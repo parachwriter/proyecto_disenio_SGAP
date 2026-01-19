@@ -1,19 +1,30 @@
-import java.time.LocalDate;
+package com.tuempresa.proyectos.gestionproyectos.model;
 
-@Entity 
-plublic class ProyectoInvestigacion {
-    @Id 
-    @GeneratedValue(strategy = GeneratioType.IDENTITY)
-    private Long id; 
-    private String nombre; 
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+public class ProyectoInvestigacion {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String nombre;
     private double presupuesto;
 
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
-    private String estado; 
+    private String estado;
 
     @OneToMany
-    private List<IntegranteProyecto> integrantes;
+    @JoinColumn(name = "proyecto_id")
+    private List<IntegranteProyecto> integrantes = new ArrayList<>();
 
+    public ProyectoInvestigacion() {
+    }
 
+    // Getters y setters aquí
 }
