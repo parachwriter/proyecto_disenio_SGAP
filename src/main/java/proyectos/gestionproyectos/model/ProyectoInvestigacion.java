@@ -1,4 +1,4 @@
-package com.tuempresa.proyectos.gestionproyectos.model;
+package proyectos.gestionproyectos.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -24,6 +24,14 @@ public class ProyectoInvestigacion {
     private List<IntegranteProyecto> integrantes = new ArrayList<>();
 
     public ProyectoInvestigacion() {
+    }
+
+    // Dentro de ProyectoInvestigacion.java
+    @ManyToMany // O @OneToMany según prefieras
+    private List<IntegranteProyecto> listaIntegrantes;
+
+    public List<IntegranteProyecto> getListaIntegrantes() {
+        return listaIntegrantes;
     }
 
     // Getters y setters aquí
