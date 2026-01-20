@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-SgapApplication<sgap>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "proyectos.SgapApplication",
+            "projectName": "sgap",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

@@ -1,10 +1,15 @@
 package proyectos.gestioncomunicacion.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Scheduled; // Necesario para la automatización
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service; // Importa tu repositorio
+
+import proyectos.gestionusuario.model.DirectorProyecto; // Importa tu modelo
+import proyectos.gestionusuario.repository.DirectorProyectoRepository;
 
 @Service
 public class ServicioGestionComunicacion {
@@ -12,38 +17,51 @@ public class ServicioGestionComunicacion {
     @Autowired
     private JavaMailSender mailSender;
 
-    // 1. Enviar credenciales cuando el Jefe de Departamento crea el proyecto
+    @Autowired
+    private DirectorProyectoRepository directorRepository; // Inyectamos el repositorio para persistencia
+
+    // 1. Enviar credenciales (Se activa manualmente al crear el proyecto)
     public void enviarCorreoCredencialesDirector(String destino, String usuario, String password) {
         SimpleMailMessage mensaje = new SimpleMailMessage();
         mensaje.setTo(destino);
         mensaje.setSubject("Bienvenido al Sistema - Credenciales de Director");
         mensaje.setText("Se le ha asignado un nuevo proyecto.\n\n" +
                 "Usuario: " + usuario + "\n" +
-                "Contraseña temporal: " + password + "\n\n" +
-                "Debe ingresar mensualmente para reportar su nómina.");
+                "Contraseña temporal: " + password);
         mailSender.send(mensaje);
     }
 
-    // 2. Recordatorio mensual automático
-    // Se ejecutará el día 1 de cada mes a las 9:00 AM
+    // 2. Recordatorio mensual automático (PERSISTENTE)
     @Scheduled(cron = "0 0 9 1 * ?")
-    public void enviarCorreoRecordatorioNominaMensual(String destino) {
-        // Nota: En una fase avanzada, aquí buscaremos los correos de la DB
-        if (destino != null) {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setTo(destino);
-            mensaje.setSubject("Recordatorio: Actualización de Nómina Mensual");
-            mensaje.setText("Aún no ha realizado el reporte de asistentes de este mes. Por favor ingrese al sistema.");
-            mailSender.send(mensaje);
+    public void enviarCorreoRecordatorioNominaMensual() {
+        // BUSCAMOS EN LA BASE DE DATOS REAL
+        List<DirectorProyecto> directores = directorRepository.findAll();
+        
+        for (DirectorProyecto director : directores) {
+            if (director.getCorreoInstitucional() != null) {
+                SimpleMailMessage mensaje = new SimpleMailMessage();
+                mensaje.setTo(director.getCorreoInstitucional());
+                mensaje.setSubject("Recordatorio: Actualización de Nómina Mensual");
+                mensaje.setText("Estimado " + director.getNombre() + 
+                                ", por favor ingrese al sistema para reportar su nómina.");
+                mailSender.send(mensaje);
+            }
         }
     }
 
-    // 3. Confirmación de actualización exitosa
-    public void enviarConfirmacionActualizadaNominaMensual(String destino) {
+    // 3. Confirmación de actualización exitosa (PERSISTENTE)
+    public void enviarConfirmacionActualizadaNominaMensual(String destino, String nombreDirector) {
         SimpleMailMessage mensaje = new SimpleMailMessage();
         mensaje.setTo(destino);
-        mensaje.setSubject("Confirmación: Nómina Actualizada");
-        mensaje.setText("Su reporte de nómina ha sido recibido correctamente.");
+        mensaje.setSubject("Confirmación: Nómina Actualizada Exitosamente");
+        mensaje.setText("Estimado/a " + nombreDirector + ",\n\n" +
+                "Le informamos que el reporte de asistentes para su proyecto " +
+                "ha sido registrado correctamente en la base de datos.\n\n" +
+                "Fecha de registro: " + java.time.LocalDateTime.now());
+        
         mailSender.send(mensaje);
+        System.out.println("Correo de confirmación enviado a: " + destino);
     }
+
+
 }
