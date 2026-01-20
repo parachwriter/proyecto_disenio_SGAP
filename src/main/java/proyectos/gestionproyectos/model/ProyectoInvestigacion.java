@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import proyectos.gestionusuario.model.DirectorProyecto;
 
 @Entity
 public class ProyectoInvestigacion {
@@ -12,27 +13,29 @@ public class ProyectoInvestigacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nombre;
-    private double presupuesto;
+    // Relación con el Director
+    @OneToOne(cascade = CascadeType.ALL)
+    private DirectorProyecto director;
 
-    private LocalDate fechaInicio;
-    private LocalDate fechaFin;
-    private String estado;
-
-    @OneToMany
+    // Relación con la lista de integrantes (Asistentes/Colaboradores)
+    @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "proyecto_id")
-    private List<IntegranteProyecto> integrantes = new ArrayList<>();
+    private List<IntegranteProyecto> listaIntegrantes = new ArrayList<>();
 
-    public ProyectoInvestigacion() {
+    // --- GETTERS Y SETTERS CLAVE ---
+    public DirectorProyecto getDirector() {
+        return director;
     }
 
-    // Dentro de ProyectoInvestigacion.java
-    @ManyToMany // O @OneToMany según prefieras
-    private List<IntegranteProyecto> listaIntegrantes;
+    public void setDirector(DirectorProyecto director) {
+        this.director = director;
+    }
 
     public List<IntegranteProyecto> getListaIntegrantes() {
         return listaIntegrantes;
     }
 
-    // Getters y setters aquí
+    public void setListaIntegrantes(List<IntegranteProyecto> listaIntegrantes) {
+        this.listaIntegrantes = listaIntegrantes;
+    }
 }
