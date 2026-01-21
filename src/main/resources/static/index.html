@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>SGAP - Gestión de Proyectos</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .module { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+        form { display: flex; flex-direction: column; max-width: 400px; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Sistema SGAP</h1>
+
+    <div class="module">
+        <h2>Registro de Proyecto (Jefe de Departamento)</h2>
+        <form id="formProyecto">
+            <input type="text" id="nombreP" placeholder="Nombre del Proyecto" required>
+            <input type="number" id="presupuestoP" placeholder="Presupuesto">
+            <hr>
+            <small>Datos del Director a asignar:</small>
+            <input type="text" id="nombreD" placeholder="Nombre del Director">
+            <input type="email" id="correoD" placeholder="Correo Institucional">
+            <input type="text" id="cedulaD" placeholder="Cédula">
+            <button type="submit">Registrar Proyecto y Notificar Director</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('formProyecto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                nombre: document.getElementById('nombreP').value,
+                presupuesto: document.getElementById('presupuestoP').value,
+                director: {
+                    nombre: document.getElementById('nombreD').value,
+                    correoInstitucional: document.getElementById('correoD').value,
+                    cedula: document.getElementById('cedulaD').value
+                }
+            };
+
+            try {
+                const res = await fetch('/proyectos', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const msg = await res.text();
+                alert(msg);
+            } catch (err) {
+                alert("Error al conectar con el servidor");
+            }
+        });
+    </script>
+</body>
+</html>

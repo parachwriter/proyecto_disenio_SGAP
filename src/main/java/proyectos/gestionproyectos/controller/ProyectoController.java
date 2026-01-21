@@ -1,7 +1,8 @@
 package proyectos.gestionproyectos.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable; // Cambiado para soportar HTML
+import org.springframework.web.bind.annotation.CrossOrigin; // Cambiado para soportar HTML
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import proyectos.gestionproyectos.model.ProyectoInvestigacion;
 import proyectos.gestionproyectos.service.ServicioGestionProyecto;
+
+@CrossOrigin(origins = "*") // Permite peticiones desde cualquier origen para pruebas
 
 @RestController
 @RequestMapping("/proyectos")

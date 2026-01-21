@@ -19,13 +19,20 @@ public class ServicioGestionUsuario {
 
     // 1. Método del diagrama: Crear credenciales y NOTIFICAR
     public void crearCredencialesDirector(DirectorProyecto director) {
+        // Generamos los datos
         String passwordTemporal = "Temp" + director.getCedula();
         String usuario = director.getCorreoInstitucional();
 
-        // Guardamos al director en la DB antes de enviar el correo
+        // --- ESTO ES LO QUE FALTABA ---
+        // Debes setear los valores en el objeto para que Hibernate los vea
+        director.setUsuario(usuario);
+        director.setPassword(passwordTemporal);
+        // ------------------------------
+
+        // Ahora sí, guardamos al director con sus datos completos en la DB
         directorRepository.save(director);
 
-        // Llamamos al servicio para enviar el correo (según tu diseño)
+        // Llamamos al servicio para enviar el correo
         servicioComunicacion.enviarCorreoCredencialesDirector(
                 director.getCorreoInstitucional(),
                 usuario,
