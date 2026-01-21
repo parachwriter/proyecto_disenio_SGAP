@@ -1,4 +1,4 @@
-package com.tuempresa.gestioncomunicacion.model;
+package proyectos.gestioncomunicacion.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -40,3 +40,4 @@ public class Comunicado {
     public String getTipo() { return tipo; }
     public void setTipo(String tipo) { this.tipo = tipo; }
 }
+
