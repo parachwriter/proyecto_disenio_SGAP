@@ -1,4 +1,4 @@
-package com.tuempresa.gestioncomunicacion.model;
+package proyectos.gestioncomunicacion.model;
 
 public class Notificacion {
 
@@ -26,3 +26,4 @@ public class Notificacion {
     public String getHipervinculo() { return hipervinculo; }
     public void setHipervinculo(String hipervinculo) { this.hipervinculo = hipervinculo; }
 }
+
