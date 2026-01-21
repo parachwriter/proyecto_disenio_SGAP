@@ -1,4 +1,4 @@
-package com.tuempresa.gestioncomunicacion.model;
+package proyectos.gestioncomunicacion.model;
 
 public class MensajeCorreoElectronico {
 
@@ -38,3 +38,4 @@ public class MensajeCorreoElectronico {
 
     public String getMensajePersonalizado() { return mensajePersonalizado; }
 }
+
