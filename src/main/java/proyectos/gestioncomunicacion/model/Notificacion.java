@@ -1,4 +1,4 @@
-package com.tuempresa.gestioncomunicacion.model;
+package proyectos.gestioncomunicacion.model;
 
 public class Notificacion {
 

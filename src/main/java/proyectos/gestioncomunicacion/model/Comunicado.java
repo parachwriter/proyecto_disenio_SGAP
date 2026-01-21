@@ -1,4 +1,4 @@
-package com.tuempresa.gestioncomunicacion.model;
+package proyectos.gestioncomunicacion.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;

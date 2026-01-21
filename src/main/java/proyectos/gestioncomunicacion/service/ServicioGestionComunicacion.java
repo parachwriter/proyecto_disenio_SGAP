@@ -63,5 +63,9 @@ public class ServicioGestionComunicacion {
         System.out.println("Correo de confirmación enviado a: " + destino);
     }
 
-
+    // Método para notificación al jefe de departamento
+    public void enviarNotificacionAJefeDepartamento() {
+        // Lógica para enviar notificación al jefe
+        System.out.println("Notificación enviada al jefe de departamento: Reporte mensual no cumplido");
+    }
 }
