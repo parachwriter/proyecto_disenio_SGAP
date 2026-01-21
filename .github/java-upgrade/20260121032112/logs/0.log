@@ -1,0 +1,26 @@
+2026-01-21T03:21:12.844Z [INFO] ----------------------invoke install_maven----------------------
+2026-01-21T03:21:12.845Z [INFO] [Tool.invoke]({name: install_maven, input: {
+  "version": "latest",
+  "projectPath": "c:\\Users\\gabye\\Documents\\Diseño\\proyecto_disenio_SGAP"
+}}).
+2026-01-21T03:21:12.845Z [INFO] [Task.start](): Starting task toolCall
+2026-01-21T03:21:12.846Z [INFO] [Task.start](): Started task toolCall
+2026-01-21T03:21:12.846Z [INFO] [Tool.invoke] validate GitHub Copilot license.
+2026-01-21T03:21:12.846Z [INFO] [Tool.invoke] do pre-invoke.
+2026-01-21T03:21:12.847Z [INFO] [Tool.invoke] do invoke.
+2026-01-21T03:21:16.130Z [INFO] [Tool.invoke]({result: {
+  "result": {
+    "name": "mvn",
+    "path": "C:\\Users\\gabye\\.maven\\maven-3.9.12\\bin",
+    "version": "3.9.12"
+  },
+  "message": "Maven latest is installed at C:\\Users\\gabye\\.maven\\maven-3.9.12\\bin",
+  "telemetry": {
+    "tool": "Maven",
+    "version": "latest"
+  }
+}}).
+2026-01-21T03:21:16.130Z [INFO] [Task.complete](): Completing task toolCall
+2026-01-21T03:21:16.131Z [INFO] [Task.complete](): Completed task toolCall
+2026-01-21T03:21:16.131Z [INFO] [Tool.invoke]({message: Maven latest is installed at C:\Users\gabye\.maven\maven-3.9.12\bin}).
+2026-01-21T03:21:16.132Z [INFO] ----------------------invoked install_maven----------------------

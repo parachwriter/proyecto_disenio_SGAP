@@ -1,0 +1,54 @@
+2026-01-21T03:19:10.905Z [INFO] ----------------------invoke generate_upgrade_plan----------------------
+2026-01-21T03:19:10.906Z [INFO] [Tool.invoke]({name: generate_upgrade_plan, input: {
+  "projectPath": "c:\\Users\\gabye\\Documents\\Diseño\\proyecto_disenio_SGAP",
+  "targetJavaVersion": "21",
+  "useCurrentBranch": false
+}}).
+2026-01-21T03:19:10.906Z [INFO] [Plan.tryStartTask]({tool:generate_upgrade_plan, nextTask:{type:undefined, tool:undefined}}
+2026-01-21T03:19:10.906Z [INFO] [Plan.tryStartTask]: no next task, create new one.
+2026-01-21T03:19:10.907Z [INFO] [Plan.createTaskAtStart]({tool: generate_upgrade_plan, input: {
+  "projectPath": "c:\\Users\\gabye\\Documents\\Diseño\\proyecto_disenio_SGAP",
+  "targetJavaVersion": "21",
+  "useCurrentBranch": false,
+  "sessionId": "20260121031910"
+}}).
+2026-01-21T03:19:10.907Z [INFO] [Plan.tryStartTask]: starting task generatePlan
+2026-01-21T03:19:10.908Z [INFO] [Task.start](): Starting task generatePlan
+2026-01-21T03:19:10.908Z [INFO] [Task.start](1): Started task generatePlan
+2026-01-21T03:19:10.915Z [INFO] [Tool.invoke] validate GitHub Copilot license.
+2026-01-21T03:19:10.915Z [INFO] [Tool.invoke] do pre-invoke.
+2026-01-21T03:19:10.915Z [INFO] [Tool.invoke] do invoke.
+2026-01-21T03:19:11.557Z [INFO] [Task.start](): Starting task generatePlan
+2026-01-21T03:19:11.558Z [INFO] [Task.start](1.1): Started task generatePlan
+2026-01-21T03:19:11.559Z [INFO] ---------------------prepare install_maven----------------------
+2026-01-21T03:19:11.559Z [INFO] [Tool.prepareInvocation]({name: install_maven, input: {
+  "sessionId": "20260121031910",
+  "version": "3.9.12",
+  "dest": "C:\\Users\\gabye\\.maven",
+  "reason": "Maven  is required to build the project, but not found on the machine."
+}}).
+2026-01-21T03:19:11.560Z [INFO] [Tool.prepareInvocation] do prepare invocation.
+2026-01-21T03:19:11.785Z [INFO] [Tool.prepareInvocation]({result: {
+  "invocationMessage": "Download and install Maven",
+  "confirmationMessages": {
+    "title": "Download and install Maven",
+    "message": "\nMaven  is required to build the project, but not found on the machine.\nThis tool will download and install Maven 3.9.12 from Apache with below settings.\n- **Version**: 3.9.12\n- **Vendor**: Apache\n- **Url**: https://dlcdn.apache.org/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.zip\n- **Destination**: `C:\\Users\\gabye\\.maven`\n- **Checksum**: SHA512: 0ef0d074761a55e7b982fd7f2cd6ea2da028289c73156ebd488c0513efbff8a64ac5bc0c11c3b8bbced930ce15238ecef344b0e065ae54f7cdca8c86cf39e736\n- **Signature**: https://dlcdn.apache.org/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.zip.asc\n- **Public Key**: https://downloads.apache.org/maven/KEYS\n"
+  }
+}}).
+2026-01-21T03:19:11.786Z [INFO] ----------------------prepared install_maven----------------------
+2026-01-21T03:19:17.678Z [INFO] [Task.complete](1.1): Completing task generatePlan
+2026-01-21T03:19:17.679Z [INFO] [Task.complete](1.1): Completed task generatePlan
+2026-01-21T03:19:17.680Z [ERROR] [Tool.invoke] error occurs when invoking tool generate_upgrade_plan: UserError: Failed to prepare project configuration or init upgrade options: Build tool path is required but not provided.
+Please provide a valid build tool installation. You may find another valid installation or guide user to install one first.. Please check the project configuration and try again..
+2026-01-21T03:19:17.681Z [INFO] [Task.complete](1): Completing task generatePlan
+2026-01-21T03:19:17.681Z [INFO] ----------------------invoked generate_upgrade_plan----------------------
+2026-01-21T03:19:17.682Z [INFO] [Task.complete](1): Completed task generatePlan
+2026-01-21T03:19:20.488Z [INFO] ---------------------prepare list_mavens----------------------
+2026-01-21T03:19:20.488Z [INFO] [Tool.prepareInvocation]({name: list_mavens, input: {
+  "includeVersion": true
+}}).
+2026-01-21T03:19:20.489Z [INFO] [Tool.prepareInvocation] do prepare invocation.
+2026-01-21T03:19:20.490Z [INFO] [Tool.prepareInvocation]({result: {
+  "invocationMessage": "List mavens"
+}}).
+2026-01-21T03:19:20.490Z [INFO] ----------------------prepared list_mavens----------------------

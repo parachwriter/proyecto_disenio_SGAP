@@ -1,0 +1,33 @@
+2026-01-21T16:10:36.410Z [INFO] ----------------------invoke list_jdks----------------------
+2026-01-21T16:10:36.410Z [INFO] [Tool.invoke]({name: list_jdks, input: {
+  "projectPath": "c:\\Users\\gabye\\Documents\\Diseño\\proyecto_disenio_SGAP"
+}}).
+2026-01-21T16:10:36.411Z [INFO] [Task.start](): Starting task toolCall
+2026-01-21T16:10:36.411Z [INFO] [Task.start](): Started task toolCall
+2026-01-21T16:10:36.411Z [INFO] [Tool.invoke] validate GitHub Copilot license.
+2026-01-21T16:10:36.412Z [INFO] [Tool.invoke] do pre-invoke.
+2026-01-21T16:10:36.412Z [INFO] [Tool.invoke] do invoke.
+2026-01-21T16:10:36.504Z [INFO] [Tool.invoke]({result: {
+  "message": "We found following jdks in your system:\n\n1. Java 17.0.14\n   📁 Path: C:\\Users\\gabye\\.jdks\\jbr-17.0.14\\bin\n   🏷️ Source: others\n\n2. Java 23.0.2\n   📁 Path: C:\\Program Files\\Java\\jdk-23\\bin\n   🏷️ Source: PATH,JAVA_HOME\n\nTotal: 2 JDK installation(s) found"
+}}).
+2026-01-21T16:10:36.505Z [INFO] [Task.complete](): Completing task toolCall
+2026-01-21T16:10:36.505Z [INFO] [Task.complete](): Completed task toolCall
+2026-01-21T16:10:36.506Z [INFO] [Tool.invoke]({message: We found following jdks in your system:
+
+1. Java 17.0.14
+   📁 Path: C:\Users\gabye\.jdks\jbr-17.0.14\bin
+   🏷️ Source: others
+
+2. Java 23.0.2
+   📁 Path: C:\Program Files\Java\jdk-23\bin
+   🏷️ Source: PATH,JAVA_HOME
+
+Total: 2 JDK installation(s) found}).
+2026-01-21T16:10:36.506Z [INFO] ----------------------invoked list_jdks----------------------
+2026-01-21T16:10:37.604Z [INFO] ---------------------prepare list_mavens----------------------
+2026-01-21T16:10:37.605Z [INFO] [Tool.prepareInvocation]({name: list_mavens, input: {}}).
+2026-01-21T16:10:37.605Z [INFO] [Tool.prepareInvocation] do prepare invocation.
+2026-01-21T16:10:37.606Z [INFO] [Tool.prepareInvocation]({result: {
+  "invocationMessage": "List mavens"
+}}).
+2026-01-21T16:10:37.606Z [INFO] ----------------------prepared list_mavens----------------------

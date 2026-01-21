@@ -1,0 +1,27 @@
+2026-01-21T16:10:37.651Z [INFO] ----------------------invoke list_mavens----------------------
+2026-01-21T16:10:37.652Z [INFO] [Tool.invoke]({name: list_mavens, input: {
+  "projectPath": "c:\\Users\\gabye\\Documents\\Diseño\\proyecto_disenio_SGAP"
+}}).
+2026-01-21T16:10:37.653Z [INFO] [Task.start](): Starting task toolCall
+2026-01-21T16:10:37.653Z [INFO] [Task.start](): Started task toolCall
+2026-01-21T16:10:37.654Z [INFO] [Tool.invoke] validate GitHub Copilot license.
+2026-01-21T16:10:37.654Z [INFO] [Tool.invoke] do pre-invoke.
+2026-01-21T16:10:37.654Z [INFO] [Tool.invoke] do invoke.
+2026-01-21T16:10:37.828Z [INFO] [Tool.invoke]({result: {
+  "message": "We found following maven installations in your system:\n\n1. 📁 Path: C:\\Users\\gabye\\.maven\\maven-3.9.12(1)\\bin\n   🏷️ Source: install\n\n2. 📁 Path: C:\\Users\\gabye\\.maven\\maven-3.9.12(2)\\bin\n   🏷️ Source: install\n\n3. 📁 Path: C:\\Users\\gabye\\.maven\\maven-3.9.12\\bin\n   🏷️ Source: install\n\nTotal: 3 Maven installation(s) found"
+}}).
+2026-01-21T16:10:37.828Z [INFO] [Task.complete](): Completing task toolCall
+2026-01-21T16:10:37.829Z [INFO] [Task.complete](): Completed task toolCall
+2026-01-21T16:10:37.829Z [INFO] [Tool.invoke]({message: We found following maven installations in your system:
+
+1. 📁 Path: C:\Users\gabye\.maven\maven-3.9.12(1)\bin
+   🏷️ Source: install
+
+2. 📁 Path: C:\Users\gabye\.maven\maven-3.9.12(2)\bin
+   🏷️ Source: install
+
+3. 📁 Path: C:\Users\gabye\.maven\maven-3.9.12\bin
+   🏷️ Source: install
+
+Total: 3 Maven installation(s) found}).
+2026-01-21T16:10:37.829Z [INFO] ----------------------invoked list_mavens----------------------
