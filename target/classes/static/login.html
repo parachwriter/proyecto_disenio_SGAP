@@ -13,26 +13,45 @@
     <div class="login-card">
         <h2>SGAP Login</h2>
         <form id="loginForm">
-            <input type="email" id="user" placeholder="Correo (admin@sgap.com)" required>
+            <input type="email" id="user" placeholder="Correo" required>
             <input type="password" id="pass" placeholder="Contraseña" required>
             <button type="submit">Entrar</button>
         </form>
     </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const user = document.getElementById('user').value;
-            const pass = document.getElementById('pass').value;
+   <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const usuario = document.getElementById('user').value;
+        const password = document.getElementById('pass').value;
 
-            // Validación por defecto solicitada
-            if(user === "admin@sgap.com" && pass === "admin123") {
-                localStorage.setItem("sesion", "admin"); // Guardamos sesión simple
+        try {
+            // Llamada real al endpoint de autenticación
+            const response = await fetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, password })
+            });
+
+            if (!response.ok) throw new Error("Error en el servidor");
+
+            const rol = await response.text(); // Recibe "ADMIN", "DIRECTOR" o "INVALIDO"
+
+            if (rol === "ADMIN") {
+                localStorage.setItem("sesion", "admin");
                 window.location.href = "dashboard.html";
+            } else if (rol === "DIRECTOR") {
+                localStorage.setItem("sesion", "director");
+                localStorage.setItem("userEmail", usuario); 
+                window.location.href = "menu-director.html";
             } else {
-                alert("Credenciales incorrectas");
+                alert("Usuario o contraseña incorrectos. Si es Director, use la clave temporal de su correo.");
             }
-        });
-    </script>
+        } catch (err) {
+            console.error(err);
+            alert("Error al conectar con el servidor. Asegúrese de que el Backend esté corriendo.");
+        }
+    });
+</script>
 </body>
 </html>

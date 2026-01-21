@@ -1,15 +1,39 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>SGAP - Panel Jefe Departamento</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; max-width: 600px; margin-top: 20px; }
-        .card { padding: 20px; border: 1px solid #007bff; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .card:hover { background: #007bff; color: white; }
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        .card {
+            padding: 20px;
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            background: #007bff;
+            color: white;
+        }
     </style>
 </head>
+
 <body>
     <h1>Bienvenido, Jefe de Departamento</h1>
     <p>Seleccione una opción de gestión:</p>
@@ -33,10 +57,10 @@
     <button onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
 
     <script>
-        // Protección simple de página
-        if(!localStorage.getItem("sesion")) {
+        if (localStorage.getItem("sesion") !== "admin") {
             window.location.href = "login.html";
         }
     </script>
 </body>
+
 </html>
