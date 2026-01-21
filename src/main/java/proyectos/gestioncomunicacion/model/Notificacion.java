@@ -26,3 +26,4 @@ public class Notificacion {
     public String getHipervinculo() { return hipervinculo; }
     public void setHipervinculo(String hipervinculo) { this.hipervinculo = hipervinculo; }
 }
+
