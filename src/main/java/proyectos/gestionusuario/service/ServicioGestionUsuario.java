@@ -39,11 +39,21 @@ public class ServicioGestionUsuario {
                 passwordTemporal);
     }
 
-    // 2. Método del diagrama: Autenticar Usuario
-    public boolean autenticarUsuario(String usuario, String password) {
-        // Aquí luego buscaremos en el repositorio de Usuarios
-        System.out.println("Autenticando al usuario: " + usuario);
-        return true;
+    // 2. Método del diagrama: Autenticar Usuario (CORREGIDO PARA VALIDACIÓN REAL)
+    public String autenticarUsuario(String usuario, String password) {
+        // Caso Jefe de Departamento (Admin)
+        if (usuario.equals("admin@sgap.com") && password.equals("admin123")) {
+            return "ADMIN";
+        }
+
+        // Caso Director de Proyecto: Buscamos en la tabla 'usuarios' a través del
+        // repositorio
+        // Filtramos por el usuario (email) y el password que se generó antes
+        return directorRepository.findAll().stream()
+                .filter(d -> d.getUsuario().equals(usuario) && d.getPassword().equals(password))
+                .findFirst()
+                .map(d -> "DIRECTOR") // Si lo encuentra, devuelve este rol
+                .orElse("INVALIDO"); // Si no coincide, devuelve este mensaje
     }
 
     // 3. Método del diagrama: Verificar Credenciales

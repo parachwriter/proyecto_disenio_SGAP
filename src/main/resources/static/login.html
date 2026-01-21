@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SGAP - Login</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; }
+        .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>SGAP Login</h2>
+        <form id="loginForm">
+            <input type="email" id="user" placeholder="Correo" required>
+            <input type="password" id="pass" placeholder="Contraseña" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+   <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const usuario = document.getElementById('user').value;
+        const password = document.getElementById('pass').value;
+
+        try {
+            // Llamada real al endpoint de autenticación
+            const response = await fetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, password })
+            });
+
+            if (!response.ok) throw new Error("Error en el servidor");
+
+            const rol = await response.text(); // Recibe "ADMIN", "DIRECTOR" o "INVALIDO"
+
+            if (rol === "ADMIN") {
+                localStorage.setItem("sesion", "admin");
+                window.location.href = "dashboard.html";
+            } else if (rol === "DIRECTOR") {
+                localStorage.setItem("sesion", "director");
+                localStorage.setItem("userEmail", usuario); 
+                window.location.href = "menu-director.html";
+            } else {
+                alert("Usuario o contraseña incorrectos. Si es Director, use la clave temporal de su correo.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error al conectar con el servidor. Asegúrese de que el Backend esté corriendo.");
+        }
+    });
+</script>
+</body>
+</html>
