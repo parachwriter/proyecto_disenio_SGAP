@@ -2,14 +2,13 @@ package proyectos.gestionproyectos.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+
 import proyectos.gestionproyectos.model.IntegranteProyecto;
+import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.repository.IntegranteRepository;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 import proyectos.gestionusuario.model.DirectorProyecto;
 import proyectos.gestionusuario.service.ServicioGestionUsuario;
-import proyectos.gestionproyectos.repository.IntegranteRepository;
-
-import java.util.List;
 
 @Service
 public class ServicioGestionProyecto {
@@ -23,12 +22,17 @@ public class ServicioGestionProyecto {
     @Autowired
     private ServicioGestionUsuario servicioUsuario;
 
-    public void registrarProyecto(ProyectoInvestigacion proyecto, DirectorProyecto director) {
-        // 1. Guardamos el proyecto y al director en la DB
+    public void registrarProyecto(ProyectoInvestigacion proyecto) {
+        // 1. Guardamos el proyecto (esto guarda la relación en SQLite)
         proyectoRepo.save(proyecto);
 
-        // 2. Ejecutamos la lógica de creación de credenciales y envío de correo
-        servicioUsuario.crearCredencialesDirector(director);
+        // 2. Extraemos el director que ya viene asociado en el modelo
+        DirectorProyecto directorAsignado = proyecto.getDirector();
+
+        // 3. Delegamos al experto en usuarios la creación de accesos
+        if (directorAsignado != null) {
+            servicioUsuario.crearCredencialesDirector(directorAsignado);
+        }
     }
 
     public IntegranteProyecto registrarIntegrante(IntegranteProyecto i) {

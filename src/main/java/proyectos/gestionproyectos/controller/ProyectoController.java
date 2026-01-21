@@ -1,12 +1,14 @@
 package proyectos.gestionproyectos.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller; // Cambiado para soportar HTML
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable; // Cambiado para soportar HTML
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import proyectos.gestionproyectos.model.ProyectoInvestigacion;
 import proyectos.gestionproyectos.service.ServicioGestionProyecto;
-import proyectos.gestionusuario.model.DirectorProyecto;
 
 @RestController
 @RequestMapping("/proyectos")
@@ -16,12 +18,8 @@ public class ProyectoController {
 
     @PostMapping
     public String crearProyecto(@RequestBody ProyectoInvestigacion p) {
-        // Extraemos el director que viene dentro del objeto proyecto
-        DirectorProyecto director = p.getDirector();
-
-        // Ahora enviamos AMBOS parámetros al servicio como él espera
-        servicio.registrarProyecto(p, director);
-
+        // Solo pasamos el proyecto completo. El servicio sabrá qué hacer con él.
+        servicio.registrarProyecto(p);
         return "Proyecto y Director registrados correctamente";
     }
 
