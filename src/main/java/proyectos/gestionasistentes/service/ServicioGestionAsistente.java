@@ -43,25 +43,37 @@ public class ServicioGestionAsistente {
     }
 
     // +generarReporteNominaMensual()
-    public ReporteNomina generarReporteNominaMensual(Integer mes, Integer anio, List<Asistente> listaAsistentes) {
-        ReporteNomina reporte = nominaRepository
-                .findByMesAndAnio(mes, anio)
-                .orElse(new ReporteNomina());
+    public ReporteNomina generarReporteNominaMensual(Integer mes, Integer anio, List<Long> idsAsistentes) {
+        if (mes == null || anio == null) {
+            throw new IllegalArgumentException("mes y anio son obligatorios");
+        }
+        if (idsAsistentes == null || idsAsistentes.isEmpty()) {
+            throw new IllegalArgumentException("Debe seleccionar al menos 1 asistente");
+        }
+
+        // Si ya existe reporte para ese mes/año, lo reutilizamos
+        ReporteNomina reporte = nominaRepository.findByMesAndAnio(mes, anio).orElse(new ReporteNomina());
 
         reporte.setMes(mes);
         reporte.setAnio(anio);
-        reporte.setListaAsistentes(listaAsistentes);
+        reporte.setFechaRegistro(LocalDate.now());
+        reporte.setEstado("INCOMPLETO");
 
-        if (reporte.getFechaRegistro() == null) {
-            reporte.setFechaRegistro(LocalDate.now());
-        }
+        // Construir la lista de asistentes desde ids
+        List<Asistente> asistentes = idsAsistentes.stream()
+                .map(this::obtenerAsistente)
+                .toList();
 
+        // Marcar en nómina (ACTIVO)
+        actualizarEstadoNominaAsistentes(asistentes);
+
+        reporte.setListaAsistentes(asistentes);
         reporte.registrar();
 
+        // Guardar reporte
         ReporteNomina guardado = nominaRepository.save(reporte);
 
-        actualizarEstadoNominaAsistentes(listaAsistentes);
-
+        // Actualizar estado final (si está completo)
         if (guardado.validarCompleto()) {
             guardado.setEstado("COMPLETO");
         } else {
@@ -83,6 +95,8 @@ public class ServicioGestionAsistente {
 
     // +validarReporteMensualCumplido()
     public boolean validarReporteMensualCumplido(Integer mes, Integer anio) {
+        if (mes == null || anio == null) return false;
+
         return nominaRepository
                 .findByMesAndAnio(mes, anio)
                 .map(ReporteNomina::validarCompleto)
