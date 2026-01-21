@@ -38,9 +38,6 @@ public class ReporteNomina {
         if (this.fechaRegistro == null) {
             this.fechaRegistro = LocalDate.now();
         }
-        if (this.estado == null || this.estado.isBlank()) {
-            this.estado = "REGISTRADO";
-        }
     }
 
     // +validarCompleto()
@@ -57,8 +54,7 @@ public class ReporteNomina {
     // +esDelMesActual()
     public boolean esDelMesActual() {
         LocalDate hoy = LocalDate.now();
-        return mes != null
-                && anio != null
+        return mes != null && anio != null
                 && mes == hoy.getMonthValue()
                 && anio == hoy.getYear();
     }
@@ -67,6 +63,10 @@ public class ReporteNomina {
 
     public Long getIdReporte() {
         return idReporte;
+    }
+
+    public void setIdReporte(Long idReporte) {
+        this.idReporte = idReporte;
     }
 
     public Integer getMes() {
