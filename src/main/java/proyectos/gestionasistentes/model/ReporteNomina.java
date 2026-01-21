@@ -11,7 +11,7 @@ import proyectos.gestionproyectos.model.Asistente;
 public class ReporteNomina {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idReporte;
 
     private Integer mes;
@@ -31,10 +31,7 @@ public class ReporteNomina {
 
     // +ReporteNomina()
     public ReporteNomina() {
-        // Constructor vacío requerido por JPA
     }
-
-    // ===== Métodos del diagrama =====
 
     // +registrar()
     public void registrar() {
@@ -48,21 +45,25 @@ public class ReporteNomina {
 
     // +validarCompleto()
     public boolean validarCompleto() {
-        if (mes == null || anio == null) return false;
-        if (fechaRegistro == null) return false;
-        if (listaAsistentes == null || listaAsistentes.isEmpty()) return false;
-        if (estado == null || estado.isBlank()) return false;
-        return true;
+        return mes != null
+                && anio != null
+                && fechaRegistro != null
+                && listaAsistentes != null
+                && !listaAsistentes.isEmpty()
+                && estado != null
+                && !estado.isBlank();
     }
 
     // +esDelMesActual()
     public boolean esDelMesActual() {
         LocalDate hoy = LocalDate.now();
-        if (mes == null || anio == null) return false;
-        return (this.mes == hoy.getMonthValue()) && (this.anio == hoy.getYear());
+        return mes != null
+                && anio != null
+                && mes == hoy.getMonthValue()
+                && anio == hoy.getYear();
     }
 
-    // ===== Getters/Setters (no cambian nombres de atributos del diagrama) =====
+    // ===== Getters y Setters =====
 
     public Long getIdReporte() {
         return idReporte;
