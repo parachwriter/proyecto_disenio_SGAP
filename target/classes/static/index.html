@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="UTF-8"><meta charset="UTF-8">
     <title>SGAP - Gestión de Proyectos</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .module { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
         form { display: flex; flex-direction: column; max-width: 400px; gap: 10px; }
         hr { width: 100%; margin: 10px 0; }
+        .btn-volver { margin-bottom: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
+    <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver al Panel</button>
+
     <h1>Sistema SGAP</h1>
 
     <div class="module">
@@ -31,18 +35,24 @@
     </div>
 
     <script>
+        // --- ESTO ES EL INICIO AL QUE ME REFERÍA ---
+        // Verifica si el usuario inició sesión como admin
+        if (localStorage.getItem("sesion") !== "admin") {
+            window.location.href = 'login.html';
+        }
+        // -------------------------------------------
+
         document.getElementById('formProyecto').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Construcción del objeto JSON
             const data = {
                 nombre: document.getElementById('nombreP').value,
-                presupuesto: parseFloat(document.getElementById('presupuestoP').value), // Aseguramos que sea número
+                presupuesto: parseFloat(document.getElementById('presupuestoP').value),
                 director: {
                     nombre: document.getElementById('nombreD').value,
                     correoInstitucional: document.getElementById('correoD').value,
                     cedula: document.getElementById('cedulaD').value,
-                    areaInvestigacion: document.getElementById('areaD').value // Atributo para la tabla hija
+                    areaInvestigacion: document.getElementById('areaD').value 
                 }
             };
 
@@ -56,7 +66,7 @@
                 if (res.ok) {
                     const msg = await res.text();
                     alert("Éxito: " + msg);
-                    location.reload(); // Recargar para limpiar formulario
+                    location.reload(); 
                 } else {
                     const errorMsg = await res.text();
                     alert("Error del servidor: " + errorMsg);

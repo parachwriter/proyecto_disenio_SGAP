@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SGAP - Login</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; }
+        .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>SGAP Login</h2>
+        <form id="loginForm">
+            <input type="email" id="user" placeholder="Correo (admin@sgap.com)" required>
+            <input type="password" id="pass" placeholder="Contraseña" required>
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+
+            // Validación por defecto solicitada
+            if(user === "admin@sgap.com" && pass === "admin123") {
+                localStorage.setItem("sesion", "admin"); // Guardamos sesión simple
+                window.location.href = "dashboard.html";
+            } else {
+                alert("Credenciales incorrectas");
+            }
+        });
+    </script>
+</body>
+</html>
