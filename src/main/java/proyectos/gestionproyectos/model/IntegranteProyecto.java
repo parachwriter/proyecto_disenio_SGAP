@@ -48,6 +48,14 @@ public abstract class IntegranteProyecto {
         this.fechaNacimiento = fechaNacimiento;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     // --- LÓGICA DE NEGOCIO ---
 
     public int calcularEdad() {

@@ -16,7 +16,6 @@
     th { background: #eaf7ee; }
     .status { font-weight: bold; }
     .muted { color: #666; }
-    .right { text-align: right; }
     .pill { display:inline-block; padding:4px 10px; border-radius: 999px; background:#eef; }
   </style>
 </head>
@@ -33,6 +32,28 @@
     </div>
   </div>
 
+  <!-- REGISTRO DE ASISTENTE (Director) -->
+  <div class="card">
+    <h3 style="margin-top:0;">Registrar Asistente (Director)</h3>
+    <div class="row">
+      <label>ID Proyecto:</label>
+      <input type="number" id="idProyecto" placeholder="Ej: 1" />
+
+      <label>Cédula:</label>
+      <input type="text" id="cedula" placeholder="0102030405" />
+
+      <label>Nombre:</label>
+      <input type="text" id="nombre" placeholder="Nombre Apellido" />
+
+      <label>Fecha Nac:</label>
+      <input type="date" id="fechaNacimiento" />
+
+      <button onclick="registrarAsistente()">Registrar</button>
+    </div>
+    <div class="muted" id="regMsg"></div>
+  </div>
+
+  <!-- CONTROLES NÓMINA -->
   <div class="card">
     <div class="row">
       <label>Mes:</label>
@@ -40,19 +61,14 @@
       <label>Año:</label>
       <input type="number" id="anio" min="2000" max="2100" placeholder="2026" />
       <button onclick="cargarAsistentes()">Cargar asistentes</button>
-      <button onclick="validarReporte()">Validar reporte</button>
-    </div>
-    <div class="muted" style="margin-top:8px;">
-      Selecciona los asistentes y luego presiona <span class="pill">Generar Reporte</span>.
+      <!-- <button onclick="validarReporte()">Validar reporte</button> -->
+      <button onclick="generarReporte()">Generar Reporte</button>
     </div>
   </div>
 
+  <!-- TABLA ASISTENTES -->
   <div class="card">
-    <div class="row" style="justify-content: space-between;">
-      <h3 style="margin:0;">Lista de Asistentes</h3>
-      <button onclick="generarReporte()">Generar Reporte</button>
-    </div>
-
+    <h3 style="margin-top:0;">Lista de Asistentes</h3>
     <table>
       <thead>
         <tr>
@@ -64,23 +80,66 @@
         </tr>
       </thead>
       <tbody id="tbodyAsistentes">
-        <tr><td colspan="5" class="muted">Presiona “Cargar asistentes”</td></tr>
+        <tr><td colspan="5" class="muted">Registra asistentes o presiona “Cargar asistentes”.</td></tr>
       </tbody>
     </table>
   </div>
 
+  <!-- RESULTADO -->
   <div class="card">
     <h3 style="margin-top:0;">Resultado</h3>
     <div id="resultado" class="muted">Aquí se mostrará el resultado del reporte.</div>
   </div>
 
 <script>
-  // Protección (igual que menu-director.html)
-  if (localStorage.getItem("sesion") !== "director") {
-    window.location.href = "login.html";
-  }
+  // protección básica (si tu proyecto ya usa esta lógica)
   const email = localStorage.getItem("userEmail") || "(sin correo)";
   document.getElementById("bienvenida").innerText = "Identificado como: " + email;
+
+  async function registrarAsistente() {
+    const idProyecto = Number(document.getElementById("idProyecto").value);
+    const cedula = document.getElementById("cedula").value.trim();
+    const nombre = document.getElementById("nombre").value.trim();
+    const fechaNacimiento = document.getElementById("fechaNacimiento").value;
+
+    const regMsg = document.getElementById("regMsg");
+    regMsg.innerText = "";
+
+    if (!idProyecto) { alert("Ingresa el ID del proyecto"); return; }
+    if (!cedula) { alert("Ingresa la cédula"); return; }
+    if (!nombre) { alert("Ingresa el nombre"); return; }
+
+    regMsg.innerText = "Registrando...";
+
+    try {
+      const res = await fetch("/nomina/asistentes/registrar", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ idProyecto, cedula, nombre, fechaNacimiento })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        regMsg.innerText = "Error: " + txt;
+        return;
+      }
+
+      const a = await res.json();
+      regMsg.innerText = ` Asistente registrado con ID: ${a.id}`;
+
+      // limpiar inputs
+      document.getElementById("cedula").value = "";
+      document.getElementById("nombre").value = "";
+      document.getElementById("fechaNacimiento").value = "";
+
+      // refrescar lista
+      await cargarAsistentes();
+
+    } catch (e) {
+      console.error(e);
+      regMsg.innerText = "Error registrando (ver consola).";
+    }
+  }
 
   async function cargarAsistentes() {
     const tbody = document.getElementById("tbodyAsistentes");
@@ -121,14 +180,8 @@
     const anio = Number(document.getElementById("anio").value);
     const idsAsistentes = getSeleccionados();
 
-    if (!mes || !anio) {
-      alert("Ingresa mes y año.");
-      return;
-    }
-    if (idsAsistentes.length === 0) {
-      alert("Selecciona al menos 1 asistente.");
-      return;
-    }
+    if (!mes || !anio) { alert("Ingresa mes y año."); return; }
+    if (idsAsistentes.length === 0) { alert("Selecciona al menos 1 asistente."); return; }
 
     document.getElementById("resultado").innerHTML = "Generando reporte...";
 
@@ -141,7 +194,7 @@
 
       if (!res.ok) {
         const txt = await res.text();
-        document.getElementById("resultado").innerHTML = "Error: " + txt;
+        document.getElementById("resultado").innerHTML = "Error";
         return;
       }
 
@@ -154,7 +207,6 @@
         <div><b>Total Asistentes:</b> ${reporte.listaAsistentes?.length ?? 0}</div>
       `;
 
-      // refrescar lista para ver estados actualizados
       await cargarAsistentes();
 
     } catch (e) {
@@ -167,10 +219,7 @@
     const mes = Number(document.getElementById("mes").value);
     const anio = Number(document.getElementById("anio").value);
 
-    if (!mes || !anio) {
-      alert("Ingresa mes y año.");
-      return;
-    }
+    if (!mes || !anio) { alert("Ingresa mes y año."); return; }
 
     document.getElementById("resultado").innerHTML = "Validando...";
 
