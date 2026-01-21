@@ -1,17 +1,27 @@
 package proyectos.gestiondocumentos.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "documentos")
+@Inheritance(strategy = InheritanceType.JOINED) // Estrategia clave para herencia en BD
 public abstract class Documento {
-    private String idDocumento;
-    private String nombre;
-    private String tipo;
-    private String formato;
-    private String rutaAlmacenamiento;
-    private LocalDateTime fecha;
 
-    public Documento(String idDocumento, String nombre, String tipo, String formato, String rutaAlmacenamiento, LocalDateTime fecha) {
-        this.idDocumento = idDocumento;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    protected Long idDocumento; // Cambiado a Long para autoincremento
+
+    protected String nombre;
+    protected String tipo;
+    protected String formato;
+    protected String rutaAlmacenamiento;
+    protected LocalDateTime fecha;
+
+    // --- CONSTRUCTOR VACÍO OBLIGATORIO JPA ---
+    public Documento() {}
+
+    public Documento(String nombre, String tipo, String formato, String rutaAlmacenamiento, LocalDateTime fecha) {
         this.nombre = nombre;
         this.tipo = tipo;
         this.formato = formato;
@@ -19,11 +29,9 @@ public abstract class Documento {
         this.fecha = fecha;
     }
 
+    // --- MÉTODOS DE NEGOCIO ---
     public boolean validarFormato() {
-        if (formato == null || formato.isEmpty()) {
-            return false;
-        }
-        // Ejemplo: validar que tenga extensión
+        if (formato == null || formato.isEmpty()) return false;
         return nombre.endsWith("." + formato.toLowerCase());
     }
 
@@ -31,13 +39,17 @@ public abstract class Documento {
         return rutaAlmacenamiento + "/" + nombre;
     }
 
-    // Getters necesarios para que los hijos accedan a los datos (Encapsulamiento)
-    public LocalDateTime getFecha() {
-        return fecha;
-    }
-
-    public String getFormato() {
-        return formato;
-    }
-
+    // --- GETTERS Y SETTERS ---
+    public Long getIdDocumento() { return idDocumento; }
+    public void setIdDocumento(Long id) { this.idDocumento = id; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+    public String getFormato() { return formato; }
+    public void setFormato(String formato) { this.formato = formato; }
+    public String getRutaAlmacenamiento() { return rutaAlmacenamiento; }
+    public void setRutaAlmacenamiento(String ruta) { this.rutaAlmacenamiento = ruta; }
+    public LocalDateTime getFecha() { return fecha; }
+    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
 }
