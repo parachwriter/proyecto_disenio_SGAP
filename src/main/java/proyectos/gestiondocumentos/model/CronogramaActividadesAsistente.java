@@ -1,29 +1,44 @@
 package proyectos.gestiondocumentos.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "cronogramas_actividades")
+@PrimaryKeyJoinColumn(name = "idDocumento") // Se une a la tabla padre
 public class CronogramaActividadesAsistente extends Documento {
+
     private String idAsistente;
     private String idProyecto;
     private String mesActividad;
 
-    public CronogramaActividadesAsistente(String idDocumento, String nombre, String tipo, String formato, String rutaAlmacenamiento, LocalDateTime fecha,
+    // --- CONSTRUCTOR VACÍO OBLIGATORIO JPA ---
+    public CronogramaActividadesAsistente() { super(); }
+
+    public CronogramaActividadesAsistente(String nombre, String tipo, String formato, String rutaAlmacenamiento, LocalDateTime fecha,
                                           String idAsistente, String idProyecto, String mesActividad) {
-        super(idDocumento, nombre, tipo, formato, rutaAlmacenamiento, fecha);
+        // Nota: Quitamos el idDocumento del constructor porque la BD lo genera solo
+        super(nombre, tipo, formato, rutaAlmacenamiento, fecha);
         this.idAsistente = idAsistente;
         this.idProyecto = idProyecto;
         this.mesActividad = mesActividad;
     }
 
-
+    // --- MÉTODOS DE NEGOCIO ---
     public void registrarActividad(String descripcion) {
         System.out.println("Registrando actividad para el asistente " + idAsistente + ": \n" + descripcion);
     }
 
-    // Sobreescritura (Polimorfismo): Si el cronograma se valida diferente al documento normal
     @Override
     public boolean validarFormato() {
-        //valida con formato pdf
         return "pdf".equalsIgnoreCase(this.getFormato());
     }
+
+    // Getters y Setters
+    public String getIdAsistente() { return idAsistente; }
+    public void setIdAsistente(String id) { this.idAsistente = id; }
+    public String getIdProyecto() { return idProyecto; }
+    public void setIdProyecto(String id) { this.idProyecto = id; }
+    public String getMesActividad() { return mesActividad; }
+    public void setMesActividad(String mes) { this.mesActividad = mes; }
 }
