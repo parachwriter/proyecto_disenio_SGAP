@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>SGAP - Nómina Mensual</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f8ff; padding: 20px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-top: 15px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    input, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    button { cursor: pointer; border: 1px solid #28a745; background: white; transition: 0.2s; }
+    button:hover { background: #28a745; color: white; transform: translateY(-1px); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
+    th { background: #eaf7ee; }
+    .status { font-weight: bold; }
+    .muted { color: #666; }
+    .right { text-align: right; }
+    .pill { display:inline-block; padding:4px 10px; border-radius: 999px; background:#eef; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div>
+      <h1>Nómina Mensual</h1>
+      <div class="muted" id="bienvenida"></div>
+    </div>
+    <div class="row">
+      <button onclick="window.location.href='menu-director.html'">Volver</button>
+      <button onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>Mes:</label>
+      <input type="number" id="mes" min="1" max="12" placeholder="1-12" />
+      <label>Año:</label>
+      <input type="number" id="anio" min="2000" max="2100" placeholder="2026" />
+      <button onclick="cargarAsistentes()">Cargar asistentes</button>
+      <button onclick="validarReporte()">Validar reporte</button>
+    </div>
+    <div class="muted" style="margin-top:8px;">
+      Selecciona los asistentes y luego presiona <span class="pill">Generar Reporte</span>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content: space-between;">
+      <h3 style="margin:0;">Lista de Asistentes</h3>
+      <button onclick="generarReporte()">Generar Reporte</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Seleccionar</th>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Cédula</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyAsistentes">
+        <tr><td colspan="5" class="muted">Presiona “Cargar asistentes”</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0;">Resultado</h3>
+    <div id="resultado" class="muted">Aquí se mostrará el resultado del reporte.</div>
+  </div>
+
+<script>
+  // Protección (igual que menu-director.html)
+  if (localStorage.getItem("sesion") !== "director") {
+    window.location.href = "login.html";
+  }
+  const email = localStorage.getItem("userEmail") || "(sin correo)";
+  document.getElementById("bienvenida").innerText = "Identificado como: " + email;
+
+  async function cargarAsistentes() {
+    const tbody = document.getElementById("tbodyAsistentes");
+    tbody.innerHTML = "<tr><td colspan='5' class='muted'>Cargando...</td></tr>";
+
+    try {
+      const res = await fetch("/nomina/asistentes");
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5' class='muted'>No hay asistentes registrados.</td></tr>";
+        return;
+      }
+
+      tbody.innerHTML = data.map(a => `
+        <tr>
+          <td><input type="checkbox" class="chkAsistente" value="${a.id}" /></td>
+          <td>${a.id}</td>
+          <td>${a.nombre ?? ""}</td>
+          <td>${a.cedula ?? ""}</td>
+          <td class="status">${a.estado ?? ""}</td>
+        </tr>
+      `).join("");
+
+    } catch (e) {
+      tbody.innerHTML = "<tr><td colspan='5' class='muted'>Error cargando asistentes.</td></tr>";
+      console.error(e);
+    }
+  }
+
+  function getSeleccionados() {
+    return Array.from(document.querySelectorAll(".chkAsistente:checked"))
+      .map(chk => Number(chk.value));
+  }
+
+  async function generarReporte() {
+    const mes = Number(document.getElementById("mes").value);
+    const anio = Number(document.getElementById("anio").value);
+    const idsAsistentes = getSeleccionados();
+
+    if (!mes || !anio) {
+      alert("Ingresa mes y año.");
+      return;
+    }
+    if (idsAsistentes.length === 0) {
+      alert("Selecciona al menos 1 asistente.");
+      return;
+    }
+
+    document.getElementById("resultado").innerHTML = "Generando reporte...";
+
+    try {
+      const res = await fetch("/nomina/generar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mes, anio, idsAsistentes })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        document.getElementById("resultado").innerHTML = "Error: " + txt;
+        return;
+      }
+
+      const reporte = await res.json();
+      document.getElementById("resultado").innerHTML = `
+        <div><b>ID Reporte:</b> ${reporte.idReporte}</div>
+        <div><b>Mes/Año:</b> ${reporte.mes}/${reporte.anio}</div>
+        <div><b>Fecha Registro:</b> ${reporte.fechaRegistro}</div>
+        <div><b>Estado:</b> <span class="pill">${reporte.estado}</span></div>
+        <div><b>Total Asistentes:</b> ${reporte.listaAsistentes?.length ?? 0}</div>
+      `;
+
+      // refrescar lista para ver estados actualizados
+      await cargarAsistentes();
+
+    } catch (e) {
+      console.error(e);
+      document.getElementById("resultado").innerHTML = "Error generando reporte (ver consola).";
+    }
+  }
+
+  async function validarReporte() {
+    const mes = Number(document.getElementById("mes").value);
+    const anio = Number(document.getElementById("anio").value);
+
+    if (!mes || !anio) {
+      alert("Ingresa mes y año.");
+      return;
+    }
+
+    document.getElementById("resultado").innerHTML = "Validando...";
+
+    try {
+      const res = await fetch(`/nomina/validar?mes=${mes}&anio=${anio}`);
+      const data = await res.json();
+
+      document.getElementById("resultado").innerHTML = `
+        <div><b>Mes/Año:</b> ${data.mes}/${data.anio}</div>
+        <div><b>Reporte mensual cumplido:</b> <span class="pill">${data.cumplido}</span></div>
+      `;
+    } catch (e) {
+      console.error(e);
+      document.getElementById("resultado").innerHTML = "Error validando (ver consola).";
+    }
+  }
+</script>
+
+</body>
+</html>
