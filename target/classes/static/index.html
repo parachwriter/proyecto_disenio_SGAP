@@ -6,6 +6,7 @@
         body { font-family: sans-serif; margin: 20px; }
         .module { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
         form { display: flex; flex-direction: column; max-width: 400px; gap: 10px; }
+        hr { width: 100%; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -15,12 +16,16 @@
         <h2>Registro de Proyecto (Jefe de Departamento)</h2>
         <form id="formProyecto">
             <input type="text" id="nombreP" placeholder="Nombre del Proyecto" required>
-            <input type="number" id="presupuestoP" placeholder="Presupuesto">
+            <input type="number" id="presupuestoP" placeholder="Presupuesto" required>
+            
             <hr>
             <small>Datos del Director a asignar:</small>
-            <input type="text" id="nombreD" placeholder="Nombre del Director">
-            <input type="email" id="correoD" placeholder="Correo Institucional">
-            <input type="text" id="cedulaD" placeholder="Cédula">
+            <input type="text" id="nombreD" placeholder="Nombre del Director" required>
+            <input type="email" id="correoD" placeholder="Correo Institucional" required>
+            <input type="text" id="cedulaD" placeholder="Cédula" required>
+            
+            <input type="text" id="areaD" placeholder="Área de Investigación (Ej: IA, Software)" required>
+
             <button type="submit">Registrar Proyecto y Notificar Director</button>
         </form>
     </div>
@@ -28,13 +33,16 @@
     <script>
         document.getElementById('formProyecto').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Construcción del objeto JSON
             const data = {
                 nombre: document.getElementById('nombreP').value,
-                presupuesto: document.getElementById('presupuestoP').value,
+                presupuesto: parseFloat(document.getElementById('presupuestoP').value), // Aseguramos que sea número
                 director: {
                     nombre: document.getElementById('nombreD').value,
                     correoInstitucional: document.getElementById('correoD').value,
-                    cedula: document.getElementById('cedulaD').value
+                    cedula: document.getElementById('cedulaD').value,
+                    areaInvestigacion: document.getElementById('areaD').value // Atributo para la tabla hija
                 }
             };
 
@@ -44,8 +52,15 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
                 });
-                const msg = await res.text();
-                alert(msg);
+                
+                if (res.ok) {
+                    const msg = await res.text();
+                    alert("Éxito: " + msg);
+                    location.reload(); // Recargar para limpiar formulario
+                } else {
+                    const errorMsg = await res.text();
+                    alert("Error del servidor: " + errorMsg);
+                }
             } catch (err) {
                 alert("Error al conectar con el servidor");
             }

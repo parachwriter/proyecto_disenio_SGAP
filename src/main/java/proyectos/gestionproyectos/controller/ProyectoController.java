@@ -21,9 +21,16 @@ public class ProyectoController {
 
     @PostMapping
     public String crearProyecto(@RequestBody ProyectoInvestigacion p) {
-        // Solo pasamos el proyecto completo. El servicio sabrá qué hacer con él.
+        // Verificación rápida antes de procesar
+        if (p.getDirector() == null) {
+            return "Error: El proyecto debe tener un director asignado";
+        }
+
+        // El servicio se encarga de llamar a ServicioGestionUsuario
+        // para crear las credenciales y guardar al director.
         servicio.registrarProyecto(p);
-        return "Proyecto y Director registrados correctamente";
+        return "Proyecto y Director registrados correctamente. Se ha enviado un correo a "
+                + p.getDirector().getCorreoInstitucional();
     }
 
     @PostMapping("/{proyectoId}/integrantes/{integranteId}")
