@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.repository.NominaRepository;
 import proyectos.gestionproyectos.model.Asistente;
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
 import proyectos.gestionproyectos.repository.IntegranteRepository;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 
@@ -163,7 +162,7 @@ public class ServicioGestionAsistente {
                                         existente.getId());
                             }
                         }
-                    } catch (Exception e) {
+                    } catch (RuntimeException e) {
                         logger.warn("Error procesando asistente: {}", e.getMessage());
                     }
                 }

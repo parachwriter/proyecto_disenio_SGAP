@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import proyectos.gestionasistentes.dto.NominaRequestDTO;
 import proyectos.gestionasistentes.model.ReporteNomina;
@@ -26,6 +28,7 @@ import proyectos.gestionproyectos.model.Asistente;
 @RequestMapping("/api/nomina")
 @CrossOrigin(origins = "*")
 public class ReporteNominaController {
+    private static final Logger logger = LoggerFactory.getLogger(ReporteNominaController.class);
 
     @Autowired
     private ServicioGestionAsistente servicioAsistente;
@@ -48,6 +51,7 @@ public class ReporteNominaController {
         Long proyectoId = Long.valueOf(payload.get("proyectoId").toString());
         Integer mes = (Integer) payload.get("mes");
         Integer anio = (Integer) payload.get("anio");
+        @SuppressWarnings("unchecked")
         List<Long> idsAsistentes = (List<Long>) payload.get("idsAsistentes");
 
         return servicioAsistente.confirmarActualizacionNomina(proyectoId, mes, anio, idsAsistentes);
@@ -76,12 +80,9 @@ public class ReporteNominaController {
             response.put("mensaje", "Nómina procesada exitosamente");
             response.put("proyecto", resultado.getProyecto().getNombre());
             response.put("asistentesGuardados", resultado.getListaAsistentes().size());
-            System.out.println("DEBUG: Éxito - ID reporte: " + resultado.getIdReporte());
-            System.out.println("DEBUG: Asistentes finales guardados: " + resultado.getListaAsistentes().size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.out.println("DEBUG: Error en procesamiento: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error en procesamiento: {}", e.getMessage(), e);
             response.put("error", "Error al procesar la nómina");
             response.put("mensaje", e.getMessage());
             response.put("tipo", e.getClass().getSimpleName());
@@ -93,16 +94,10 @@ public class ReporteNominaController {
     @GetMapping("/asistentes-activos/{proyectoId}")
     public ResponseEntity<?> obtenerAsistentesActivos(@PathVariable Long proyectoId) {
         try {
-            System.out.println("DEBUG: Obteniendo asistentes activos del proyecto: " + proyectoId);
             List<Asistente> asistentes = servicioAsistente.obtenerAsistentesActivosPorProyecto(proyectoId);
-            System.out.println("DEBUG: Encontrados " + asistentes.size() + " asistentes activos");
-            for (Asistente a : asistentes) {
-                System.out.println("  - " + a.getId() + ": " + a.getNombre() + " (" + a.getEstado() + ")");
-            }
             return ResponseEntity.ok(asistentes);
         } catch (Exception e) {
-            System.out.println("DEBUG: Error obteniendo asistentes: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error obteniendo asistentes: {}", e.getMessage(), e);
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en caso de error
         }
     }

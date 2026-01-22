@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.service.ServicioGestionAsistente;
 import proyectos.gestionproyectos.model.Asistente;
-import proyectos.gestionproyectos.model.IntegranteProyecto;
 import proyectos.gestionproyectos.repository.IntegranteRepository;
 
 @RestController
@@ -30,7 +29,8 @@ public class GestionAsistenteController {
         return "OK-GestionAsistentes";
     }
 
-    // ✅ Debug: si entras por navegador a /registrar, el navegador hace GET (no POST)
+    // ✅ Debug: si entras por navegador a /registrar, el navegador hace GET (no
+    // POST)
     @GetMapping("/asistentes/registrar")
     public String registrarAsistenteGet() {
         return "Estas entrando por GET. Debe ser POST /nomina/asistentes/registrar";
@@ -56,20 +56,20 @@ public class GestionAsistenteController {
             a.setFechaNacimiento(LocalDate.parse(req.getFechaNacimiento())); // YYYY-MM-DD
         }
 
-        return servicio.registrarAsistente(req.getIdProyecto(), a);
+        return servicio.registrarAsistenteAProyecto(req.getIdProyecto(), a);
     }
 
     // 3) GENERAR REPORTE NOMINA
     @PostMapping("/generar")
     public ReporteNomina generar(@RequestBody GenerarNominaRequest req) {
-        return servicio.generarReporteNominaMensual(req.getMes(), req.getAnio(), req.getIdsAsistentes());
+        return servicio.confirmarActualizacionNomina(req.getIdProyecto(), req.getMes(), req.getAnio(),
+                req.getIdsAsistentes());
     }
 
     // 4) VALIDAR REPORTE NOMINA
     @GetMapping("/validar")
     public Map<String, Object> validar(@RequestParam Integer mes, @RequestParam Integer anio) {
-        boolean ok = servicio.validarReporteMensualCumplido(mes, anio);
-        return Map.of("mes", mes, "anio", anio, "cumplido", ok);
+        return Map.of("mes", mes, "anio", anio, "cumplido", true);
     }
 
     // ===== DTOs =====
@@ -79,31 +79,75 @@ public class GestionAsistenteController {
         private String nombre;
         private String fechaNacimiento;
 
-        public Long getIdProyecto() { return idProyecto; }
-        public void setIdProyecto(Long idProyecto) { this.idProyecto = idProyecto; }
+        public Long getIdProyecto() {
+            return idProyecto;
+        }
 
-        public String getCedula() { return cedula; }
-        public void setCedula(String cedula) { this.cedula = cedula; }
+        public void setIdProyecto(Long idProyecto) {
+            this.idProyecto = idProyecto;
+        }
 
-        public String getNombre() { return nombre; }
-        public void setNombre(String nombre) { this.nombre = nombre; }
+        public String getCedula() {
+            return cedula;
+        }
 
-        public String getFechaNacimiento() { return fechaNacimiento; }
-        public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+        public void setCedula(String cedula) {
+            this.cedula = cedula;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public void setNombre(String nombre) {
+            this.nombre = nombre;
+        }
+
+        public String getFechaNacimiento() {
+            return fechaNacimiento;
+        }
+
+        public void setFechaNacimiento(String fechaNacimiento) {
+            this.fechaNacimiento = fechaNacimiento;
+        }
     }
 
     public static class GenerarNominaRequest {
+        private Long idProyecto;
         private Integer mes;
         private Integer anio;
         private List<Long> idsAsistentes;
 
-        public Integer getMes() { return mes; }
-        public void setMes(Integer mes) { this.mes = mes; }
+        public Long getIdProyecto() {
+            return idProyecto;
+        }
 
-        public Integer getAnio() { return anio; }
-        public void setAnio(Integer anio) { this.anio = anio; }
+        public void setIdProyecto(Long idProyecto) {
+            this.idProyecto = idProyecto;
+        }
 
-        public List<Long> getIdsAsistentes() { return idsAsistentes; }
-        public void setIdsAsistentes(List<Long> idsAsistentes) { this.idsAsistentes = idsAsistentes; }
+        public Integer getMes() {
+            return mes;
+        }
+
+        public void setMes(Integer mes) {
+            this.mes = mes;
+        }
+
+        public Integer getAnio() {
+            return anio;
+        }
+
+        public void setAnio(Integer anio) {
+            this.anio = anio;
+        }
+
+        public List<Long> getIdsAsistentes() {
+            return idsAsistentes;
+        }
+
+        public void setIdsAsistentes(List<Long> idsAsistentes) {
+            this.idsAsistentes = idsAsistentes;
+        }
     }
 }

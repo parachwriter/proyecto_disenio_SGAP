@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import proyectos.gestionproyectos.model.ProyectoInvestigacion;
 import proyectos.gestionproyectos.service.ServicioGestionProyecto;
@@ -21,6 +23,8 @@ import proyectos.gestionproyectos.service.ServicioGestionProyecto;
 @RestController
 @RequestMapping("/proyectos")
 public class ProyectoController {
+    private static final Logger logger = LoggerFactory.getLogger(ProyectoController.class);
+
     @Autowired
     private ServicioGestionProyecto servicio;
 
@@ -49,13 +53,10 @@ public class ProyectoController {
     @GetMapping("/director/{correo}")
     public ResponseEntity<?> listarPorDirector(@PathVariable String correo) {
         try {
-            System.out.println("DEBUG: Buscando proyectos para director: " + correo);
             List<ProyectoInvestigacion> proyectos = servicio.obtenerProyectosPorDirector(correo);
-            System.out.println("DEBUG: Encontrados " + (proyectos != null ? proyectos.size() : 0) + " proyectos");
             return ResponseEntity.ok(proyectos != null ? proyectos : new ArrayList<>());
         } catch (Exception e) {
-            System.out.println("DEBUG: Error al listar proyectos: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error al listar proyectos: {}", e.getMessage(), e);
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en lugar de error
         }
     }
