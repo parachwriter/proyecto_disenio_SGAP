@@ -1,7 +1,12 @@
 package proyectos.gestionproyectos.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin; // Cambiado para soportar HTML
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,5 +44,19 @@ public class ProyectoController {
             @PathVariable Long integranteId) {
         servicio.asignarIntegranteAProyecto(proyectoId, integranteId);
         return "Integrante asignado con éxito";
+    }
+
+    @GetMapping("/director/{correo}")
+    public ResponseEntity<?> listarPorDirector(@PathVariable String correo) {
+        try {
+            System.out.println("DEBUG: Buscando proyectos para director: " + correo);
+            List<ProyectoInvestigacion> proyectos = servicio.obtenerProyectosPorDirector(correo);
+            System.out.println("DEBUG: Encontrados " + (proyectos != null ? proyectos.size() : 0) + " proyectos");
+            return ResponseEntity.ok(proyectos != null ? proyectos : new ArrayList<>());
+        } catch (Exception e) {
+            System.out.println("DEBUG: Error al listar proyectos: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en lugar de error
+        }
     }
 }

@@ -4,8 +4,18 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import proyectos.gestionproyectos.model.Asistente;
+import proyectos.gestionproyectos.model.ProyectoInvestigacion;
 
 @Entity
 public class ReporteNomina {
@@ -16,31 +26,38 @@ public class ReporteNomina {
 
     private Integer mes;
     private Integer anio;
-
     private LocalDate fechaRegistro;
-
     private String estado;
 
+    // --- NUEVA RELACIÓN: Un reporte pertenece a un proyecto ---
+    @ManyToOne
+    @JoinColumn(name = "id_proyecto")
+    @JsonIgnore
+    private ProyectoInvestigacion proyecto;
+
     @ManyToMany
-    @JoinTable(
-        name = "reporte_nomina_asistentes",
-        joinColumns = @JoinColumn(name = "id_reporte"),
-        inverseJoinColumns = @JoinColumn(name = "id_asistente")
-    )
+    @JoinTable(name = "reporte_nomina_asistentes", joinColumns = @JoinColumn(name = "id_reporte"), inverseJoinColumns = @JoinColumn(name = "id_asistente"))
     private List<Asistente> listaAsistentes = new ArrayList<>();
 
-    // +ReporteNomina()
     public ReporteNomina() {
     }
 
-    // +registrar()
+    // --- NUEVO GETTER Y SETTER (Soluciona el error de compilación) ---
+    public ProyectoInvestigacion getProyecto() {
+        return proyecto;
+    }
+
+    public void setProyecto(ProyectoInvestigacion proyecto) {
+        this.proyecto = proyecto;
+    }
+
+    // --- Métodos existentes ---
     public void registrar() {
         if (this.fechaRegistro == null) {
             this.fechaRegistro = LocalDate.now();
         }
     }
 
-    // +validarCompleto()
     public boolean validarCompleto() {
         return mes != null
                 && anio != null
@@ -51,7 +68,6 @@ public class ReporteNomina {
                 && !estado.isBlank();
     }
 
-    // +esDelMesActual()
     public boolean esDelMesActual() {
         LocalDate hoy = LocalDate.now();
         return mes != null && anio != null
@@ -59,8 +75,7 @@ public class ReporteNomina {
                 && anio == hoy.getYear();
     }
 
-    // ===== Getters y Setters =====
-
+    // ===== Getters y Setters previos =====
     public Long getIdReporte() {
         return idReporte;
     }

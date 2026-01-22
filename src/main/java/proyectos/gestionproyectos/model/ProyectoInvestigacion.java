@@ -23,6 +23,9 @@ public class ProyectoInvestigacion {
     // --- NUEVO: Estos atributos crean las columnas faltantes ---
     private String nombre;
     private Double presupuesto;
+    private Integer maxAsistentes;
+    private String fechaInicio; // Puedes usar LocalDate si prefieres
+    private String fechaFin;
     // ---------------------------------------------------------
 
     // Relación con el Director
@@ -34,7 +37,15 @@ public class ProyectoInvestigacion {
     @JoinColumn(name = "proyecto_id")
     private List<IntegranteProyecto> listaIntegrantes = new ArrayList<>();
 
-    // --- NUEVOS GETTERS Y SETTERS (Obligatorios para que Spring funcione) ---
+    // --- GETTERS Y SETTERS ---
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getNombre() {
         return nombre;
     }
@@ -51,7 +62,6 @@ public class ProyectoInvestigacion {
         this.presupuesto = presupuesto;
     }
 
-    // --- GETTERS Y SETTERS EXISTENTES ---
     public DirectorProyecto getDirector() {
         return director;
     }
@@ -66,5 +76,29 @@ public class ProyectoInvestigacion {
 
     public void setListaIntegrantes(List<IntegranteProyecto> listaIntegrantes) {
         this.listaIntegrantes = listaIntegrantes;
+    }
+
+    public Integer getMaxAsistentes() {
+        return maxAsistentes;
+    }
+
+    public void setMaxAsistentes(Integer maxAsistentes) {
+        this.maxAsistentes = maxAsistentes;
+    }
+
+    public String getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(String fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public String getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(String fechaFin) {
+        this.fechaFin = fechaFin;
     }
 }

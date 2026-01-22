@@ -1,30 +1,111 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <title>SGAP - Nómina Mensual</title>
   <style>
-    body { font-family: sans-serif; background: #f0f8ff; padding: 20px; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; }
-    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); margin-top: 15px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    input, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
-    button { cursor: pointer; border: 1px solid #28a745; background: white; transition: 0.2s; }
-    button:hover { background: #28a745; color: white; transform: translateY(-1px); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; }
-    th { background: #eaf7ee; }
-    .status { font-weight: bold; }
-    .muted { color: #666; }
-    .right { text-align: right; }
-    .pill { display:inline-block; padding:4px 10px; border-radius: 999px; background:#eef; }
+    body {
+      font-family: sans-serif;
+      background: #f0f8ff;
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      margin-top: 15px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    input,
+    button,
+    select {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid #28a745;
+      background: white;
+      transition: 0.2s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #28a745;
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    .btn-baja {
+      border-color: #dc3545;
+      color: #dc3545;
+    }
+
+    .btn-baja:hover {
+      background: #dc3545;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #eee;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #eaf7ee;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef;
+      font-size: 0.8em;
+    }
+
+    .status-activo {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .status-fuera {
+      color: #dc3545;
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
 
   <div class="topbar">
     <div>
-      <h1>Nómina Mensual</h1>
+      <h1>Gestión de Nómina Mensual</h1>
       <div class="muted" id="bienvenida"></div>
     </div>
     <div class="row">
@@ -34,160 +115,294 @@
   </div>
 
   <div class="card">
+    <h3>1. Selección de Proyecto y Periodo</h3>
     <div class="row">
+      <label>Proyecto:</label>
+      <select id="selectProyecto" onchange="cargarAsistentesDelProyecto()">
+        <option value="">Cargando sus proyectos...</option>
+      </select>
       <label>Mes:</label>
-      <input type="number" id="mes" min="1" max="12" placeholder="1-12" />
+      <input type="number" id="mes" min="1" max="12" value="1" />
       <label>Año:</label>
-      <input type="number" id="anio" min="2000" max="2100" placeholder="2026" />
-      <button onclick="cargarAsistentes()">Cargar asistentes</button>
-      <button onclick="validarReporte()">Validar reporte</button>
+      <input type="number" id="anio" value="2026" />
+      <button onclick="verificarPendientes()">Verificar Meses Pendientes</button>
     </div>
-    <div class="muted" style="margin-top:8px;">
-      Selecciona los asistentes y luego presiona <span class="pill">Generar Reporte</span>.
+  </div>
+
+  <div class="card">
+    <h3>2. Reportar Nueva Contratación</h3>
+    <div class="row">
+      <input type="text" id="nomA" placeholder="Nombre completo" />
+      <input type="text" id="cedA" placeholder="Cédula" />
+      <input type="email" id="corA" placeholder="Correo Personal" />
+      <button onclick="agregarAsistente()">+ Agregar Asistente</button>
     </div>
   </div>
 
   <div class="card">
     <div class="row" style="justify-content: space-between;">
-      <h3 style="margin:0;">Lista de Asistentes</h3>
-      <button onclick="generarReporte()">Generar Reporte</button>
+      <h3 style="margin:0;">3. Asistentes en Nómina (Este Mes)</h3>
+      <button onclick="confirmarNomina()" style="background: #28a745; color: white;">CONFIRMAR ACTUALIZACIÓN
+        MENSUAL</button>
     </div>
 
-    <table>
+    <table id="tablaAsistentes">
       <thead>
         <tr>
-          <th>Seleccionar</th>
           <th>ID</th>
           <th>Nombre</th>
           <th>Cédula</th>
           <th>Estado</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody id="tbodyAsistentes">
-        <tr><td colspan="5" class="muted">Presiona “Cargar asistentes”</td></tr>
+        <tr>
+          <td colspan="5" class="muted">Seleccione un proyecto para ver los asistentes activos.</td>
+        </tr>
       </tbody>
     </table>
   </div>
 
   <div class="card">
-    <h3 style="margin-top:0;">Resultado</h3>
-    <div id="resultado" class="muted">Aquí se mostrará el resultado del reporte.</div>
+    <h3 style="margin-top:0;">Estado del Reporte</h3>
+    <div id="resultado" class="muted">No se han realizado envíos en esta sesión.</div>
   </div>
 
-<script>
-  // Protección (igual que menu-director.html)
-  if (localStorage.getItem("sesion") !== "director") {
-    window.location.href = "login.html";
-  }
-  const email = localStorage.getItem("userEmail") || "(sin correo)";
-  document.getElementById("bienvenida").innerText = "Identificado como: " + email;
+  <script>
+    // Verificación de sesión
+    if (localStorage.getItem("sesion") !== "director") {
+      window.location.href = "login.html";
+    }
 
-  async function cargarAsistentes() {
-    const tbody = document.getElementById("tbodyAsistentes");
-    tbody.innerHTML = "<tr><td colspan='5' class='muted'>Cargando...</td></tr>";
+    const emailDir = localStorage.getItem("userEmail");
+    document.getElementById("bienvenida").innerText = "Director: " + emailDir;
 
-    try {
-      const res = await fetch("/nomina/asistentes");
-      const data = await res.json();
+    // 1. CARGAR PROYECTOS (Ruta corregida: /proyectos/director/...)
+    window.onload = async () => {
+      try {
+        const res = await fetch(`/proyectos/director/${emailDir}`);
+        if (!res.ok) throw new Error("Error en la respuesta del servidor");
 
-      if (!Array.isArray(data) || data.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='5' class='muted'>No hay asistentes registrados.</td></tr>";
-        return;
+        const proyectos = await res.json();
+        console.log("Proyectos cargados del servidor:", proyectos);
+        
+        const select = document.getElementById("selectProyecto");
+
+        if (!proyectos || proyectos.length === 0) {
+          select.innerHTML = "<option value=''>No tiene proyectos asignados</option>";
+          return;
+        }
+
+        console.log("Primer proyecto:", proyectos[0]);
+        console.log("Keys del primer proyecto:", Object.keys(proyectos[0]));
+        
+        // Crear opciones con mejor debugging
+        const opciones = proyectos.map(p => {
+          console.log("Procesando proyecto:", p, "id=", p.id, "nombre=", p.nombre);
+          return `<option value="${p.id}">${p.nombre}</option>`;
+        }).join("");
+        
+        console.log("HTML de opciones:", opciones);
+        select.innerHTML = opciones;
+        
+        // Mostrar el primer proyecto seleccionado
+        if (select.options.length > 0) {
+          select.selectedIndex = 0;
+          console.log("Opción 0 value:", select.options[0].value);
+        }
+        
+        cargarAsistentesDelProyecto();
+      } catch (e) {
+        console.error("Error cargando proyectos", e);
+        document.getElementById("selectProyecto").innerHTML = "<option value=''>Error al conectar con el servidor</option>";
       }
+    };
 
-      tbody.innerHTML = data.map(a => `
-        <tr>
-          <td><input type="checkbox" class="chkAsistente" value="${a.id}" /></td>
+    // 2. CARGAR ASISTENTES
+    async function cargarAsistentesDelProyecto() {
+      const pId = document.getElementById("selectProyecto").value;
+      if (!pId) return;
+
+      const tbody = document.getElementById("tbodyAsistentes");
+
+      try {
+        // Ahora busca TODOS los asistentes activos del proyecto
+        const res = await fetch(`/api/nomina/asistentes-activos/${pId}`);
+        const asistentes = await res.json();
+
+        if (asistentes.length === 0) {
+          tbody.innerHTML = "<tr><td colspan='5'>No hay asistentes registrados como activos en este proyecto.</td></tr>";
+          return;
+        }
+
+        tbody.innerHTML = asistentes.map(a => `
+        <tr data-id="${a.id}">
           <td>${a.id}</td>
-          <td>${a.nombre ?? ""}</td>
-          <td>${a.cedula ?? ""}</td>
-          <td class="status">${a.estado ?? ""}</td>
+          <td>${a.nombre}</td>
+          <td>${a.cedula}</td>
+          <td class="${a.estado === 'ACTIVO' ? 'status-activo' : 'status-fuera'}">${a.estado}</td>
+          <td>
+            ${a.estado === 'ACTIVO' ? `<button class="btn-baja" onclick="darDeBaja(${a.id})">Dar de Baja</button>` : '---'}
+          </td>
         </tr>
       `).join("");
-
-    } catch (e) {
-      tbody.innerHTML = "<tr><td colspan='5' class='muted'>Error cargando asistentes.</td></tr>";
-      console.error(e);
-    }
-  }
-
-  function getSeleccionados() {
-    return Array.from(document.querySelectorAll(".chkAsistente:checked"))
-      .map(chk => Number(chk.value));
-  }
-
-  async function generarReporte() {
-    const mes = Number(document.getElementById("mes").value);
-    const anio = Number(document.getElementById("anio").value);
-    const idsAsistentes = getSeleccionados();
-
-    if (!mes || !anio) {
-      alert("Ingresa mes y año.");
-      return;
-    }
-    if (idsAsistentes.length === 0) {
-      alert("Selecciona al menos 1 asistente.");
-      return;
+      } catch (e) {
+        console.error("Error al cargar asistentes:", e);
+        tbody.innerHTML = "<tr><td colspan='5'>Error al cargar asistentes.</td></tr>";
+      }
     }
 
-    document.getElementById("resultado").innerHTML = "Generando reporte...";
+    // 3. AGREGAR ASISTENTE (Solo visual en el Front)
+    function agregarAsistente() {
+      const pId = document.getElementById("selectProyecto").value;
+      const nombre = document.getElementById("nomA").value;
+      const cedula = document.getElementById("cedA").value;
+      const correo = document.getElementById("corA").value;
 
-    try {
-      const res = await fetch("/nomina/generar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mes, anio, idsAsistentes })
-      });
+      if (!nombre || !cedula || !pId) return alert("Complete los datos y seleccione proyecto");
 
-      if (!res.ok) {
-        const txt = await res.text();
-        document.getElementById("resultado").innerHTML = "Error: " + txt;
-        return;
+      const tbody = document.getElementById("tbodyAsistentes");
+
+      // Si la tabla tenía el mensaje de "No hay asistentes", lo borramos
+      if (tbody.rows[0]?.cells.length === 1) tbody.innerHTML = "";
+
+      // Insertamos la fila en la tabla sin ir al servidor todavía
+      const nuevaFila = `
+    <tr data-id="NUEVO">
+      <td><span class="pill">NUEVO</span></td>
+      <td class="cell-nombre">${nombre}</td>
+      <td class="cell-cedula">${cedula}</td>
+      <td class="status-activo">ACTIVO</td>
+      <td>
+        <button class="btn-baja" onclick="eliminarFilaTemporal(this)">Remover</button>
+      </td>
+    </tr>
+  `;
+      tbody.innerHTML += nuevaFila;
+
+      // Limpiar campos
+      document.getElementById("nomA").value = "";
+      document.getElementById("cedA").value = "";
+      document.getElementById("corA").value = "";
+    }
+
+    function eliminarFilaTemporal(boton) {
+      boton.closest('tr').remove();
+    }
+
+    async function confirmarNomina() {
+      console.log("=== INICIO confirmarNomina ===");
+      console.log("document:", document);
+      console.log("document.getElementById:", document.getElementById);
+      
+      // Buscar el elemento de múltiples formas
+      let selectProyecto = document.getElementById("selectProyecto");
+      console.log("getElementById('selectProyecto'):", selectProyecto);
+      
+      if (!selectProyecto) {
+        console.log("No encontrado por id, buscando por query...");
+        selectProyecto = document.querySelector("select");
+        console.log("querySelector('select'):", selectProyecto);
+      }
+      
+      if (!selectProyecto) {
+        console.log("TODOS los selects en la página:");
+        console.log(document.querySelectorAll("select"));
+        return alert("ERROR: No se encontró el select de proyecto. Revisa F12 console para más info.");
       }
 
-      const reporte = await res.json();
-      document.getElementById("resultado").innerHTML = `
-        <div><b>ID Reporte:</b> ${reporte.idReporte}</div>
-        <div><b>Mes/Año:</b> ${reporte.mes}/${reporte.anio}</div>
-        <div><b>Fecha Registro:</b> ${reporte.fechaRegistro}</div>
-        <div><b>Estado:</b> <span class="pill">${reporte.estado}</span></div>
-        <div><b>Total Asistentes:</b> ${reporte.listaAsistentes?.length ?? 0}</div>
-      `;
+      console.log("Select encontrado:", selectProyecto);
+      console.log("Select id:", selectProyecto.id);
+      console.log("Select class:", selectProyecto.className);
+      
+      const proyectoId = selectProyecto.value;
+      const mes = document.getElementById("mes").value;
+      const anio = document.getElementById("anio").value;
 
-      // refrescar lista para ver estados actualizados
-      await cargarAsistentes();
+      console.log("Valores obtenidos:");
+      console.log("  proyectoId:", proyectoId, "tipo:", typeof proyectoId);
+      console.log("  mes:", mes, "tipo:", typeof mes);
+      console.log("  anio:", anio, "tipo:", typeof anio);
 
-    } catch (e) {
-      console.error(e);
-      document.getElementById("resultado").innerHTML = "Error generando reporte (ver consola).";
+      // Validaciones
+      if (!proyectoId || proyectoId === "" || proyectoId === undefined) {
+        return alert("Debe seleccionar un proyecto primero");
+      }
+      if (!mes || mes === "") {
+        return alert("Seleccione un mes");
+      }
+      if (!anio || anio === "") {
+        return alert("Seleccione un año");
+      }
+
+      const proyectoIdInt = parseInt(proyectoId, 10);
+      const mesInt = parseInt(mes, 10);
+      const anioInt = parseInt(anio, 10);
+
+      if (isNaN(proyectoIdInt) || isNaN(mesInt) || isNaN(anioInt)) {
+        return alert("El proyecto, mes y año deben ser números válidos. Valores: proyecto=" + proyectoId + ", mes=" + mes + ", anio=" + anio);
+      }
+
+      // Recolectamos la información de la tabla de forma segura
+      const filas = document.querySelectorAll("#tbodyAsistentes tr");
+      const asistentesTabla = [];
+
+      filas.forEach(tr => {
+        // Saltamos filas de error o mensajes vacíos
+        if (tr.cells.length < 3) return;
+
+        asistentesTabla.push({
+          id: tr.dataset.id === "NUEVO" ? null : parseInt(tr.dataset.id),
+          nombre: tr.cells[1].innerText.trim(),
+          cedula: tr.cells[2].innerText.trim(),
+          // Buscamos el correo en el input oculto o usamos vacío
+          correoPersonal: tr.querySelector(".hidden-correo")?.value || "",
+          estado: tr.querySelector(".status-activo") ? "ACTIVO" : "FUERA_NOMINA"
+        });
+      });
+
+      const payload = {
+        proyectoId: proyectoIdInt,
+        mes: mesInt,
+        anio: anioInt,
+        asistentes: asistentesTabla
+      };
+
+      console.log("Enviando al servidor:", payload);
+
+      try {
+        const res = await fetch("/api/nomina/confirmar-completo", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          alert("Nómina y asistentes actualizados correctamente.");
+          document.getElementById("resultado").innerText = "Reporte guardado con ID: " + data.idReporte;
+          cargarAsistentesDelProyecto();
+        } else {
+          const errorStr = await res.text();
+          alert("Error en el servidor: " + errorStr);
+        }
+      } catch (e) {
+        alert("Error de conexión: " + e.message);
+      }
     }
-  }
 
-  async function validarReporte() {
-    const mes = Number(document.getElementById("mes").value);
-    const anio = Number(document.getElementById("anio").value);
+    async function verificarPendientes() {
+      const pId = document.getElementById("selectProyecto").value;
+      if (!pId) return alert("Seleccione un proyecto primero");
 
-    if (!mes || !anio) {
-      alert("Ingresa mes y año.");
-      return;
+      try {
+        const res = await fetch(`/api/nomina/pendientes/${pId}`);
+        const pendientes = await res.json();
+        alert("Meses detectados como NO actualizados: " + (pendientes.join(", ") || "Ninguno"));
+      } catch (e) { alert("Funcionalidad en desarrollo o error de conexión."); }
     }
-
-    document.getElementById("resultado").innerHTML = "Validando...";
-
-    try {
-      const res = await fetch(`/nomina/validar?mes=${mes}&anio=${anio}`);
-      const data = await res.json();
-
-      document.getElementById("resultado").innerHTML = `
-        <div><b>Mes/Año:</b> ${data.mes}/${data.anio}</div>
-        <div><b>Reporte mensual cumplido:</b> <span class="pill">${data.cumplido}</span></div>
-      `;
-    } catch (e) {
-      console.error(e);
-      document.getElementById("resultado").innerHTML = "Error validando (ver consola).";
-    }
-  }
-</script>
-
+  </script>
 </body>
+
 </html>

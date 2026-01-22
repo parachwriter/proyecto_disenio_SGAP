@@ -3,12 +3,16 @@ package proyectos.gestionproyectos.model;
 import java.time.LocalDate;
 import java.time.Period;
 
-import jakarta.persistence.Entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Entity; // Cambiado para incluir JoinColumn y ManyToOne
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -21,8 +25,28 @@ public abstract class IntegranteProyecto {
     private String nombre;
     private LocalDate fechaNacimiento;
 
-    // --- MÉTODOS GETTER Y SETTER (Indispensables para que el Servicio funcione)
-    // ---
+    // --- NUEVA RELACIÓN (Necesaria para solucionar el error de compilación) ---
+    @ManyToOne
+    @JoinColumn(name = "proyecto_id")
+    @JsonIgnore
+    private ProyectoInvestigacion proyecto;
+
+    // --- MÉTODOS GETTER Y SETTER ---
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setProyecto(ProyectoInvestigacion proyecto) {
+        this.proyecto = proyecto;
+    }
+
+    public ProyectoInvestigacion getProyecto() {
+        return proyecto;
+    }
+
+    // ... (Mantén tus getters y setters existentes de cedula, nombre y
+    // fechaNacimiento)
 
     public String getCedula() {
         return cedula;
@@ -49,7 +73,6 @@ public abstract class IntegranteProyecto {
     }
 
     // --- LÓGICA DE NEGOCIO ---
-
     public int calcularEdad() {
         if (fechaNacimiento == null)
             return 0;

@@ -1,5 +1,7 @@
 package proyectos.gestionproyectos.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,5 +51,9 @@ public class ServicioGestionProyecto {
         proyecto.getListaIntegrantes().add(integrante); // Asegúrate que este nombre coincida con tu clase
                                                         // ProyectoInvestigacion
         proyectoRepo.save(proyecto);
+    }
+
+    public List<ProyectoInvestigacion> obtenerProyectosPorDirector(String correo) {
+        return proyectoRepo.findByDirectorCorreoInstitucional(correo);
     }
 }
