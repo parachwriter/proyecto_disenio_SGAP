@@ -1,0 +1,30 @@
+2026-01-21T03:19:20.535Z [INFO] ----------------------invoke list_mavens----------------------
+2026-01-21T03:19:20.536Z [INFO] [Tool.invoke]({name: list_mavens, input: {
+  "includeVersion": true,
+  "projectPath": "c:\\Users\\gabye\\Documents\\Diseño\\proyecto_disenio_SGAP"
+}}).
+2026-01-21T03:19:20.536Z [INFO] [Task.start](): Starting task toolCall
+2026-01-21T03:19:20.538Z [INFO] [Task.start](): Started task toolCall
+2026-01-21T03:19:20.538Z [INFO] [Tool.invoke] validate GitHub Copilot license.
+2026-01-21T03:19:20.539Z [INFO] [Tool.invoke] do pre-invoke.
+2026-01-21T03:19:20.539Z [INFO] [Tool.invoke] do invoke.
+2026-01-21T03:19:20.541Z [INFO] [Tool.invoke]({result: {
+  "message": "No Maven installations found."
+}}).
+2026-01-21T03:19:20.541Z [INFO] [Task.complete](): Completing task toolCall
+2026-01-21T03:19:20.542Z [INFO] [Task.complete](): Completed task toolCall
+2026-01-21T03:19:20.542Z [INFO] [Tool.invoke]({message: No Maven installations found.}).
+2026-01-21T03:19:20.542Z [INFO] ----------------------invoked list_mavens----------------------
+2026-01-21T03:19:24.571Z [INFO] ---------------------prepare install_maven----------------------
+2026-01-21T03:19:24.572Z [INFO] [Tool.prepareInvocation]({name: install_maven, input: {
+  "version": "latest"
+}}).
+2026-01-21T03:19:24.572Z [INFO] [Tool.prepareInvocation] do prepare invocation.
+2026-01-21T03:19:24.989Z [INFO] [Tool.prepareInvocation]({result: {
+  "invocationMessage": "Download and install Maven",
+  "confirmationMessages": {
+    "title": "Download and install Maven",
+    "message": "\nThis tool will download and install Maven latest from Apache with below settings.\n- **Version**: latest\n- **Vendor**: Apache\n- **Url**: https://dlcdn.apache.org/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.zip\n- **Destination**: `C:\\Users\\gabye\\.maven`\n- **Checksum**: SHA512: 0ef0d074761a55e7b982fd7f2cd6ea2da028289c73156ebd488c0513efbff8a64ac5bc0c11c3b8bbced930ce15238ecef344b0e065ae54f7cdca8c86cf39e736\n- **Signature**: https://dlcdn.apache.org/maven/maven-3/3.9.12/binaries/apache-maven-3.9.12-bin.zip.asc\n- **Public Key**: https://downloads.apache.org/maven/KEYS\n"
+  }
+}}).
+2026-01-21T03:19:24.989Z [INFO] ----------------------prepared install_maven----------------------
