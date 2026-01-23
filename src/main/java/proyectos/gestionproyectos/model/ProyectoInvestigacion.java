@@ -9,8 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import proyectos.gestionusuario.model.DirectorProyecto;
 
 @Entity
@@ -28,9 +28,10 @@ public class ProyectoInvestigacion {
     private String fechaFin;
     // ---------------------------------------------------------
 
-    // Relación con el Director
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "director_id") // Es mejor especificar el nombre de la columna
+    // Relación con el Director (ManyToOne: muchos proyectos pueden tener el mismo
+    // director)
+    @ManyToOne
+    @JoinColumn(name = "director_id")
     private DirectorProyecto director;
 
     @OneToMany(cascade = CascadeType.ALL)

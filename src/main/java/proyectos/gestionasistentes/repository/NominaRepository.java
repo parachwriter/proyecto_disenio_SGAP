@@ -1,5 +1,6 @@
 package proyectos.gestionasistentes.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,8 @@ public interface NominaRepository extends JpaRepository<ReporteNomina, Long> {
             @Param("idProyecto") Long idProyecto,
             @Param("mes") Integer mes,
             @Param("anio") Integer anio);
+
+    // Obtener todos los reportes de un proyecto
+    @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto ORDER BY r.anio DESC, r.mes DESC")
+    List<ReporteNomina> obtenerReportesProyecto(@Param("idProyecto") Long idProyecto);
 }

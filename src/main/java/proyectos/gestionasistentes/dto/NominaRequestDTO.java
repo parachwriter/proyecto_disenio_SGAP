@@ -45,6 +45,7 @@ public class NominaRequestDTO {
         private String nombre;
         private String cedula;
         private String correoPersonal;
+        private String fechaNacimiento;
         private String estado;
 
         public Long getId() {
@@ -77,6 +78,14 @@ public class NominaRequestDTO {
 
         public void setCorreoPersonal(String correoPersonal) {
             this.correoPersonal = correoPersonal;
+        }
+
+        public String getFechaNacimiento() {
+            return fechaNacimiento;
+        }
+
+        public void setFechaNacimiento(String fechaNacimiento) {
+            this.fechaNacimiento = fechaNacimiento;
         }
 
         public String getEstado() {

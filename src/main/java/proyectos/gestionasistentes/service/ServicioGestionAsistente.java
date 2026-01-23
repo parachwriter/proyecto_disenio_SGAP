@@ -27,7 +27,7 @@ public class ServicioGestionAsistente {
     private NominaRepository nominaRepository;
 
     @Autowired
-    private proyectos.gestionproyectos.repository.ProyectoRepository proyectoRepository;
+    private ProyectoRepository proyectoRepository;
 
     // +registrarAsistenteAProyecto()
     public Asistente registrarAsistenteAProyecto(Long proyectoId, Asistente asistente) {
@@ -138,6 +138,12 @@ public class ServicioGestionAsistente {
                             nuevo.setCedula(dto.getCedula());
                             nuevo.setProyecto(proyecto);
                             nuevo.activar();
+
+                            // Guardar fecha de nacimiento si está presente
+                            if (dto.getFechaNacimiento() != null && !dto.getFechaNacimiento().isEmpty()) {
+                                nuevo.setFechaNacimiento(LocalDate.parse(dto.getFechaNacimiento()));
+                            }
+
                             Asistente guardado = (Asistente) integranteRepository.save(nuevo);
                             asistentesFinales.add(guardado);
                             logger.info("  Nuevo asistente guardado: {} (ID={})", guardado.getNombre(),
@@ -217,5 +223,10 @@ public class ServicioGestionAsistente {
         List<Asistente> asistentes = integranteRepository.obtenerAsistentesActivosPorProyecto(proyectoId);
         logger.info("Se encontraron {} asistentes activos en el proyecto", asistentes.size());
         return asistentes;
+    }
+
+    // Obtener todos los reportes de nómina de un proyecto
+    public List<ReporteNomina> obtenerReportesProyecto(Long proyectoId) {
+        return nominaRepository.obtenerReportesProyecto(proyectoId);
     }
 }

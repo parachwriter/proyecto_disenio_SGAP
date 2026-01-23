@@ -1,5 +1,7 @@
 package proyectos.gestionasistentes.controller;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +25,8 @@ import proyectos.gestionasistentes.dto.NominaRequestDTO;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.service.ServicioGestionAsistente;
 import proyectos.gestionproyectos.model.Asistente;
+import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.repository.ProyectoRepository;
 
 @RestController
 @RequestMapping("/api/nomina")
@@ -32,6 +36,9 @@ public class ReporteNominaController {
 
     @Autowired
     private ServicioGestionAsistente servicioAsistente;
+
+    @Autowired
+    private ProyectoRepository proyectoRepository;
 
     // 1. Registrar un nuevo asistente a un proyecto específico
     @PostMapping("/registrar-asistente/{proyectoId}")
@@ -98,6 +105,69 @@ public class ReporteNominaController {
             return ResponseEntity.ok(asistentes);
         } catch (Exception e) {
             logger.error("Error obteniendo asistentes: {}", e.getMessage(), e);
+            return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en caso de error
+        }
+    }
+
+    // Obtener fechas y años disponibles del proyecto
+    @GetMapping("/fechas-proyecto/{proyectoId}")
+    public ResponseEntity<?> obtenerFechasProyecto(@PathVariable Long proyectoId) {
+        try {
+            ProyectoInvestigacion proyecto = proyectoRepository.findById(proyectoId)
+                    .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("fechaInicio", proyecto.getFechaInicio());
+            response.put("fechaFin", proyecto.getFechaFin());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error obteniendo fechas del proyecto: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // Obtener meses atrasados (sin reporte completado)
+    @GetMapping("/meses-atrasados/{proyectoId}")
+    public ResponseEntity<?> obtenerMesesAtrasados(@PathVariable Long proyectoId) {
+        try {
+            ProyectoInvestigacion proyecto = proyectoRepository.findById(proyectoId)
+                    .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+
+            // Obtener todos los reportes de nómina para este proyecto
+            List<ReporteNomina> reportes = servicioAsistente.obtenerReportesProyecto(proyectoId);
+
+            // Crear mapa de meses completados (año-mes -> completado)
+            Map<String, Boolean> mesesCompletados = new HashMap<>();
+            for (ReporteNomina reporte : reportes) {
+                String clave = reporte.getAnio() + "-" + String.format("%02d", reporte.getMes());
+                mesesCompletados.put(clave, true);
+            }
+
+            // Parsear fechas del proyecto
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            YearMonth fechaInicio = YearMonth.parse(proyecto.getFechaInicio(), formatter);
+            YearMonth fechaFin = YearMonth.parse(proyecto.getFechaFin(), formatter);
+            YearMonth ahora = YearMonth.now();
+
+            // Generar lista de meses atrasados
+            List<Map<String, Object>> mesesAtrasados = new ArrayList<>();
+            YearMonth actual = fechaInicio;
+            while (!actual.isAfter(fechaFin) && !actual.isAfter(ahora)) {
+                String clave = actual.getYear() + "-" + String.format("%02d", actual.getMonthValue());
+                if (!mesesCompletados.containsKey(clave)) {
+                    Map<String, Object> mes = new HashMap<>();
+                    mes.put("mes", actual.getMonthValue());
+                    mes.put("anio", actual.getYear());
+                    mes.put("etiqueta", actual.format(DateTimeFormatter.ofPattern("MMMM")));
+                    mesesAtrasados.add(mes);
+                }
+                actual = actual.plusMonths(1);
+            }
+
+            return ResponseEntity.ok(mesesAtrasados);
+        } catch (Exception e) {
+            logger.error("Error obteniendo meses atrasados: {}", e.getMessage(), e);
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en caso de error
         }
     }

@@ -29,17 +29,22 @@ public class ProyectoController {
     private ServicioGestionProyecto servicio;
 
     @PostMapping
-    public String crearProyecto(@RequestBody ProyectoInvestigacion p) {
-        // Verificación rápida antes de procesar
-        if (p.getDirector() == null) {
-            return "Error: El proyecto debe tener un director asignado";
-        }
+    public ResponseEntity<String> crearProyecto(@RequestBody ProyectoInvestigacion p) {
+        try {
+            // Verificación rápida antes de procesar
+            if (p.getDirector() == null) {
+                return ResponseEntity.badRequest().body("Error: El proyecto debe tener un director asignado");
+            }
 
-        // El servicio se encarga de llamar a ServicioGestionUsuario
-        // para crear las credenciales y guardar al director.
-        servicio.registrarProyecto(p);
-        return "Proyecto y Director registrados correctamente. Se ha enviado un correo a "
-                + p.getDirector().getCorreoInstitucional();
+            // El servicio se encarga de llamar a ServicioGestionUsuario
+            // para crear las credenciales y guardar al director.
+            servicio.registrarProyecto(p);
+            return ResponseEntity.ok("Proyecto y Director registrados correctamente. Se ha enviado un correo a "
+                    + p.getDirector().getCorreoInstitucional());
+        } catch (Exception e) {
+            logger.error("Error al crear proyecto: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Error al crear proyecto: " + e.getMessage());
+        }
     }
 
     @PostMapping("/{proyectoId}/integrantes/{integranteId}")

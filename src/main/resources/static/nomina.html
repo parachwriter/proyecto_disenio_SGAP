@@ -64,6 +64,17 @@
       background: #dc3545;
     }
 
+    .btn-restaurar {
+      border-color: #0066cc;
+      color: #0066cc;
+      background: white;
+    }
+
+    .btn-restaurar:hover {
+      background: #0066cc;
+      color: white;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -98,6 +109,90 @@
       color: #dc3545;
       font-weight: bold;
     }
+
+    .seccion-oculta {
+      display: none;
+    }
+
+    .btn-seleccionar {
+      border-color: #0066cc;
+      color: #0066cc;
+    }
+
+    .btn-seleccionar:hover {
+      background: #0066cc;
+      color: white;
+    }
+
+    /* Estilos para el modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.activo {
+      display: flex;
+    }
+
+    .modal-contenido {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 500px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-titulo {
+      font-size: 1.5em;
+      color: #28a745;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .modal-mensaje {
+      font-size: 1.1em;
+      color: #333;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .modal-boton {
+      background: #28a745;
+      color: white;
+      padding: 12px 40px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1em;
+    }
+
+    .modal-boton:hover {
+      background: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
   </style>
 </head>
 
@@ -118,28 +213,32 @@
     <h3>1. Selección de Proyecto y Periodo</h3>
     <div class="row">
       <label>Proyecto:</label>
-      <select id="selectProyecto" onchange="cargarAsistentesDelProyecto()">
+      <select id="selectProyecto" onchange="cargarMesesAtrasados()">
         <option value="">Cargando sus proyectos...</option>
       </select>
-      <label>Mes:</label>
-      <input type="number" id="mes" min="1" max="12" value="1" />
       <label>Año:</label>
-      <input type="number" id="anio" value="2026" />
-      <button onclick="verificarPendientes()">Verificar Meses Pendientes</button>
+      <select id="anio" onchange="actualizarMesesPorAnio()">
+        <option value="">Seleccione un año primero</option>
+      </select>
+      <label>Mes:</label>
+      <select id="mes">
+        <option value="">Seleccione un año primero</option>
+      </select>
+      <button class="btn-seleccionar" onclick="seleccionarPeriodo()">Seleccionar Período</button>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card seccion-oculta" id="seccionContratacion">
     <h3>2. Reportar Nueva Contratación</h3>
     <div class="row">
-      <input type="text" id="nomA" placeholder="Nombre completo" />
-      <input type="text" id="cedA" placeholder="Cédula" />
-      <input type="email" id="corA" placeholder="Correo Personal" />
+      <input type="text" id="nomA" placeholder="Nombre completo" maxlength="100" />
+      <input type="text" id="cedA" placeholder="Cédula" maxlength="10" />
+      <input type="date" id="fechaNacA" />
       <button onclick="agregarAsistente()">+ Agregar Asistente</button>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card seccion-oculta" id="seccionAsistentes">
     <div class="row" style="justify-content: space-between;">
       <h3 style="margin:0;">3. Asistentes en Nómina (Este Mes)</h3>
       <button onclick="confirmarNomina()" style="background: #28a745; color: white;">CONFIRMAR ACTUALIZACIÓN
@@ -164,9 +263,13 @@
     </table>
   </div>
 
-  <div class="card">
-    <h3 style="margin-top:0;">Estado del Reporte</h3>
-    <div id="resultado" class="muted">No se han realizado envíos en esta sesión.</div>
+  <!-- Modal de éxito -->
+  <div class="modal-overlay" id="modalExito">
+    <div class="modal-contenido">
+      <div class="modal-titulo">✓ Éxito</div>
+      <div class="modal-mensaje" id="mensajeModal"></div>
+      <button class="modal-boton" onclick="cerrarModal()">Aceptar</button>
+    </div>
   </div>
 
   <script>
@@ -178,6 +281,28 @@
     const emailDir = localStorage.getItem("userEmail");
     document.getElementById("bienvenida").innerText = "Director: " + emailDir;
 
+    // Variable global para almacenar proyectos
+    let proyectosGlobal = [];
+
+    // VALIDACIONES EN TIEMPO REAL
+    document.addEventListener('DOMContentLoaded', function() {
+      // Validar nombre: solo letras y espacios
+      const inputNombre = document.getElementById("nomA");
+      if (inputNombre) {
+        inputNombre.addEventListener('input', function() {
+          this.value = this.value.replace(/[^a-záéíóúñ\s]/gi, '');
+        });
+      }
+
+      // Validar cédula: solo números
+      const inputCedula = document.getElementById("cedA");
+      if (inputCedula) {
+        inputCedula.addEventListener('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '');
+        });
+      }
+    });
+
     // 1. CARGAR PROYECTOS (Ruta corregida: /proyectos/director/...)
     window.onload = async () => {
       try {
@@ -186,6 +311,9 @@
 
         const proyectos = await res.json();
         console.log("Proyectos cargados del servidor:", proyectos);
+        
+        // Guardar en variable global
+        proyectosGlobal = proyectos;
         
         const select = document.getElementById("selectProyecto");
 
@@ -210,16 +338,106 @@
         if (select.options.length > 0) {
           select.selectedIndex = 0;
           console.log("Opción 0 value:", select.options[0].value);
+          // Disparar el evento change para cargar meses
+          select.dispatchEvent(new Event('change'));
         }
         
-        cargarAsistentesDelProyecto();
       } catch (e) {
         console.error("Error cargando proyectos", e);
         document.getElementById("selectProyecto").innerHTML = "<option value=''>Error al conectar con el servidor</option>";
       }
     };
 
-    // 2. CARGAR ASISTENTES
+    // 2. CARGAR MESES ATRASADOS DEL PROYECTO
+    let mesesAtrasadosGlobal = []; // Variable global para almacenar los meses
+    
+    async function cargarMesesAtrasados() {
+      const pId = document.getElementById("selectProyecto").value;
+      console.log("Cargando meses para proyecto:", pId);
+      
+      if (!pId) {
+        document.getElementById("mes").innerHTML = "<option value=''>Seleccione un proyecto primero</option>";
+        document.getElementById("anio").innerHTML = "<option value=''>Seleccione un proyecto primero</option>";
+        return;
+      }
+
+      try {
+        // Obtener meses atrasados
+        const resMeses = await fetch(`/api/nomina/meses-atrasados/${pId}`);
+        console.log("Status respuesta:", resMeses.status);
+        
+        const mesesAtrasados = await resMeses.json();
+        console.log("Meses atrasados obtenidos:", mesesAtrasados);
+
+        if (!mesesAtrasados || mesesAtrasados.length === 0) {
+          console.log("No hay meses atrasados");
+          document.getElementById("mes").innerHTML = "<option value=''>Todos los períodos están actualizados</option>";
+          document.getElementById("anio").innerHTML = "<option value=''>Todos los períodos están actualizados</option>";
+          return;
+        }
+
+        // Guardar en variable global
+        mesesAtrasadosGlobal = mesesAtrasados;
+
+        // Agrupar meses por año
+        const años = new Set();
+        mesesAtrasados.forEach(m => años.add(m.anio));
+        console.log("Años encontrados:", Array.from(años));
+
+        // Llenar select de años
+        const opcionesAnios = Array.from(años).sort((a, b) => b - a).map(a => 
+          `<option value="${a}">${a}</option>`
+        ).join("");
+        document.getElementById("anio").innerHTML = opcionesAnios;
+
+        // Limpiar select de meses
+        document.getElementById("mes").innerHTML = "<option value=''>Seleccione un año primero</option>";
+
+        // Seleccionar el primer año automáticamente
+        const primerAnio = Array.from(años).sort((a, b) => b - a)[0];
+        console.log("Primer año:", primerAnio);
+        
+        if (primerAnio) {
+          document.getElementById("anio").value = primerAnio;
+          actualizarMesesPorAnio();
+        }
+
+      } catch (e) {
+        console.error("Error cargando meses atrasados:", e);
+        alert("Error al cargar meses atrasados. Revisa la consola (F12) para más detalles.");
+        document.getElementById("mes").innerHTML = "<option value=''>Error al cargar meses</option>";
+        document.getElementById("anio").innerHTML = "<option value=''>Error al cargar años</option>";
+      }
+    }
+
+    // Función para actualizar meses cuando cambia el año
+    function actualizarMesesPorAnio() {
+      const anioSeleccionado = parseInt(document.getElementById("anio").value);
+      console.log("Actualizando meses para año:", anioSeleccionado);
+      console.log("Meses globales:", mesesAtrasadosGlobal);
+      
+      if (!anioSeleccionado || !mesesAtrasadosGlobal || mesesAtrasadosGlobal.length === 0) {
+        document.getElementById("mes").innerHTML = "<option value=''>Seleccione un año primero</option>";
+        return;
+      }
+
+      const mesesDelAnio = mesesAtrasadosGlobal.filter(m => m.anio === anioSeleccionado);
+      console.log("Meses para el año " + anioSeleccionado + ":", mesesDelAnio);
+      
+      if (mesesDelAnio.length === 0) {
+        document.getElementById("mes").innerHTML = "<option value=''>No hay meses atrasados para este año</option>";
+        return;
+      }
+
+      const opciones = mesesDelAnio.map(m => 
+        `<option value="${m.mes}">${m.etiqueta}</option>`
+      ).join("");
+      console.log("Opciones HTML generadas:", opciones);
+      document.getElementById("mes").innerHTML = opciones;
+    }
+
+
+    // 3. CARGAR ASISTENTES DEL PROYECTO
     async function cargarAsistentesDelProyecto() {
       const pId = document.getElementById("selectProyecto").value;
       if (!pId) return;
@@ -258,11 +476,32 @@
       const pId = document.getElementById("selectProyecto").value;
       const nombre = document.getElementById("nomA").value;
       const cedula = document.getElementById("cedA").value;
-      const correo = document.getElementById("corA").value;
+      const fechaNac = document.getElementById("fechaNacA").value;
 
-      if (!nombre || !cedula || !pId) return alert("Complete los datos y seleccione proyecto");
+      if (!nombre || !cedula || !fechaNac || !pId) return alert("Complete todos los datos y seleccione proyecto");
+
+      // Obtener proyecto actual
+      const proyectoActual = proyectosGlobal.find(p => p.id == pId);
+      if (!proyectoActual) return alert("Proyecto no encontrado");
+
+      const maxAsistentes = proyectoActual.maxAsistentes;
+      console.log("Máximo asistentes permitidos:", maxAsistentes);
 
       const tbody = document.getElementById("tbodyAsistentes");
+
+      // Contar asistentes ACTIVOS en la tabla (no incluye los dados de baja)
+      const asistentesActivos = Array.from(tbody.querySelectorAll("tr")).filter(row => {
+        const estadoCell = row.cells[3];
+        return estadoCell && estadoCell.classList.contains("status-activo");
+      }).length;
+
+      console.log("Asistentes activos actualmente:", asistentesActivos);
+
+      // Validar si se alcanzó el máximo
+      if (asistentesActivos >= maxAsistentes) {
+        alert(`No puedes agregar más asistentes. Máximo permitido: ${maxAsistentes}. Actualmente tienes ${asistentesActivos}.`);
+        return;
+      }
 
       // Si la tabla tenía el mensaje de "No hay asistentes", lo borramos
       if (tbody.rows[0]?.cells.length === 1) tbody.innerHTML = "";
@@ -276,6 +515,7 @@
       <td class="status-activo">ACTIVO</td>
       <td>
         <button class="btn-baja" onclick="eliminarFilaTemporal(this)">Remover</button>
+        <input type="hidden" class="hidden-fecha-nac" value="${fechaNac}">
       </td>
     </tr>
   `;
@@ -284,11 +524,75 @@
       // Limpiar campos
       document.getElementById("nomA").value = "";
       document.getElementById("cedA").value = "";
-      document.getElementById("corA").value = "";
+      document.getElementById("fechaNacA").value = "";
     }
 
     function eliminarFilaTemporal(boton) {
       boton.closest('tr').remove();
+    }
+
+    // 4. DAR DE BAJA UN ASISTENTE (Solo visual, sin guardar en BD todavía)
+    function darDeBaja(idAsistente) {
+      const fila = document.querySelector(`tr[data-id="${idAsistente}"]`);
+      const nombreAsistente = fila.cells[1].innerText.trim();
+
+      // Mostrar confirmación
+      const confirmar = confirm(`¿Estás seguro de dar de baja a "${nombreAsistente}"?`);
+      
+      if (!confirmar) return;
+
+      // Cambiar el estado visual SOLO en el frontend
+      const estadoCell = fila.cells[3];
+      const accionCell = fila.cells[4];
+      
+      // Cambiar el estado visual
+      estadoCell.className = 'status-fuera';
+      estadoCell.innerText = 'FUERA_NOMINA';
+      
+      // Cambiar el botón a restaurar
+      accionCell.innerHTML = `<button class="btn-restaurar" onclick="restaurarAsistente(${idAsistente})">Restaurar</button>`;
+    }
+
+    // 5. RESTAURAR UN ASISTENTE (Deshacer dar de baja)
+    function restaurarAsistente(idAsistente) {
+      const fila = document.querySelector(`tr[data-id="${idAsistente}"]`);
+      const nombreAsistente = fila.cells[1].innerText.trim();
+
+      // Obtener proyecto actual para validar máximo
+      const pId = document.getElementById("selectProyecto").value;
+      const proyectoActual = proyectosGlobal.find(p => p.id == pId);
+      if (!proyectoActual) {
+        alert("Proyecto no encontrado");
+        return;
+      }
+
+      const maxAsistentes = proyectoActual.maxAsistentes;
+      const tbody = document.getElementById("tbodyAsistentes");
+
+      // Contar asistentes ACTIVOS actuales (sin contar el que vamos a restaurar)
+      const asistentesActivos = Array.from(tbody.querySelectorAll("tr")).filter(row => {
+        const estadoCell = row.cells[3];
+        return estadoCell && estadoCell.classList.contains("status-activo");
+      }).length;
+
+      // Validar si al restaurar excederíamos el máximo
+      if (asistentesActivos >= maxAsistentes) {
+        alert(`No puedes restaurar más asistentes. Máximo permitido: ${maxAsistentes}. Actualmente tienes ${asistentesActivos} activos.`);
+        return;
+      }
+
+      // Confirmar restauración
+      const confirmar = confirm(`¿Restaurar a "${nombreAsistente}" a ACTIVO?`);
+      if (!confirmar) return;
+
+      // Revertir cambios visuales
+      const estadoCell = fila.cells[3];
+      const accionCell = fila.cells[4];
+      
+      estadoCell.className = 'status-activo';
+      estadoCell.innerText = 'ACTIVO';
+      
+      accionCell.innerHTML = `<button class="btn-baja" onclick="darDeBaja(${idAsistente})">Dar de Baja</button>`;
     }
 
     async function confirmarNomina() {
@@ -358,9 +662,25 @@
           cedula: tr.cells[2].innerText.trim(),
           // Buscamos el correo en el input oculto o usamos vacío
           correoPersonal: tr.querySelector(".hidden-correo")?.value || "",
+          fechaNacimiento: tr.querySelector(".hidden-fecha-nac")?.value || "",
           estado: tr.querySelector(".status-activo") ? "ACTIVO" : "FUERA_NOMINA"
         });
       });
+
+      // Contar cambios
+      const nuevosAsistentes = asistentesTabla.filter(a => a.id === null).length;
+      const asistentesActivosPermanecen = asistentesTabla.filter(a => a.id !== null && a.estado === "ACTIVO").length;
+      const asistentesdadosDeBaja = asistentesTabla.filter(a => a.id !== null && a.estado === "FUERA_NOMINA").length;
+
+      // Mostrar resumen antes de confirmar
+      let resumen = `Resumen de cambios:\n\n`;
+      resumen += `✓ Nuevos asistentes: ${nuevosAsistentes}\n`;
+      resumen += `✓ Asistentes activos: ${asistentesActivosPermanecen}\n`;
+      resumen += `✗ Asistentes dados de baja: ${asistentesdadosDeBaja}\n\n`;
+      resumen += `¿Confirmas la actualización de nómina?`;
+
+      const confirmarCambios = confirm(resumen);
+      if (!confirmarCambios) return;
 
       const payload = {
         proyectoId: proyectoIdInt,
@@ -380,9 +700,15 @@
 
         if (res.ok) {
           const data = await res.json();
-          alert("Nómina y asistentes actualizados correctamente.");
-          document.getElementById("resultado").innerText = "Reporte guardado con ID: " + data.idReporte;
-          cargarAsistentesDelProyecto();
+          
+          // Obtener datos para mostrar en el modal
+          const mesNombre = new Date(anioInt, mesInt - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+          const proyecto = document.getElementById("selectProyecto").selectedOptions[0].text;
+          
+          // Mostrar modal
+          document.getElementById("mensajeModal").innerText = `Nómina del período ${mesNombre} actualizada con éxito`;
+          document.getElementById("modalExito").classList.add("activo");
+          
         } else {
           const errorStr = await res.text();
           alert("Error en el servidor: " + errorStr);
@@ -392,15 +718,43 @@
       }
     }
 
-    async function verificarPendientes() {
+    function seleccionarPeriodo() {
       const pId = document.getElementById("selectProyecto").value;
-      if (!pId) return alert("Seleccione un proyecto primero");
+      const mes = document.getElementById("mes").value;
+      const anio = document.getElementById("anio").value;
 
-      try {
-        const res = await fetch(`/api/nomina/pendientes/${pId}`);
-        const pendientes = await res.json();
-        alert("Meses detectados como NO actualizados: " + (pendientes.join(", ") || "Ninguno"));
-      } catch (e) { alert("Funcionalidad en desarrollo o error de conexión."); }
+      if (!pId || !mes || !anio) {
+        alert("Por favor complete todos los campos: Proyecto, Mes y Año");
+        return;
+      }
+
+      // Mostrar las secciones 2, 3 y 4
+      document.getElementById("seccionContratacion").classList.remove("seccion-oculta");
+      document.getElementById("seccionAsistentes").classList.remove("seccion-oculta");
+
+      // Cargar asistentes para el período seleccionado
+      cargarAsistentesDelProyecto();
+    }
+
+    // Función para cerrar el modal y limpiar
+    function cerrarModal() {
+      document.getElementById("modalExito").classList.remove("activo");
+      
+      // Ocultar las secciones 2 y 3
+      document.getElementById("seccionContratacion").classList.add("seccion-oculta");
+      document.getElementById("seccionAsistentes").classList.add("seccion-oculta");
+      
+      // Limpiar inputs
+      document.getElementById("nomA").value = "";
+      document.getElementById("cedA").value = "";
+      document.getElementById("fechaNacA").value = "";
+      
+      // Resetear selects a estado inicial
+      document.getElementById("mes").innerHTML = "<option value=''>Seleccione un año primero</option>";
+      document.getElementById("anio").innerHTML = "<option value=''>Seleccione un año primero</option>";
+      
+      // Recargar meses
+      cargarMesesAtrasados();
     }
   </script>
 </body>

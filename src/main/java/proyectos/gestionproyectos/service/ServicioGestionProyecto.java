@@ -25,16 +25,18 @@ public class ServicioGestionProyecto {
     private ServicioGestionUsuario servicioUsuario;
 
     public void registrarProyecto(ProyectoInvestigacion proyecto) {
-        // 1. Guardamos el proyecto (esto guarda la relación en SQLite)
-        proyectoRepo.save(proyecto);
-
-        // 2. Extraemos el director que ya viene asociado en el modelo
+        // 1. Extraemos el director ANTES de guardar el proyecto
         DirectorProyecto directorAsignado = proyecto.getDirector();
 
-        // 3. Delegamos al experto en usuarios la creación de accesos
+        // 2. Primero creamos/obtenemos las credenciales del director
         if (directorAsignado != null) {
-            servicioUsuario.crearCredencialesDirector(directorAsignado);
+            DirectorProyecto directorManaged = servicioUsuario.crearCredencialesDirector(directorAsignado);
+            // 3. Asignamos el director managed al proyecto (evita detached entity error)
+            proyecto.setDirector(directorManaged);
         }
+
+        // 4. Ahora guardamos el proyecto con el director ya configurado y managed
+        proyectoRepo.save(proyecto);
     }
 
     public IntegranteProyecto registrarIntegrante(IntegranteProyecto i) {
