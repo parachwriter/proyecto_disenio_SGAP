@@ -13,26 +13,25 @@ import proyectos.gestionasistentes.model.ReporteNomina;
 @Repository
 public interface NominaRepository extends JpaRepository<ReporteNomina, Long> {
 
-    // Consulta con FETCH JOIN para cargar eagerly los integrantes
-    @Query("SELECT DISTINCT r FROM ReporteNomina r LEFT JOIN FETCH r.listaIntegrantes WHERE r.proyecto.id = :idProyecto AND r.mes = :mes AND r.anio = :anio")
-    Optional<ReporteNomina> buscarPorProyectoMesAnio(
-            @Param("idProyecto") Long idProyecto,
-            @Param("mes") Integer mes,
-            @Param("anio") Integer anio);
+        // Consulta con FETCH JOIN para cargar eagerly los integrantes
+        @Query("SELECT DISTINCT r FROM ReporteNomina r LEFT JOIN FETCH r.listaIntegrantes WHERE r.proyecto.id = :idProyecto AND r.mes = :mes AND r.anio = :anio")
+        Optional<ReporteNomina> buscarPorProyectoMesAnio(
+                        @Param("idProyecto") Long idProyecto,
+                        @Param("mes") Integer mes,
+                        @Param("anio") Integer anio);
 
-    // Obtener todos los reportes de un proyecto
-    @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto ORDER BY r.anio DESC, r.mes DESC")
-    List<ReporteNomina> obtenerReportesProyecto(@Param("idProyecto") Long idProyecto);
+        // Obtener todos los reportes de un proyecto
+        @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto ORDER BY r.anio DESC, r.mes DESC")
+        List<ReporteNomina> obtenerReportesProyecto(@Param("idProyecto") Long idProyecto);
 
-    // Buscar nóminas en un rango de meses y años
-    @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto AND " +
-            "((r.anio = :anioInicio AND r.mes >= :mesInicio) OR " +
-            "(r.anio > :anioInicio AND r.anio < :anioFin) OR " +
-            "(r.anio = :anioFin AND r.mes <= :mesFin))")
-    List<ReporteNomina> findByProyectoIdAndMesAnio(
-            @Param("idProyecto") Long idProyecto,
-            @Param("mesInicio") Integer mesInicio,
-            @Param("anioInicio") Integer anioInicio,
-            @Param("mesFin") Integer mesFin,
-            @Param("anioFin") Integer anioFin);
+        // Buscar nóminas en un rango de meses y años
+        @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto AND " +
+                        "((r.anio > :anioInicio) OR (r.anio = :anioInicio AND r.mes >= :mesInicio)) AND " +
+                        "((r.anio < :anioFin) OR (r.anio = :anioFin AND r.mes <= :mesFin))")
+        List<ReporteNomina> findByProyectoIdAndMesAnio(
+                        @Param("idProyecto") Long idProyecto,
+                        @Param("mesInicio") Integer mesInicio,
+                        @Param("anioInicio") Integer anioInicio,
+                        @Param("mesFin") Integer mesFin,
+                        @Param("anioFin") Integer anioFin);
 }

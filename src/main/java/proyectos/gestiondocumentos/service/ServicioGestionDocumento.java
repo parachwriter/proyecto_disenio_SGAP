@@ -122,37 +122,49 @@ public class ServicioGestionDocumento {
             return resultado;
         }
 
-        // Obtener todos los periodos desde el inicio del proyecto hasta el periodo
-        // anterior al solicitado
-        PeriodoAcademico periodoAnterior = periodoSolicitado.anterior();
-        List<PeriodoAcademico> periodosAnteriores = PeriodoAcademicoUtil.obtenerPeriodosEntreFechas(
-                fechaInicio,
-                periodoAnterior.getFechaFin());
+        // Lista para acumular periodos con nóminas faltantes
+        List<String> periodosFaltantes = new ArrayList<>();
 
-        // Verificar que todas las nóminas de esos periodos estén completas
-        for (PeriodoAcademico periodo : periodosAnteriores) {
-            LocalDate inicioPeriodo = periodo.getFechaInicio();
-            LocalDate finPeriodo = periodo.getFechaFin();
+        System.out.println("DEBUG PLANIFICACION - Proyecto ID: " + proyectoId);
+        System.out.println("DEBUG PLANIFICACION - Fecha inicio proyecto: " + fechaInicio);
+        System.out.println("DEBUG PLANIFICACION - Primer periodo proyecto: " + primerPeriodoProyecto.getCodigo());
+        System.out.println("DEBUG PLANIFICACION - Periodo solicitado: " + periodoSolicitado.getCodigo());
 
-            // Contar cuántos meses tiene este periodo
-            int mesesEnPeriodo = 6; // Cada periodo académico tiene 6 meses
+        // Generar todos los periodos anteriores al solicitado
+        PeriodoAcademico periodoActual = primerPeriodoProyecto;
+        int iteracion = 0;
+        while (periodoActual.compareTo(periodoSolicitado) < 0) {
+            iteracion++;
+            System.out.println("DEBUG PLANIFICACION - Iteración " + iteracion + ": Validando periodo "
+                    + periodoActual.getCodigo());
 
-            // Contar cuántas nóminas existen para este proyecto en este periodo
-            List<ReporteNomina> nominas = nominaRepository.findByProyectoIdAndMesAnio(
-                    proyectoId,
-                    inicioPeriodo.getMonthValue(),
-                    inicioPeriodo.getYear(),
-                    finPeriodo.getMonthValue(),
-                    finPeriodo.getYear());
+            // Contar nóminas de este periodo mes por mes
+            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodoActual);
 
-            if (nominas.size() < mesesEnPeriodo) {
-                resultado.setPuedeCargar(false);
-                resultado.setMensaje(
-                        "No puede cargar Planificación para el periodo " + periodoSolicitado.getCodigo() +
-                                ". Faltan nóminas del periodo " + periodo.getCodigo() +
-                                ". Nóminas registradas: " + nominas.size() + "/" + mesesEnPeriodo);
-                return resultado;
+            if (nominasEncontradas < 6) {
+                periodosFaltantes.add(periodoActual.getCodigo() + " (registradas: " + nominasEncontradas + "/6)");
+                System.out.println(
+                        "DEBUG PLANIFICACION - Periodo " + periodoActual.getCodigo() + " agregado a faltantes");
             }
+
+            periodoActual = periodoActual.siguiente();
+            System.out.println("DEBUG PLANIFICACION - Siguiente periodo: " + periodoActual.getCodigo());
+        }
+
+        System.out.println("DEBUG PLANIFICACION - Total periodos faltantes: " + periodosFaltantes.size());
+
+        // Si hay periodos con nóminas faltantes, construir mensaje detallado
+        if (!periodosFaltantes.isEmpty()) {
+            resultado.setPuedeCargar(false);
+            StringBuilder mensaje = new StringBuilder();
+            mensaje.append("No puede cargar Planificación para el periodo ").append(periodoSolicitado.getCodigo())
+                    .append(".\n\nFaltan nóminas completas en los siguientes periodos anteriores:\n");
+            for (String periodoFaltante : periodosFaltantes) {
+                mensaje.append("• ").append(periodoFaltante).append("\n");
+            }
+            mensaje.append("\nDebe completar todas las nóminas antes de cargar el documento.");
+            resultado.setMensaje(mensaje.toString());
+            return resultado;
         }
 
         resultado.setPuedeCargar(true);
@@ -194,46 +206,24 @@ public class ServicioGestionDocumento {
         PeriodoAcademico primerPeriodoProyecto = PeriodoAcademicoUtil.obtenerPeriodoDeFecha(fechaInicio);
 
         // 1. Validar periodos anteriores al seleccionado (completos)
-        if (periodoSolicitado.compareTo(primerPeriodoProyecto) > 0) {
-            PeriodoAcademico periodoAnteriorAlSeleccionado = periodoSolicitado.anterior();
-            List<PeriodoAcademico> periodosAnteriores = PeriodoAcademicoUtil.obtenerPeriodosEntreFechas(
-                    fechaInicio,
-                    periodoAnteriorAlSeleccionado.getFechaFin());
+        PeriodoAcademico periodo = primerPeriodoProyecto;
+        while (periodo.compareTo(periodoSolicitado) < 0) {
+            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodo);
 
-            for (PeriodoAcademico periodo : periodosAnteriores) {
-                LocalDate inicioPeriodo = periodo.getFechaInicio();
-                LocalDate finPeriodo = periodo.getFechaFin();
-
-                int mesesEnPeriodo = 6;
-                List<ReporteNomina> nominas = nominaRepository.findByProyectoIdAndMesAnio(
-                        proyectoId,
-                        inicioPeriodo.getMonthValue(),
-                        inicioPeriodo.getYear(),
-                        finPeriodo.getMonthValue(),
-                        finPeriodo.getYear());
-
-                if (nominas.size() < mesesEnPeriodo) {
-                    periodosFaltantes.add(periodo.getCodigo() + " (registradas: " + nominas.size() + "/6)");
-                }
+            if (nominasEncontradas < 6) {
+                periodosFaltantes.add(periodo.getCodigo() + " (registradas: " + nominasEncontradas + "/6)");
             }
+
+            periodo = periodo.siguiente();
         }
 
         // 2. Validar que el periodo seleccionado tenga TODAS sus nóminas completas (6
         // meses)
-        LocalDate inicioPeriodoSeleccionado = periodoSolicitado.getFechaInicio();
-        LocalDate finPeriodoSeleccionado = periodoSolicitado.getFechaFin();
-        int mesesEnPeriodo = 6;
+        int nominasPeriodoSeleccionado = contarNominasPeriodo(proyectoId, periodoSolicitado);
 
-        List<ReporteNomina> nominasPeriodoSeleccionado = nominaRepository.findByProyectoIdAndMesAnio(
-                proyectoId,
-                inicioPeriodoSeleccionado.getMonthValue(),
-                inicioPeriodoSeleccionado.getYear(),
-                finPeriodoSeleccionado.getMonthValue(),
-                finPeriodoSeleccionado.getYear());
-
-        if (nominasPeriodoSeleccionado.size() < mesesEnPeriodo) {
+        if (nominasPeriodoSeleccionado < 6) {
             periodosFaltantes
-                    .add(periodoSolicitado.getCodigo() + " (registradas: " + nominasPeriodoSeleccionado.size() + "/6)");
+                    .add(periodoSolicitado.getCodigo() + " (registradas: " + nominasPeriodoSeleccionado + "/6)");
         }
 
         // Si hay periodos con nóminas faltantes, construir mensaje detallado
@@ -254,5 +244,44 @@ public class ServicioGestionDocumento {
         resultado.setMensaje("Todas las nóminas requeridas están completas. Puede cargar el Avance del periodo "
                 + periodoSolicitado.getCodigo());
         return resultado;
+    }
+
+    /**
+     * Cuenta cuántas nóminas existen para un proyecto en un periodo académico
+     * específico
+     * Valida mes por mes dentro del periodo
+     */
+    private int contarNominasPeriodo(Long proyectoId, PeriodoAcademico periodo) {
+        int count = 0;
+        LocalDate fecha = periodo.getFechaInicio();
+        LocalDate fechaFin = periodo.getFechaFin();
+
+        System.out.println("DEBUG - Contando nóminas para periodo: " + periodo.getCodigo());
+        System.out.println("DEBUG - Fecha inicio: " + fecha + ", Fecha fin: " + fechaFin);
+
+        // Iterar por 6 meses exactos (cada periodo tiene 6 meses)
+        for (int i = 0; i < 6; i++) {
+            int mes = fecha.getMonthValue();
+            int anio = fecha.getYear();
+
+            System.out.println("DEBUG - Buscando nómina: mes=" + mes + ", año=" + anio);
+
+            Optional<ReporteNomina> nominaOpt = nominaRepository.buscarPorProyectoMesAnio(
+                    proyectoId,
+                    mes,
+                    anio);
+
+            if (nominaOpt.isPresent()) {
+                count++;
+                System.out.println("DEBUG - Nómina encontrada para mes " + mes + "/" + anio);
+            } else {
+                System.out.println("DEBUG - NO encontrada nómina para mes " + mes + "/" + anio);
+            }
+
+            fecha = fecha.plusMonths(1);
+        }
+
+        System.out.println("DEBUG - Total nóminas encontradas en " + periodo.getCodigo() + ": " + count);
+        return count;
     }
 }
