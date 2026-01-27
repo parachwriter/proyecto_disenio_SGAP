@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.repository.NominaRepository;
 import proyectos.gestionproyectos.model.Asistente;
+import proyectos.gestionproyectos.model.AyudanteInvestigacion;
+import proyectos.gestionproyectos.model.IntegranteProyecto;
+import proyectos.gestionproyectos.model.TecnicoInvestigacion;
 import proyectos.gestionproyectos.repository.IntegranteRepository;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 
@@ -28,6 +31,25 @@ public class ServicioGestionAsistente {
 
     @Autowired
     private ProyectoRepository proyectoRepository;
+
+    /**
+     * Crea una instancia del tipo de integrante correcto según el tipo especificado
+     */
+    private IntegranteProyecto crearIntegranteSegunTipo(String tipo) {
+        if (tipo == null || tipo.isEmpty()) {
+            return new Asistente(); // Por defecto
+        }
+
+        switch (tipo.toUpperCase()) {
+            case "AYUDANTE":
+                return new AyudanteInvestigacion();
+            case "TECNICO":
+                return new TecnicoInvestigacion();
+            case "ASISTENTE":
+            default:
+                return new Asistente();
+        }
+    }
 
     // +registrarAsistenteAProyecto()
     public Asistente registrarAsistenteAProyecto(Long proyectoId, Asistente asistente) {
@@ -132,21 +154,30 @@ public class ServicioGestionAsistente {
                 for (NominaRequestDTO.AsistenteDTO dto : request.getAsistentes()) {
                     try {
                         if (dto.getId() == null) {
-                            // Nuevo asistente
-                            Asistente nuevo = new Asistente();
+                            // Nuevo integrante - crear según tipo
+                            IntegranteProyecto nuevo = crearIntegranteSegunTipo(dto.getTipoIntegrante());
                             nuevo.setNombre(dto.getNombre());
                             nuevo.setCedula(dto.getCedula());
                             nuevo.setProyecto(proyecto);
-                            nuevo.activar();
+
+                            // Si es Asistente, activarlo
+                            if (nuevo instanceof Asistente) {
+                                ((Asistente) nuevo).activar();
+                            }
 
                             // Guardar fecha de nacimiento si está presente
                             if (dto.getFechaNacimiento() != null && !dto.getFechaNacimiento().isEmpty()) {
                                 nuevo.setFechaNacimiento(LocalDate.parse(dto.getFechaNacimiento()));
                             }
 
-                            Asistente guardado = (Asistente) integranteRepository.save(nuevo);
-                            asistentesFinales.add(guardado);
-                            logger.info("  Nuevo asistente guardado: {} (ID={})", guardado.getNombre(),
+                            IntegranteProyecto guardado = integranteRepository.save(nuevo);
+
+                            // Agregar a la lista si es Asistente activo
+                            if (guardado instanceof Asistente && ((Asistente) guardado).estaActivo()) {
+                                asistentesFinales.add((Asistente) guardado);
+                            }
+
+                            logger.info("  Nuevo integrante guardado: {} (ID={})", guardado.getNombre(),
                                     guardado.getId());
                         } else {
                             // Asistente existente

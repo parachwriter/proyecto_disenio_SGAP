@@ -504,10 +504,18 @@
     <div class="card seccion-oculta" id="seccionContratacion">
       <h3>Reportar Nueva Contratación</h3>
       <div class="row">
+        <label for="tipoIntegrante" style="min-width: auto;">Tipo de Contrato:</label>
+        <select id="tipoIntegrante" style="min-width: 200px;">
+          <option value="ASISTENTE">Asistente</option>
+          <option value="AYUDANTE">Ayudante de Investigación</option>
+          <option value="TECNICO">Técnico de Investigación</option>
+        </select>
+      </div>
+      <div class="row">
         <input type="text" id="nomA" placeholder="Nombre completo" maxlength="100" />
         <input type="text" id="cedA" placeholder="Cédula" maxlength="10" />
         <input type="date" id="fechaNacA" />
-        <button class="btn-primary" onclick="agregarAsistente()">+ Agregar Asistente</button>
+        <button class="btn-primary" onclick="agregarAsistente()">+ Agregar Integrante</button>
       </div>
     </div>
 
@@ -749,11 +757,12 @@
     // 3. AGREGAR ASISTENTE (Solo visual en el Front)
     function agregarAsistente() {
       const pId = document.getElementById("selectProyecto").value;
+      const tipoIntegrante = document.getElementById("tipoIntegrante").value;
       const nombre = document.getElementById("nomA").value;
       const cedula = document.getElementById("cedA").value;
       const fechaNac = document.getElementById("fechaNacA").value;
 
-      if (!nombre || !cedula || !fechaNac || !pId) return alert("Complete todos los datos y seleccione proyecto");
+      if (!nombre || !cedula || !fechaNac || !pId || !tipoIntegrante) return alert("Complete todos los datos y seleccione proyecto");
 
       // Obtener proyecto actual
       const proyectoActual = proyectosGlobal.find(p => p.id == pId);
@@ -781,16 +790,21 @@
       // Si la tabla tenía el mensaje de "No hay asistentes", lo borramos
       if (tbody.rows[0]?.cells.length === 1) tbody.innerHTML = "";
 
+      // Determinar el tipo de integrante para mostrar
+      let tipoTexto = tipoIntegrante === 'ASISTENTE' ? 'Asistente' : 
+                      tipoIntegrante === 'AYUDANTE' ? 'Ayudante' : 'Técnico';
+
       // Insertamos la fila en la tabla sin ir al servidor todavía
       const nuevaFila = `
     <tr data-id="NUEVO">
       <td><span class="pill">NUEVO</span></td>
       <td class="cell-nombre">${nombre}</td>
       <td class="cell-cedula">${cedula}</td>
-      <td class="status-activo">ACTIVO</td>
+      <td class="status-activo">ACTIVO (${tipoTexto})</td>
       <td>
         <button class="btn-baja" onclick="eliminarFilaTemporal(this)">Remover</button>
         <input type="hidden" class="hidden-fecha-nac" value="${fechaNac}">
+        <input type="hidden" class="hidden-tipo-integrante" value="${tipoIntegrante}">
       </td>
     </tr>
   `;
@@ -938,6 +952,7 @@
           // Buscamos el correo en el input oculto o usamos vacío
           correoPersonal: tr.querySelector(".hidden-correo")?.value || "",
           fechaNacimiento: tr.querySelector(".hidden-fecha-nac")?.value || "",
+          tipoIntegrante: tr.querySelector(".hidden-tipo-integrante")?.value || "ASISTENTE",
           estado: tr.querySelector(".status-activo") ? "ACTIVO" : "FUERA_NOMINA"
         });
       });

@@ -46,6 +46,7 @@ public class NominaRequestDTO {
         private String cedula;
         private String correoPersonal;
         private String fechaNacimiento;
+        private String tipoIntegrante; // ASISTENTE, AYUDANTE, TECNICO
         private String estado;
 
         public Long getId() {
@@ -86,6 +87,14 @@ public class NominaRequestDTO {
 
         public void setFechaNacimiento(String fechaNacimiento) {
             this.fechaNacimiento = fechaNacimiento;
+        }
+
+        public String getTipoIntegrante() {
+            return tipoIntegrante;
+        }
+
+        public void setTipoIntegrante(String tipoIntegrante) {
+            this.tipoIntegrante = tipoIntegrante;
         }
 
         public String getEstado() {
