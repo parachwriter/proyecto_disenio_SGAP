@@ -187,110 +187,81 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
-        .card.primary .card-icon {
-            color: #667eea;
-        }
-
-        .card.success .card-icon {
-            color: #48bb78;
-        }
-
-        .card.info .card-icon {
-            color: #4299e1;
-        }
-
-        .card.warning .card-icon {
-            color: #ed8936;
-        }
+        /* --- COLORES DE TARJETAS --- */
+        .card.primary .card-icon { color: #667eea; }
+        .card.success .card-icon { color: #48bb78; }
+        .card.info .card-icon { color: #4299e1; }
+        .card.warning .card-icon { color: #ed8936; }
+        /* Nueva clase para el botón de registrar director */
+        .card.accent .card-icon { color: #d53f8c; } /* Rosa/Magenta */
 
         @media (max-width: 768px) {
-            .logo-stamp {
-                width: 55px;
-                height: 55px;
-                top: 15px;
-                left: 15px;
-            }
-
-            .header {
-                padding: 1.5rem;
-                margin-top: 50px;
-            }
-
-            .header h1 {
-                font-size: 1.5rem;
-            }
-
-            .header p {
-                font-size: 0.95rem;
-            }
-
-            .logout-btn {
-                position: static;
-                margin-top: 1rem;
-                width: 100%;
-            }
-
-            .menu-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .card {
-                padding: 2rem 1.5rem;
-            }
+            .logo-stamp { width: 55px; height: 55px; top: 15px; left: 15px; }
+            .header { padding: 1.5rem; margin-top: 50px; }
+            .header h1 { font-size: 1.5rem; }
+            .header p { font-size: 0.95rem; }
+            .logout-btn { position: static; margin-top: 1rem; width: 100%; }
+            .menu-grid { grid-template-columns: 1fr; }
+            .card { padding: 2rem 1.5rem; }
         }
 
         @media (min-width: 769px) and (max-width: 1024px) {
-            .menu-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+            .menu-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
 <body>
-    <!-- Logo en esquina superior izquierda -->
-    <div class="logo-stamp">
-        <img src="SGAP.png" alt="SGAP Logo">
+<div class="logo-stamp">
+    <img src="SGAP.png" alt="SGAP Logo">
+</div>
+
+<div class="container">
+    <div class="header">
+        <h1>Bienvenido, Jefe de Departamento</h1>
+        <p>Seleccione una opción de gestión del Sistema de Gestión Académica</p>
+        <button class="logout-btn" onclick="localStorage.clear(); window.location.href='login.html'">
+            Cerrar Sesión
+        </button>
     </div>
 
-    <div class="container">
-        <div class="header">
-            <h1>Bienvenido, Jefe de Departamento</h1>
-            <p>Seleccione una opción de gestión del Sistema de Gestión Académica</p>
-            <button class="logout-btn" onclick="localStorage.clear(); window.location.href='login.html'">
-                Cerrar Sesión
-            </button>
+    <div class="menu-grid">
+        <div class="card primary" onclick="window.location.href='index.html'">
+            <div class="card-icon">📝</div>
+            <h3>Registrar Nuevo Proyecto</h3>
+            <p>Crear y registrar proyectos de investigación</p>
         </div>
 
-        <div class="menu-grid">
-            <div class="card primary" onclick="window.location.href='index.html'">
-                <div class="card-icon">📝</div>
-                <h3>Registrar Nuevo Proyecto</h3>
-                <p>Crear y registrar proyectos de investigación</p>
-            </div>
+        <div class="card accent" onclick="window.location.href='registrar-director.html'">
+            <div class="card-icon">👤+</div>
+            <h3>Registrar Director</h3>
+            <p>Dar de alta un nuevo director sin proyecto</p>
+        </div>
 
-            <div class="card success" onclick="window.location.href='lista-proyectos.html'">                <div class="card-icon">📚</div>
-                <h3>Proyectos de Investigación</h3>
-                <p>Ver y gestionar proyectos existentes</p>
-            </div>
+        <div class="card success" onclick="window.location.href='lista-proyectos.html'">
+            <div class="card-icon">📚</div>
+            <h3>Proyectos de Investigación</h3>
+            <p>Ver y gestionar proyectos existentes</p>
+        </div>
 
-            <div class="card info" onclick="window.location.href='lista-directores.html'">                <div class="card-icon">👨‍🏫</div>
-                <h3>Directores de Proyecto</h3>
-                <p>Administrar directores académicos</p>
-            </div>
+        <div class="card info" onclick="window.location.href='lista-directores.html'">
+            <div class="card-icon">👨‍🏫</div>
+            <h3>Directores de Proyecto</h3>
+            <p>Administrar directores académicos</p>
+        </div>
 
-            <div class="card warning" onclick="window.location.href='lista-asistentes.html'">
-                <div class="card-icon">👥</div>
-                <h3>Asistentes de Proyecto</h3>
-                <p>Gestionar asistentes de investigación</p>
-            </div>
+        <div class="card warning" onclick="window.location.href='lista-asistentes.html'">
+            <div class="card-icon">👥</div>
+            <h3>Asistentes de Proyecto</h3>
+            <p>Gestionar asistentes de investigación</p>
         </div>
     </div>
+</div>
 
-    <script>
-        // Verificar sesión de usuario
-        if (localStorage.getItem("sesion") !== "admin") {
-            window.location.href = "login.html";
-        }
-    </script>
+<script>
+    // Verificar sesión de usuario
+    if (localStorage.getItem("sesion") !== "admin") {
+        window.location.href = "login.html";
+    }
+</script>
 </body>
 </html>

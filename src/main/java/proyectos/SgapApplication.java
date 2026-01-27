@@ -8,7 +8,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling // Necesario para los recordatorios mensuales automáticos de nómina
 public class SgapApplication {
     public static void main(String[] args) {
-
         SpringApplication.run(SgapApplication.class, args);
     }
 }
