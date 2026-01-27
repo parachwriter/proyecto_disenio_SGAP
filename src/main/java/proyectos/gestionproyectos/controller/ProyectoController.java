@@ -127,4 +127,21 @@ public class ProyectoController {
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en lugar de error
         }
     }
+
+
+    //listar todos los proyectos
+    @GetMapping
+    public ResponseEntity<List<Proyecto>> listarTodos() {
+        try {
+            List<Proyecto> proyectos = servicio.listarTodos();
+
+            if (proyectos.isEmpty()) {
+                return ResponseEntity.noContent().build(); // Retorna 204 si está vacío
+            }
+
+            return ResponseEntity.ok(proyectos);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

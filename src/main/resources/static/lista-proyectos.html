@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Lista de Proyectos</title>
+    <style>
+        /* --- ESTILOS CSS (DISEÑO) --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .btn-volver {
+            padding: 10px 20px;
+            background: #718096;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-volver:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f7;
+            color: #4a5568;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f7fafc; }
+        
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>📚 Proyectos de Investigación</h1>
+            <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver al Panel</button>
+        </div>
+
+        <table id="tablaProyectos">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre del Proyecto</th>
+                <th>Presupuesto</th>
+                <th>Fechas (Inicio / Fin)</th>
+                <th>Director Asignado</th>
+            </tr>
+            </thead>
+            <tbody id="tbodyProyectos">
+                <tr><td colspan="5" style="text-align: center; padding: 20px;">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 1. Verificar Sesión al cargar la página
+        document.addEventListener("DOMContentLoaded", () => {
+            const sesion = localStorage.getItem("sesion");
+            // Permitimos ver la lista tanto al Admin como al Director (opcional)
+            if (!sesion) {
+                window.location.href = "login.html";
+                return;
+            }
+            cargarProyectos();
+        });
+
+        // 2. Función para pedir datos al Backend (ProyectoController.java)
+        async function cargarProyectos() {
+            const tbody = document.getElementById('tbodyProyectos');
+            try {
+                // Llama al endpoint que definimos en Java: @GetMapping("/proyectos")
+                const res = await fetch('/proyectos'); 
+                
+                if (!res.ok) throw new Error("Error en la respuesta del servidor");
+                
+                // Si la respuesta es vacía (204 No Content)
+                if (res.status === 204) {
+                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No hay proyectos registrados.</td></tr>";
+                    return;
+                }
+
+                const proyectos = await res.json();
+                
+                tbody.innerHTML = ""; // Limpiar mensaje de carga
+
+                if(proyectos.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center'>No hay proyectos registrados.</td></tr>";
+                    return;
+                }
+
+                // 3. Dibujar la tabla
+                proyectos.forEach(p => {
+                    // Validaciones para que no salga "null" o "undefined"
+                    const nombreDirector = p.director ? p.director.nombre : "Sin Asignar";
+                    const inicio = p.fechalnicio || p.fechaInicio || "N/A"; // Soporta ambos nombres de variable
+                    const fin = p.fechaFin || "N/A";
+
+                    const fila = `
+                        <tr>
+                            <td>${p.id}</td>
+                            <td><strong>${p.nombre}</strong></td>
+                            <td>$${p.presupuesto}</td>
+                            <td>${inicio} / ${fin}</td>
+                            <td>${nombreDirector}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += fila;
+                });
+
+            } catch (error) {
+                console.error("Error:", error);
+                tbody.innerHTML = "<tr><td colspan='5' style='color:red; text-align:center'>Error de conexión. Verifica que el servidor Java esté corriendo.</td></tr>";
+            }
+        }
+    </script>
+
+</body>
+</html>

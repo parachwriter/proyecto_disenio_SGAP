@@ -57,4 +57,10 @@ public class ServicioGestionProyecto {
     public List<Proyecto> obtenerProyectosPorDirector(String correo) {
         return proyectoRepo.findByDirectorCorreoInstitucional(correo);
     }
+
+
+    //retornar todos los proyectos
+    public List<Proyecto> listarTodos() {
+      return proyectoRepo.findAll();
+    }
 }
