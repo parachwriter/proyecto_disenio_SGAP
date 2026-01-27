@@ -13,8 +13,8 @@ import proyectos.gestionasistentes.model.ReporteNomina;
 @Repository
 public interface NominaRepository extends JpaRepository<ReporteNomina, Long> {
 
-    // Consulta con FETCH JOIN para cargar eagerly los asistentes
-    @Query("SELECT DISTINCT r FROM ReporteNomina r LEFT JOIN FETCH r.listaAsistentes WHERE r.proyecto.id = :idProyecto AND r.mes = :mes AND r.anio = :anio")
+    // Consulta con FETCH JOIN para cargar eagerly los integrantes
+    @Query("SELECT DISTINCT r FROM ReporteNomina r LEFT JOIN FETCH r.listaIntegrantes WHERE r.proyecto.id = :idProyecto AND r.mes = :mes AND r.anio = :anio")
     Optional<ReporteNomina> buscarPorProyectoMesAnio(
             @Param("idProyecto") Long idProyecto,
             @Param("mes") Integer mes,

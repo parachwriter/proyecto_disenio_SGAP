@@ -14,7 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import proyectos.gestionproyectos.model.Asistente;
+import proyectos.gestionproyectos.model.IntegranteProyecto;
 import proyectos.gestionproyectos.model.Proyecto;
 
 @Entity
@@ -36,8 +36,8 @@ public class ReporteNomina {
     private Proyecto proyecto;
 
     @ManyToMany
-    @JoinTable(name = "reporte_nomina_asistentes", joinColumns = @JoinColumn(name = "id_reporte"), inverseJoinColumns = @JoinColumn(name = "id_asistente"))
-    private List<Asistente> listaAsistentes = new ArrayList<>();
+    @JoinTable(name = "reporte_nomina_integrantes", joinColumns = @JoinColumn(name = "id_reporte"), inverseJoinColumns = @JoinColumn(name = "id_integrante"))
+    private List<IntegranteProyecto> listaIntegrantes = new ArrayList<>();
 
     public ReporteNomina() {
     }
@@ -62,8 +62,8 @@ public class ReporteNomina {
         return mes != null
                 && anio != null
                 && fechaRegistro != null
-                && listaAsistentes != null
-                && !listaAsistentes.isEmpty()
+                && listaIntegrantes != null
+                && !listaIntegrantes.isEmpty()
                 && estado != null
                 && !estado.isBlank();
     }
@@ -116,11 +116,11 @@ public class ReporteNomina {
         this.estado = estado;
     }
 
-    public List<Asistente> getListaAsistentes() {
-        return listaAsistentes;
+    public List<IntegranteProyecto> getListaIntegrantes() {
+        return listaIntegrantes;
     }
 
-    public void setListaAsistentes(List<Asistente> listaAsistentes) {
-        this.listaAsistentes = listaAsistentes;
+    public void setListaIntegrantes(List<IntegranteProyecto> listaIntegrantes) {
+        this.listaIntegrantes = listaIntegrantes;
     }
 }

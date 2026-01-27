@@ -5,6 +5,11 @@ import jakarta.persistence.Entity; // Importación necesaria
 @Entity
 public class Colaborador extends IntegranteProyecto {
 
+    @Override
+    public String getTipo() {
+        return "COLABORADOR";
+    }
+
     private String especialidad; // Según tu diagrama, esto representa el área de colaboración
 
     // Constructor vacío requerido por JPA

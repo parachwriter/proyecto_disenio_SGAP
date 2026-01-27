@@ -25,6 +25,7 @@ import proyectos.gestionasistentes.dto.NominaRequestDTO;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.service.ServicioGestionAsistente;
 import proyectos.gestionproyectos.model.Asistente;
+import proyectos.gestionproyectos.model.IntegranteProyecto;
 import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 
@@ -46,9 +47,10 @@ public class ReporteNominaController {
         return servicioAsistente.registrarAsistenteAProyecto(proyectoId, asistente);
     }
 
-    // 2. Dar de baja (Cambiar estado a FUERA_NOMINA)
+    // 2. Dar de baja (Cambiar estado a FUERA_NOMINA) - Ahora funciona con cualquier
+    // tipo de integrante
     @PutMapping("/dar-de-baja/{idAsistente}")
-    public Asistente darDeBaja(@PathVariable Long idAsistente) {
+    public IntegranteProyecto darDeBaja(@PathVariable Long idAsistente) {
         return servicioAsistente.darDeBajaAsistente(idAsistente);
     }
 
@@ -86,7 +88,7 @@ public class ReporteNominaController {
             response.put("idReporte", resultado.getIdReporte());
             response.put("mensaje", "Nómina procesada exitosamente");
             response.put("proyecto", resultado.getProyecto().getNombre());
-            response.put("asistentesGuardados", resultado.getListaAsistentes().size());
+            response.put("asistentesGuardados", resultado.getListaIntegrantes().size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error en procesamiento: {}", e.getMessage(), e);
@@ -97,14 +99,15 @@ public class ReporteNominaController {
         }
     }
 
-    // Obtener asistentes activos del proyecto
+    // Obtener TODOS los integrantes activos del proyecto (Asistentes, Ayudantes,
+    // Técnicos)
     @GetMapping("/asistentes-activos/{proyectoId}")
     public ResponseEntity<?> obtenerAsistentesActivos(@PathVariable Long proyectoId) {
         try {
-            List<Asistente> asistentes = servicioAsistente.obtenerAsistentesActivosPorProyecto(proyectoId);
-            return ResponseEntity.ok(asistentes);
+            List<IntegranteProyecto> integrantes = servicioAsistente.obtenerIntegrantesActivosPorProyecto(proyectoId);
+            return ResponseEntity.ok(integrantes);
         } catch (Exception e) {
-            logger.error("Error obteniendo asistentes: {}", e.getMessage(), e);
+            logger.error("Error obteniendo integrantes: {}", e.getMessage(), e);
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en caso de error
         }
     }

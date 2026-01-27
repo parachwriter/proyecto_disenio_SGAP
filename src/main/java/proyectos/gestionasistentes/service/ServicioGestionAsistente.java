@@ -66,15 +66,15 @@ public class ServicioGestionAsistente {
         return (Asistente) integranteRepository.save(asistente);
     }
 
-    // +darDeBajaAsistente()
-    public Asistente darDeBajaAsistente(Long idAsistente) {
-        Asistente asistente = obtenerAsistente(idAsistente);
+    // +darDeBajaAsistente() - Ahora funciona con cualquier tipo de integrante
+    public IntegranteProyecto darDeBajaAsistente(Long idAsistente) {
+        IntegranteProyecto integrante = integranteRepository.findById(idAsistente)
+                .orElseThrow(() -> new RuntimeException("Integrante no encontrado"));
 
-        // 3. CORRECCIÓN: Usar desactivar() o marcarFueraNomina()
-        // en lugar de .setEstado(Asistente.EstadoAsistente.INACTIVO)
-        asistente.desactivar();
+        // Usar desactivar() que ahora está en la clase padre
+        integrante.desactivar();
 
-        return (Asistente) integranteRepository.save(asistente);
+        return integranteRepository.save(integrante);
     }
 
     // +confirmarActualizacionNomina() - Procesa el reporte mensual
@@ -97,10 +97,11 @@ public class ServicioGestionAsistente {
 
         // Si la lista de IDs está vacía, se guarda como reporte "sin contrataciones"
         if (idsAsistentes != null && !idsAsistentes.isEmpty()) {
-            List<Asistente> asistentes = idsAsistentes.stream()
-                    .map(this::obtenerAsistente)
+            List<IntegranteProyecto> integrantes = idsAsistentes.stream()
+                    .map(id -> integranteRepository.findById(id)
+                            .orElseThrow(() -> new RuntimeException("Integrante no encontrado")))
                     .toList();
-            reporte.setListaAsistentes(asistentes);
+            reporte.setListaIntegrantes(integrantes);
         }
 
         reporte.setEstado("COMPLETO"); // Se marca como actualizado satisfactoriamente
@@ -148,7 +149,7 @@ public class ServicioGestionAsistente {
             logger.info("Paso 2: Procesando {} asistentes",
                     request.getAsistentes() != null ? request.getAsistentes().size() : 0);
 
-            List<Asistente> asistentesFinales = new ArrayList<>();
+            List<IntegranteProyecto> integrantesFinales = new ArrayList<>();
 
             if (request.getAsistentes() != null && !request.getAsistentes().isEmpty()) {
                 for (NominaRequestDTO.AsistenteDTO dto : request.getAsistentes()) {
@@ -172,31 +173,40 @@ public class ServicioGestionAsistente {
 
                             IntegranteProyecto guardado = integranteRepository.save(nuevo);
 
-                            // Agregar a la lista si es Asistente activo
-                            if (guardado instanceof Asistente && ((Asistente) guardado).estaActivo()) {
-                                asistentesFinales.add((Asistente) guardado);
-                            }
+                            // Agregar a la lista (todos los tipos)
+                            integrantesFinales.add(guardado);
 
-                            logger.info("  Nuevo integrante guardado: {} (ID={})", guardado.getNombre(),
-                                    guardado.getId());
+                            logger.info("  Nuevo integrante guardado: {} (ID={}) tipo={}", guardado.getNombre(),
+                                    guardado.getId(), guardado.getClass().getSimpleName());
                         } else {
-                            // Asistente existente
-                            Asistente existente = obtenerAsistente(dto.getId());
-                            // Actualizar estado basado en lo enviado
-                            if ("FUERA_NOMINA".equals(dto.getEstado())) {
-                                existente.desactivar();
+                            // Integrante existente
+                            IntegranteProyecto existente = integranteRepository.findById(dto.getId())
+                                    .orElseThrow(() -> new RuntimeException("Integrante no encontrado"));
+
+                            // Si es Asistente, actualizar estado
+                            if (existente instanceof Asistente) {
+                                Asistente asistente = (Asistente) existente;
+                                if ("FUERA_NOMINA".equals(dto.getEstado())) {
+                                    asistente.desactivar();
+                                } else {
+                                    asistente.activar();
+                                }
+                                integranteRepository.save(asistente);
+
+                                // Agregar solo si está activo
+                                if (asistente.estaActivo()) {
+                                    integrantesFinales.add(asistente);
+                                    logger.info("  Asistente actualizado y agregado: {} (ID={})", asistente.getNombre(),
+                                            asistente.getId());
+                                } else {
+                                    logger.info("  Asistente dado de baja: {} (ID={})", asistente.getNombre(),
+                                            asistente.getId());
+                                }
                             } else {
-                                existente.activar();
-                            }
-                            integranteRepository.save(existente);
-                            // Agregar SIEMPRE si está activo, sin importar si ya estaba en la lista
-                            if (existente.estaActivo()) {
-                                asistentesFinales.add(existente);
-                                logger.info("  Asistente actualizado y agregado: {} (ID={})", existente.getNombre(),
-                                        existente.getId());
-                            } else {
-                                logger.info("  Asistente dado de baja: {} (ID={})", existente.getNombre(),
-                                        existente.getId());
+                                // Ayudantes y Técnicos siempre se agregan (no tienen estado)
+                                integrantesFinales.add(existente);
+                                logger.info("  {} actualizado y agregado: {} (ID={})",
+                                        existente.getClass().getSimpleName(), existente.getNombre(), existente.getId());
                             }
                         }
                     } catch (RuntimeException e) {
@@ -205,7 +215,7 @@ public class ServicioGestionAsistente {
                 }
             }
 
-            logger.info("Paso 3: Guardando reporte con {} asistentes", asistentesFinales.size());
+            logger.info("Paso 3: Guardando reporte con {} integrantes", integrantesFinales.size());
 
             // BUSCAR O CREAR REPORTE
             ReporteNomina reporte = nominaRepository
@@ -219,27 +229,29 @@ public class ServicioGestionAsistente {
             reporte.setFechaRegistro(LocalDate.now());
             reporte.setEstado("COMPLETO");
 
-            logger.info("Reporte lista de asistentes ANTES: {}",
-                    reporte.getListaAsistentes() != null ? reporte.getListaAsistentes().size() : "null");
+            logger.info("Reporte lista de integrantes ANTES: {}",
+                    reporte.getListaIntegrantes() != null ? reporte.getListaIntegrantes().size() : "null");
 
-            // Crear nueva lista con los asistentes finales
-            List<Asistente> nuevaLista = new ArrayList<>(asistentesFinales);
-            reporte.setListaAsistentes(nuevaLista);
+            // Crear nueva lista con los integrantes finales
+            List<IntegranteProyecto> nuevaLista = new ArrayList<>(integrantesFinales);
+            reporte.setListaIntegrantes(nuevaLista);
 
-            logger.info("Reporte lista de asistentes DESPUÉS: {}", reporte.getListaAsistentes().size());
-            for (Asistente a : asistentesFinales) {
-                logger.info("  - Asistente en lista final: {} (ID={})", a.getNombre(), a.getId());
+            logger.info("Reporte lista de integrantes DESPUÉS: {}", reporte.getListaIntegrantes().size());
+            for (IntegranteProyecto i : integrantesFinales) {
+                logger.info("  - Integrante en lista final: {} (ID={}) tipo={}",
+                        i.getNombre(), i.getId(), i.getClass().getSimpleName());
             }
 
             ReporteNomina guardado = nominaRepository.save(reporte);
 
             logger.info("Reporte guardado, lista final contiene: {}",
-                    guardado.getListaAsistentes() != null ? guardado.getListaAsistentes().size() : 0);
-            for (Asistente a : guardado.getListaAsistentes()) {
-                logger.info("  - Guardado: {} (ID={})", a.getNombre(), a.getId());
+                    guardado.getListaIntegrantes() != null ? guardado.getListaIntegrantes().size() : 0);
+            for (IntegranteProyecto i : guardado.getListaIntegrantes()) {
+                logger.info("  - Guardado: {} (ID={}) tipo={}",
+                        i.getNombre(), i.getId(), i.getClass().getSimpleName());
             }
             logger.info("===== NÓMINA PROCESADA EXITOSAMENTE. ID={} =====", guardado.getIdReporte());
-            logger.info("Asistentes guardados en BD: {}", guardado.getListaAsistentes().size());
+            logger.info("Integrantes guardados en BD: {}", guardado.getListaIntegrantes().size());
 
             return guardado;
         } catch (Exception e) {
@@ -248,7 +260,18 @@ public class ServicioGestionAsistente {
         }
     }
 
-    // Obtener TODOS los asistentes activos del proyecto (no del reporte)
+    // Obtener TODOS los integrantes activos del proyecto (no del reporte)
+    public List<IntegranteProyecto> obtenerIntegrantesActivosPorProyecto(Long proyectoId) {
+        logger.info("Obteniendo integrantes activos del proyecto ID: {}", proyectoId);
+        List<IntegranteProyecto> integrantes = integranteRepository.obtenerIntegrantesActivosPorProyecto(proyectoId);
+        logger.info("Se encontraron {} integrantes activos en el proyecto", integrantes.size());
+        for (IntegranteProyecto i : integrantes) {
+            logger.info("  - {} (ID={}) tipo={}", i.getNombre(), i.getId(), i.getClass().getSimpleName());
+        }
+        return integrantes;
+    }
+
+    // Mantener método antiguo para compatibilidad
     public List<Asistente> obtenerAsistentesActivosPorProyecto(Long proyectoId) {
         logger.info("Obteniendo asistentes activos del proyecto ID: {}", proyectoId);
         List<Asistente> asistentes = integranteRepository.obtenerAsistentesActivosPorProyecto(proyectoId);

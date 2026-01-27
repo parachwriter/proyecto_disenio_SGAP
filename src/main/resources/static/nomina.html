@@ -521,7 +521,7 @@
 
     <div class="card seccion-oculta" id="seccionAsistentes">
       <div class="confirm-section">
-        <h3 style="margin: 0; border: none; padding: 0;">Asistentes en Nómina (Este Mes)</h3>
+        <h3 style="margin: 0; border: none; padding: 0;">Integrantes en Nómina (Este Mes)</h3>
         <button class="btn-primary" onclick="confirmarNomina()">✓ CONFIRMAR ACTUALIZACIÓN MENSUAL</button>
       </div>
 
@@ -531,14 +531,15 @@
             <th>ID</th>
             <th>Nombre</th>
             <th>Cédula</th>
+            <th>Tipo</th>
             <th>Estado</th>
             <th>Acción</th>
           </tr>
         </thead>
         <tbody id="tbodyAsistentes">
           <tr>
-            <td colspan="5" class="muted" style="text-align: center; padding: 2rem;">
-              Seleccione un proyecto para ver los asistentes activos.
+            <td colspan="6" class="muted" style="text-align: center; padding: 2rem;">
+              Seleccione un proyecto para ver los integrantes activos.
             </td>
           </tr>
         </tbody>
@@ -733,24 +734,34 @@
         const asistentes = await res.json();
 
         if (asistentes.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='5' style='text-align: center; padding: 2rem;'>No hay asistentes registrados como activos en este proyecto.</td></tr>";
+          tbody.innerHTML = "<tr><td colspan='6' style='text-align: center; padding: 2rem;'>No hay integrantes registrados como activos en este proyecto.</td></tr>";
           return;
         }
 
-        tbody.innerHTML = asistentes.map(a => `
-        <tr data-id="${a.id}">
-          <td>${a.id}</td>
-          <td>${a.nombre}</td>
-          <td>${a.cedula}</td>
-          <td class="${a.estado === 'ACTIVO' ? 'status-activo' : 'status-fuera'}">${a.estado}</td>
-          <td>
-            ${a.estado === 'ACTIVO' ? `<button class="btn-baja" onclick="darDeBaja(${a.id})">Dar de Baja</button>` : '---'}
-          </td>
-        </tr>
-      `).join("");
+        tbody.innerHTML = asistentes.map(a => {
+          // Ahora el tipo viene directamente del backend
+          const tipo = a.tipo || 'ASISTENTE';
+          const estadoTexto = a.estado || 'ACTIVO';
+          const estadoClase = estadoTexto === 'ACTIVO' ? 'status-activo' : 'status-fuera';
+          // Ahora todos los tipos de integrantes pueden ser dados de baja
+          const puededarBaja = estadoTexto === 'ACTIVO';
+          
+          return `
+            <tr data-id="${a.id}">
+              <td>${a.id}</td>
+              <td>${a.nombre}</td>
+              <td>${a.cedula}</td>
+              <td>${tipo}</td>
+              <td class="${estadoClase}">${estadoTexto}</td>
+              <td>
+                ${puededarBaja ? `<button class="btn-baja" onclick="darDeBaja(${a.id})">Dar de Baja</button>` : '---'}
+              </td>
+            </tr>
+          `;
+        }).join("");
       } catch (e) {
-        console.error("Error al cargar asistentes:", e);
-        tbody.innerHTML = "<tr><td colspan='5' style='text-align: center; padding: 2rem;'>Error al cargar asistentes.</td></tr>";
+        console.error("Error al cargar integrantes:", e);
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align: center; padding: 2rem;'>Error al cargar integrantes.</td></tr>";
       }
     }
 
@@ -775,7 +786,7 @@
 
       // Contar asistentes ACTIVOS en la tabla (no incluye los dados de baja)
       const asistentesActivos = Array.from(tbody.querySelectorAll("tr")).filter(row => {
-        const estadoCell = row.cells[3];
+        const estadoCell = row.cells[4];
         return estadoCell && estadoCell.classList.contains("status-activo");
       }).length;
 
@@ -791,8 +802,8 @@
       if (tbody.rows[0]?.cells.length === 1) tbody.innerHTML = "";
 
       // Determinar el tipo de integrante para mostrar
-      let tipoTexto = tipoIntegrante === 'ASISTENTE' ? 'Asistente' : 
-                      tipoIntegrante === 'AYUDANTE' ? 'Ayudante' : 'Técnico';
+      let tipoTexto = tipoIntegrante === 'ASISTENTE' ? 'ASISTENTE' : 
+                      tipoIntegrante === 'AYUDANTE' ? 'AYUDANTE' : 'TECNICO';
 
       // Insertamos la fila en la tabla sin ir al servidor todavía
       const nuevaFila = `
@@ -800,7 +811,8 @@
       <td><span class="pill">NUEVO</span></td>
       <td class="cell-nombre">${nombre}</td>
       <td class="cell-cedula">${cedula}</td>
-      <td class="status-activo">ACTIVO (${tipoTexto})</td>
+      <td>${tipoTexto}</td>
+      <td class="status-activo">ACTIVO</td>
       <td>
         <button class="btn-baja" onclick="eliminarFilaTemporal(this)">Remover</button>
         <input type="hidden" class="hidden-fecha-nac" value="${fechaNac}">
@@ -831,8 +843,8 @@
       if (!confirmar) return;
 
       // Cambiar el estado visual SOLO en el frontend
-      const estadoCell = fila.cells[3];
-      const accionCell = fila.cells[4];
+      const estadoCell = fila.cells[4];
+      const accionCell = fila.cells[5];
       
       // Cambiar el estado visual
       estadoCell.className = 'status-fuera';
@@ -860,7 +872,7 @@
 
       // Contar asistentes ACTIVOS actuales (sin contar el que vamos a restaurar)
       const asistentesActivos = Array.from(tbody.querySelectorAll("tr")).filter(row => {
-        const estadoCell = row.cells[3];
+        const estadoCell = row.cells[4];
         return estadoCell && estadoCell.classList.contains("status-activo");
       }).length;
 
@@ -875,8 +887,8 @@
       if (!confirmar) return;
 
       // Revertir cambios visuales
-      const estadoCell = fila.cells[3];
-      const accionCell = fila.cells[4];
+      const estadoCell = fila.cells[4];
+      const accionCell = fila.cells[5];
       
       estadoCell.className = 'status-activo';
       estadoCell.innerText = 'ACTIVO';

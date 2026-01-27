@@ -5,6 +5,11 @@ import jakarta.persistence.Entity;
 @Entity
 public class AyudanteInvestigacion extends IntegranteProyecto {
 
+    @Override
+    public String getTipo() {
+        return "AYUDANTE";
+    }
+
     // Atributos específicos de Ayudante de Investigación (Pasante)
     private String nua; // Número Único Alumno
     private String facultad;

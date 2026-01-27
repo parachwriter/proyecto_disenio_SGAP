@@ -5,6 +5,11 @@ import jakarta.persistence.Entity;
 @Entity
 public class TecnicoInvestigacion extends IntegranteProyecto {
 
+    @Override
+    public String getTipo() {
+        return "TECNICO";
+    }
+
     // Atributos específicos de Técnico de Investigación (Profesional)
     private String especialidadTecnica;
     private String laboratorioAsignado;
