@@ -171,6 +171,33 @@
             color: #856404;
             border: 1px solid #ffeeba;
         }
+
+        .submenu-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .submenu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .submenu-card h3 {
+            color: white;
+            margin: 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .submenu-card p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0.5rem 0 0 0;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -182,8 +209,33 @@
             </button>
         </div>
 
-        <div class="card">
-            <h2>Selección de Proyecto y Periodo</h2>
+        <!-- SUBMENÚ INICIAL -->
+        <div id="submenu" class="card">
+            <h2>Seleccione una opción</h2>
+            <div class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <div class="submenu-card" onclick="mostrarEstadoAprobaciones()">
+                    <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                    <h3>Estado Aprobaciones</h3>
+                    <p>Ver el estado de documentos aprobados y pendientes</p>
+                </div>
+                
+                <div class="submenu-card" onclick="mostrarCargarDocumento()">
+                    <div class="card-icon" style="font-size: 3rem; margin-bottom: 1rem;">📤</div>
+                    <h3>Cargar Nuevo Documento</h3>
+                    <p>Subir un documento para aprobación por periodo académico</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: CARGAR NUEVO DOCUMENTO -->
+        <div id="seccionCargarDocumento" class="seccion-oculta">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>Cargar Nuevo Documento</h2>
+                    <button class="btn-back" onclick="volverSubmenu()" style="padding: 0.5rem 1rem;">
+                        ← Volver
+                    </button>
+                </div>
             
             <div class="form-group">
                 <label for="selectProyecto">Proyecto de Investigación:</label>
@@ -215,10 +267,27 @@
                     <p><strong>Rango:</strong> <span id="rangoPeriodo">-</span></p>
                 </div>
 
+                <!-- TIPO DE DOCUMENTO -->
+                <div id="seccionTipoDocumento" class="seccion-oculta" style="margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label for="selectTipoDocumento">Tipo de Documento:</label>
+                        <select id="selectTipoDocumento" onchange="seleccionarTipoDocumento()">
+                            <option value="">-- Seleccione el tipo de documento --</option>
+                            <option value="PLANIFICACION">Planificación de Proyecto</option>
+                            <option value="AVANCE">Avance de Proyecto</option>
+                        </select>
+                    </div>
+
+                    <div id="infoTipoDocumento" class="info-box seccion-oculta" style="margin-top: 1rem;">
+                        <p id="descripcionTipoDocumento"></p>
+                    </div>
+                </div>
+
                 <button id="btnContinuar" class="btn-primary" onclick="continuarAprobacion()" disabled>
-                    Continuar a Aprobación →
+                    Continuar a Carga →
                 </button>
             </div>
+        </div>
         </div>
 
         <div id="seccionDocumentos" class="card seccion-oculta">
@@ -227,12 +296,71 @@
                 <strong>⚠️ En desarrollo:</strong> Funcionalidad de aprobación de documentos próximamente.
             </div>
         </div>
+
+        <!-- SECCIÓN: ESTADO APROBACIONES -->
+        <div id="seccionEstadoAprobaciones" class="card seccion-oculta">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Estado de Aprobaciones</h2>
+                <button class="btn-back" onclick="volverSubmenu()" style="padding: 0.5rem 1rem;">
+                    ← Volver
+                </button>
+            </div>
+            <div class="alert alert-warning">
+                <strong>⚠️ En desarrollo:</strong> Funcionalidad de consulta de estado de aprobaciones próximamente.
+            </div>
+        </div>
     </div>
 
     <script>
         // Variables globales
         let proyectosGlobal = [];
         let proyectoSeleccionado = null;
+
+        // Funciones del submenú
+        function mostrarCargarDocumento() {
+            document.getElementById("submenu").classList.add("seccion-oculta");
+            document.getElementById("seccionCargarDocumento").classList.remove("seccion-oculta");
+        }
+
+        function mostrarEstadoAprobaciones() {
+            document.getElementById("submenu").classList.add("seccion-oculta");
+            document.getElementById("seccionEstadoAprobaciones").classList.remove("seccion-oculta");
+        }
+
+        function volverSubmenu() {
+            document.getElementById("seccionCargarDocumento").classList.add("seccion-oculta");
+            document.getElementById("seccionEstadoAprobaciones").classList.add("seccion-oculta");
+            document.getElementById("seccionDocumentos").classList.add("seccion-oculta");
+            document.getElementById("submenu").classList.remove("seccion-oculta");
+            
+            // Limpiar selecciones
+            document.getElementById("selectProyecto").value = "";
+            document.getElementById("infoProyecto").classList.add("seccion-oculta");
+            document.getElementById("seccionPeriodos").classList.add("seccion-oculta");
+        }
+
+        // Funciones del submenú
+        function mostrarCargarDocumento() {
+            document.getElementById("submenu").classList.add("seccion-oculta");
+            document.getElementById("seccionCargarDocumento").classList.remove("seccion-oculta");
+        }
+
+        function mostrarEstadoAprobaciones() {
+            document.getElementById("submenu").classList.add("seccion-oculta");
+            document.getElementById("seccionEstadoAprobaciones").classList.remove("seccion-oculta");
+        }
+
+        function volverSubmenu() {
+            document.getElementById("seccionCargarDocumento").classList.add("seccion-oculta");
+            document.getElementById("seccionEstadoAprobaciones").classList.add("seccion-oculta");
+            document.getElementById("seccionDocumentos").classList.add("seccion-oculta");
+            document.getElementById("submenu").classList.remove("seccion-oculta");
+            
+            // Limpiar selecciones
+            document.getElementById("selectProyecto").value = "";
+            document.getElementById("infoProyecto").classList.add("seccion-oculta");
+            document.getElementById("seccionPeriodos").classList.add("seccion-oculta");
+        }
 
         // Al cargar la página
         window.addEventListener("DOMContentLoaded", async () => {
@@ -255,7 +383,7 @@
             }
 
             try {
-                const response = await fetch(`/api/proyectos/listar-por-director?emailDirector=${emailDirector}`);
+                const response = await fetch(`/proyectos/director/${emailDirector}`);
                 
                 if (!response.ok) {
                     throw new Error("Error al cargar proyectos");
@@ -267,8 +395,14 @@
                 const select = document.getElementById("selectProyecto");
                 select.innerHTML = '<option value="">-- Seleccione un proyecto --</option>';
 
-                // Solo mostrar proyectos EN_VIGENCIA
-                const proyectosVigentes = proyectos.filter(p => p.estado === 'EN_VIGENCIA');
+                // Filtrar proyectos que están en vigencia según las fechas
+                const fechaActual = new Date();
+                const proyectosVigentes = proyectos.filter(p => {
+                    if (!p.fechaInicio || !p.fechaFin) return false;
+                    const inicio = new Date(p.fechaInicio);
+                    const fin = new Date(p.fechaFin);
+                    return fechaActual >= inicio && fechaActual <= fin;
+                });
 
                 if (proyectosVigentes.length === 0) {
                     select.innerHTML += '<option value="" disabled>No hay proyectos en vigencia</option>';
@@ -278,7 +412,7 @@
                 proyectosVigentes.forEach(proyecto => {
                     const option = document.createElement("option");
                     option.value = proyecto.id;
-                    option.textContent = `${proyecto.titulo} (${proyecto.codigoProyecto})`;
+                    option.textContent = `${proyecto.nombre} (ID: ${proyecto.id})`;
                     select.appendChild(option);
                 });
 
@@ -309,7 +443,19 @@
             // Mostrar información del proyecto
             document.getElementById("fechaInicio").textContent = proyectoSeleccionado.fechaInicio;
             document.getElementById("fechaFin").textContent = proyectoSeleccionado.fechaFin;
-            document.getElementById("estadoProyecto").textContent = proyectoSeleccionado.estado;
+            
+            // Calcular estado del proyecto según fechas
+            const fechaActual = new Date();
+            const inicio = new Date(proyectoSeleccionado.fechaInicio);
+            const fin = new Date(proyectoSeleccionado.fechaFin);
+            let estadoTexto = "NO INICIADO";
+            if (fechaActual >= inicio && fechaActual <= fin) {
+                estadoTexto = "EN VIGENCIA";
+            } else if (fechaActual > fin) {
+                estadoTexto = "FINALIZADO";
+            }
+            
+            document.getElementById("estadoProyecto").textContent = estadoTexto;
             document.getElementById("infoProyecto").classList.remove("seccion-oculta");
 
             // Calcular periodos académicos
@@ -413,6 +559,7 @@
 
             if (!codigoPeriodo) {
                 document.getElementById("infoPeriodo").classList.add("seccion-oculta");
+                document.getElementById("seccionTipoDocumento").classList.add("seccion-oculta");
                 document.getElementById("btnContinuar").disabled = true;
                 return;
             }
@@ -423,24 +570,80 @@
             document.getElementById("codigoPeriodo").textContent = codigoPeriodo;
             document.getElementById("rangoPeriodo").textContent = rangoTexto;
             document.getElementById("infoPeriodo").classList.remove("seccion-oculta");
-            document.getElementById("btnContinuar").disabled = false;
+            
+            // Mostrar selección de tipo de documento
+            document.getElementById("seccionTipoDocumento").classList.remove("seccion-oculta");
+            document.getElementById("selectTipoDocumento").value = "";
+            document.getElementById("infoTipoDocumento").classList.add("seccion-oculta");
+            document.getElementById("btnContinuar").disabled = true;
         }
 
-        // Continuar a la aprobación
-        function continuarAprobacion() {
-            const codigoPeriodo = document.getElementById("selectPeriodo").value;
-            
-            if (!codigoPeriodo || !proyectoSeleccionado) {
-                alert("Debe seleccionar un proyecto y un periodo");
+        // Seleccionar tipo de documento
+        function seleccionarTipoDocumento() {
+            const selectTipo = document.getElementById("selectTipoDocumento");
+            const tipoDocumento = selectTipo.value;
+
+            if (!tipoDocumento) {
+                document.getElementById("infoTipoDocumento").classList.add("seccion-oculta");
+                document.getElementById("btnContinuar").disabled = true;
                 return;
             }
 
-            // Mostrar sección de documentos (en desarrollo)
-            document.getElementById("periodoSeleccionado").textContent = codigoPeriodo;
-            document.getElementById("seccionDocumentos").classList.remove("seccion-oculta");
+            const descripcion = document.getElementById("descripcionTipoDocumento");
             
-            // Scroll hacia la sección
-            document.getElementById("seccionDocumentos").scrollIntoView({ behavior: 'smooth' });
+            if (tipoDocumento === "PLANIFICACION") {
+                descripcion.innerHTML = "<strong>📋 Planificación de Proyecto:</strong> Documento que contiene los objetivos, metodología, cronograma y presupuesto planificado para el periodo académico seleccionado.";
+            } else if (tipoDocumento === "AVANCE") {
+                descripcion.innerHTML = "<strong>📈 Avance de Proyecto:</strong> Documento que reporta las actividades realizadas, resultados obtenidos, dificultades encontradas y porcentaje de avance durante el periodo académico.";
+            }
+
+            document.getElementById("infoTipoDocumento").classList.remove("seccion-oculta");
+            document.getElementById("btnContinuar").disabled = false;
+        }
+
+        // Continuar a la carga de documentos
+        async function continuarAprobacion() {
+            const codigoPeriodo = document.getElementById("selectPeriodo").value;
+            const tipoDocumento = document.getElementById("selectTipoDocumento").value;
+            
+            if (!codigoPeriodo || !proyectoSeleccionado || !tipoDocumento) {
+                alert("Debe seleccionar un proyecto, periodo y tipo de documento");
+                return;
+            }
+
+            // Validar que las nóminas estén completas antes de continuar
+            try {
+                const response = await fetch(
+                    `/api/documentos/validar-carga?proyectoId=${proyectoSeleccionado.id}&periodoAcademico=${codigoPeriodo}&tipoDocumento=${tipoDocumento}`
+                );
+                
+                if (!response.ok) {
+                    alert("Error al validar las nóminas del proyecto");
+                    return;
+                }
+
+                const validacion = await response.json();
+                
+                if (!validacion.puedeCargar) {
+                    alert("❌ No se puede cargar el documento:\n\n" + validacion.mensaje);
+                    return;
+                }
+
+                // Si la validación es exitosa, mostrar sección de carga
+                const tipoTexto = tipoDocumento === "PLANIFICACION" ? "Planificación" : "Avance";
+                document.getElementById("periodoSeleccionado").textContent = `${codigoPeriodo} - ${tipoTexto}`;
+                document.getElementById("seccionDocumentos").classList.remove("seccion-oculta");
+                
+                // Mostrar mensaje de éxito
+                alert("✅ " + validacion.mensaje + "\n\nAhora puede cargar el documento.");
+                
+                // Scroll hacia la sección
+                document.getElementById("seccionDocumentos").scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error("Error al validar nóminas:", error);
+                alert("Error al validar las nóminas del proyecto. Por favor intente nuevamente.");
+            }
         }
     </script>
 </body>
