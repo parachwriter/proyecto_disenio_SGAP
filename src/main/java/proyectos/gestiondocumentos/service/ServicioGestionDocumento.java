@@ -13,7 +13,7 @@ import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -218,7 +218,8 @@ public class ServicioGestionDocumento {
             }
         }
 
-        // 2. Validar que el periodo seleccionado tenga TODAS sus nóminas completas (6 meses)
+        // 2. Validar que el periodo seleccionado tenga TODAS sus nóminas completas (6
+        // meses)
         LocalDate inicioPeriodoSeleccionado = periodoSolicitado.getFechaInicio();
         LocalDate finPeriodoSeleccionado = periodoSolicitado.getFechaFin();
         int mesesEnPeriodo = 6;
@@ -231,7 +232,8 @@ public class ServicioGestionDocumento {
                 finPeriodoSeleccionado.getYear());
 
         if (nominasPeriodoSeleccionado.size() < mesesEnPeriodo) {
-            periodosFaltantes.add(periodoSolicitado.getCodigo() + " (registradas: " + nominasPeriodoSeleccionado.size() + "/6)");
+            periodosFaltantes
+                    .add(periodoSolicitado.getCodigo() + " (registradas: " + nominasPeriodoSeleccionado.size() + "/6)");
         }
 
         // Si hay periodos con nóminas faltantes, construir mensaje detallado
@@ -249,12 +251,8 @@ public class ServicioGestionDocumento {
         }
 
         resultado.setPuedeCargar(true);
-        resultado.setMensaje("Todas las nóminas requeridas están completas. Puede cargar el Avance del periodo " + periodoSolicitado.getCodigo());
-        return resultado;
-    }
-
-        resultado.setPuedeCargar(true);
         resultado.setMensaje("Todas las nóminas requeridas están completas. Puede cargar el Avance del periodo "
                 + periodoSolicitado.getCodigo());
         return resultado;
-    }}
+    }
+}
