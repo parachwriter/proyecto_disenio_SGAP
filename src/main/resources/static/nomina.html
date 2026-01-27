@@ -3,128 +3,306 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SGAP - Nómina Mensual</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: sans-serif;
-      background: #f0f8ff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
       padding: 20px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
+      opacity: 0.3;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .logo-stamp {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 70px;
+      height: 70px;
+      background: white;
+      border-radius: 50%;
+      padding: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-stamp img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      margin-top: 60px;
     }
 
     .topbar {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 2rem 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      margin-bottom: 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .topbar h1 {
+      color: #2d3748;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    .muted {
+      color: #718096;
+      font-size: 0.95rem;
+    }
+
+    .topbar-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
     }
 
     .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-      margin-top: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 2rem 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h3 {
+      color: #2d3748;
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h3::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      border-radius: 2px;
     }
 
     .row {
       display: flex;
-      gap: 10px;
+      gap: 1rem;
       flex-wrap: wrap;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .row label {
+      color: #4a5568;
+      font-weight: 600;
+      font-size: 0.95rem;
     }
 
     input,
-    button,
     select {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      background: white;
+      color: #2d3748;
+      min-width: 180px;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #48bb78;
+      box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
     }
 
     button {
-      cursor: pointer;
-      border: 1px solid #28a745;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      border: 2px solid #48bb78;
       background: white;
-      transition: 0.2s;
-      font-weight: bold;
+      color: #48bb78;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
     }
 
     button:hover {
-      background: #28a745;
+      background: #48bb78;
       color: white;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+      box-shadow: 0 6px 20px rgba(72, 187, 120, 0.5);
     }
 
     .btn-baja {
-      border-color: #dc3545;
-      color: #dc3545;
+      border-color: #f56565;
+      color: #f56565;
     }
 
     .btn-baja:hover {
-      background: #dc3545;
+      background: #f56565;
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
     }
 
     .btn-restaurar {
-      border-color: #0066cc;
-      color: #0066cc;
-      background: white;
+      border-color: #4299e1;
+      color: #4299e1;
     }
 
     .btn-restaurar:hover {
-      background: #0066cc;
+      background: #4299e1;
+      color: white;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+    }
+
+    .btn-seleccionar {
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .btn-seleccionar:hover {
+      background: #667eea;
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      border-color: #718096;
+      color: #718096;
+    }
+
+    .btn-secondary:hover {
+      background: #718096;
       color: white;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 1rem;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
     }
 
     th,
     td {
-      border-bottom: 1px solid #eee;
-      padding: 10px;
+      padding: 1rem;
       text-align: left;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     th {
-      background: #eaf7ee;
+      background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+      color: #2d3748;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: background-color 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background-color: #f7fafc;
     }
 
     .pill {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #eef;
-      font-size: 0.8em;
+      padding: 0.35rem 0.85rem;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
     }
 
     .status-activo {
-      color: #28a745;
-      font-weight: bold;
+      color: #48bb78;
+      font-weight: 700;
+      font-size: 0.9rem;
     }
 
     .status-fuera {
-      color: #dc3545;
-      font-weight: bold;
+      color: #f56565;
+      font-weight: 700;
+      font-size: 0.9rem;
     }
 
     .seccion-oculta {
       display: none;
     }
 
-    .btn-seleccionar {
-      border-color: #0066cc;
-      color: #0066cc;
-    }
-
-    .btn-seleccionar:hover {
-      background: #0066cc;
-      color: white;
-    }
-
-    /* Estilos para el modal */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -132,8 +310,9 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
       justify-content: center;
       align-items: center;
     }
@@ -144,11 +323,12 @@
 
     .modal-contenido {
       background: white;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      padding: 3rem 2.5rem;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
       text-align: center;
       max-width: 500px;
+      width: 90%;
       animation: slideIn 0.3s ease;
     }
 
@@ -164,103 +344,198 @@
     }
 
     .modal-titulo {
-      font-size: 1.5em;
-      color: #28a745;
-      margin-bottom: 20px;
-      font-weight: bold;
+      font-size: 2rem;
+      color: #48bb78;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
     }
 
     .modal-mensaje {
-      font-size: 1.1em;
-      color: #333;
-      margin-bottom: 30px;
+      font-size: 1.1rem;
+      color: #4a5568;
+      margin-bottom: 2rem;
       line-height: 1.6;
     }
 
     .modal-boton {
-      background: #28a745;
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
       color: white;
-      padding: 12px 40px;
+      padding: 0.85rem 2.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
-      font-weight: bold;
-      font-size: 1em;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
     }
 
     .modal-boton:hover {
-      background: #218838;
+      background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
       transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 20px rgba(72, 187, 120, 0.5);
+    }
+
+    .confirm-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid #e2e8f0;
+    }
+
+    @media (max-width: 768px) {
+      .logo-stamp {
+        width: 55px;
+        height: 55px;
+        top: 15px;
+        left: 15px;
+      }
+
+      .container {
+        margin-top: 50px;
+      }
+
+      .topbar {
+        padding: 1.5rem;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .topbar h1 {
+        font-size: 1.4rem;
+      }
+
+      .topbar-actions {
+        justify-content: stretch;
+      }
+
+      .topbar-actions button {
+        flex: 1;
+      }
+
+      .card {
+        padding: 1.5rem;
+      }
+
+      .card h3 {
+        font-size: 1.1rem;
+      }
+
+      .row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .row label {
+        margin-bottom: 0.25rem;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-width: unset;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      th,
+      td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      .confirm-section {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .confirm-section button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 
 <body>
-
-  <div class="topbar">
-    <div>
-      <h1>Gestión de Nómina Mensual</h1>
-      <div class="muted" id="bienvenida"></div>
-    </div>
-    <div class="row">
-      <button onclick="window.location.href='menu-director.html'">Volver</button>
-      <button onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
-    </div>
+  <!-- Logo en esquina superior izquierda -->
+  <div class="logo-stamp">
+    <img src="SGAP.png" alt="SGAP Logo">
   </div>
 
-  <div class="card">
-    <h3>1. Selección de Proyecto y Periodo</h3>
-    <div class="row">
-      <label>Proyecto:</label>
-      <select id="selectProyecto" onchange="cargarMesesAtrasados()">
-        <option value="">Cargando sus proyectos...</option>
-      </select>
-      <label>Año:</label>
-      <select id="anio" onchange="actualizarMesesPorAnio()">
-        <option value="">Seleccione un año primero</option>
-      </select>
-      <label>Mes:</label>
-      <select id="mes">
-        <option value="">Seleccione un año primero</option>
-      </select>
-      <button class="btn-seleccionar" onclick="seleccionarPeriodo()">Seleccionar Período</button>
-    </div>
-  </div>
-
-  <div class="card seccion-oculta" id="seccionContratacion">
-    <h3>2. Reportar Nueva Contratación</h3>
-    <div class="row">
-      <input type="text" id="nomA" placeholder="Nombre completo" maxlength="100" />
-      <input type="text" id="cedA" placeholder="Cédula" maxlength="10" />
-      <input type="date" id="fechaNacA" />
-      <button onclick="agregarAsistente()">+ Agregar Asistente</button>
-    </div>
-  </div>
-
-  <div class="card seccion-oculta" id="seccionAsistentes">
-    <div class="row" style="justify-content: space-between;">
-      <h3 style="margin:0;">3. Asistentes en Nómina (Este Mes)</h3>
-      <button onclick="confirmarNomina()" style="background: #28a745; color: white;">CONFIRMAR ACTUALIZACIÓN
-        MENSUAL</button>
+  <div class="container">
+    <div class="topbar">
+      <div>
+        <h1>Gestión de Nómina Mensual</h1>
+        <div class="muted" id="bienvenida"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-secondary" onclick="window.location.href='menu-director.html'">← Volver</button>
+        <button class="btn-baja" onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
+      </div>
     </div>
 
-    <table id="tablaAsistentes">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Cédula</th>
-          <th>Estado</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody id="tbodyAsistentes">
-        <tr>
-          <td colspan="5" class="muted">Seleccione un proyecto para ver los asistentes activos.</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="card">
+      <h3>Selección de Proyecto y Periodo</h3>
+      <div class="row">
+        <label>Proyecto:</label>
+        <select id="selectProyecto" onchange="cargarMesesAtrasados()">
+          <option value="">Cargando sus proyectos...</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Año:</label>
+        <select id="anio" onchange="actualizarMesesPorAnio()">
+          <option value="">Seleccione un año primero</option>
+        </select>
+        <label>Mes:</label>
+        <select id="mes">
+          <option value="">Seleccione un año primero</option>
+        </select>
+        <button class="btn-seleccionar" onclick="seleccionarPeriodo()">Seleccionar Período</button>
+      </div>
+    </div>
+
+    <div class="card seccion-oculta" id="seccionContratacion">
+      <h3>Reportar Nueva Contratación</h3>
+      <div class="row">
+        <input type="text" id="nomA" placeholder="Nombre completo" maxlength="100" />
+        <input type="text" id="cedA" placeholder="Cédula" maxlength="10" />
+        <input type="date" id="fechaNacA" />
+        <button class="btn-primary" onclick="agregarAsistente()">+ Agregar Asistente</button>
+      </div>
+    </div>
+
+    <div class="card seccion-oculta" id="seccionAsistentes">
+      <div class="confirm-section">
+        <h3 style="margin: 0; border: none; padding: 0;">Asistentes en Nómina (Este Mes)</h3>
+        <button class="btn-primary" onclick="confirmarNomina()">✓ CONFIRMAR ACTUALIZACIÓN MENSUAL</button>
+      </div>
+
+      <table id="tablaAsistentes">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Cédula</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyAsistentes">
+          <tr>
+            <td colspan="5" class="muted" style="text-align: center; padding: 2rem;">
+              Seleccione un proyecto para ver los asistentes activos.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- Modal de éxito -->
@@ -450,7 +725,7 @@
         const asistentes = await res.json();
 
         if (asistentes.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='5'>No hay asistentes registrados como activos en este proyecto.</td></tr>";
+          tbody.innerHTML = "<tr><td colspan='5' style='text-align: center; padding: 2rem;'>No hay asistentes registrados como activos en este proyecto.</td></tr>";
           return;
         }
 
@@ -467,7 +742,7 @@
       `).join("");
       } catch (e) {
         console.error("Error al cargar asistentes:", e);
-        tbody.innerHTML = "<tr><td colspan='5'>Error al cargar asistentes.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='5' style='text-align: center; padding: 2rem;'>Error al cargar asistentes.</td></tr>";
       }
     }
 

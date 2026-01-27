@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.model.Proyecto;
 
-public interface ProyectoRepository extends JpaRepository<ProyectoInvestigacion, Long> {
+public interface ProyectoRepository extends JpaRepository<Proyecto, Long> {
     // Busca proyectos comparando el correo institucional del director asignado
-    List<ProyectoInvestigacion> findByDirectorCorreoInstitucional(String correo);
+    List<Proyecto> findByDirectorCorreoInstitucional(String correo);
 }

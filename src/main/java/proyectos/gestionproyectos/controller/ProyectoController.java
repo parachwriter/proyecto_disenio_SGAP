@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.dto.ProyectoRequestDTO;
+import proyectos.gestionproyectos.model.*;
 import proyectos.gestionproyectos.service.ServicioGestionProyecto;
 
-@CrossOrigin(origins = "*") // Permite peticiones desde cualquier origen para pruebas
-
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/proyectos")
 public class ProyectoController {
@@ -29,21 +29,83 @@ public class ProyectoController {
     private ServicioGestionProyecto servicio;
 
     @PostMapping
-    public ResponseEntity<String> crearProyecto(@RequestBody ProyectoInvestigacion p) {
+    public ResponseEntity<String> crearProyecto(@RequestBody ProyectoRequestDTO dto) {
         try {
-            // Verificación rápida antes de procesar
-            if (p.getDirector() == null) {
+            // Validaciones
+            if (dto.getDirector() == null) {
                 return ResponseEntity.badRequest().body("Error: El proyecto debe tener un director asignado");
             }
+            if (dto.getTipoProyecto() == null || dto.getTipoProyecto().isEmpty()) {
+                return ResponseEntity.badRequest().body("Error: Debe especificar el tipo de proyecto");
+            }
+            if ("INVESTIGACION".equals(dto.getTipoProyecto()) &&
+                    (dto.getSubtipoInvestigacion() == null || dto.getSubtipoInvestigacion().isEmpty())) {
+                return ResponseEntity.badRequest().body("Error: Debe especificar el subtipo de investigación");
+            }
 
-            // El servicio se encarga de llamar a ServicioGestionUsuario
-            // para crear las credenciales y guardar al director.
-            servicio.registrarProyecto(p);
-            return ResponseEntity.ok("Proyecto y Director registrados correctamente. Se ha enviado un correo a "
-                    + p.getDirector().getCorreoInstitucional());
+            // Crear la instancia correcta según el tipo
+            Proyecto proyecto = crearProyectoSegunTipo(dto);
+
+            // Asignar datos comunes
+            proyecto.setNombre(dto.getNombre());
+            proyecto.setPresupuesto(dto.getPresupuesto());
+            proyecto.setMaxAsistentes(dto.getMaxAsistentes());
+            proyecto.setFechaInicio(dto.getFechaInicio());
+            proyecto.setFechaFin(dto.getFechaFin());
+            proyecto.setDirector(dto.getDirector());
+
+            // Calcular duración en meses
+            if (dto.getFechaInicio() != null && dto.getFechaFin() != null) {
+                proyecto.calcularDuracionMeses();
+            }
+
+            // Registrar proyecto
+            servicio.registrarProyecto(proyecto);
+
+            return ResponseEntity.ok("Proyecto " + obtenerNombreTipo(dto) +
+                    " registrado correctamente. Se ha enviado un correo a " +
+                    dto.getDirector().getCorreoInstitucional());
         } catch (Exception e) {
             logger.error("Error al crear proyecto: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().body("Error al crear proyecto: " + e.getMessage());
+        }
+    }
+
+    private Proyecto crearProyectoSegunTipo(ProyectoRequestDTO dto) {
+        switch (dto.getTipoProyecto()) {
+            case "INVESTIGACION":
+                return crearProyectoInvestigacion(dto.getSubtipoInvestigacion());
+            case "VINCULACION":
+                return new ProyectoVinculacion();
+            case "TRANSICION":
+                return new ProyectoTransicionTecnologica();
+            default:
+                throw new IllegalArgumentException("Tipo de proyecto no válido: " + dto.getTipoProyecto());
+        }
+    }
+
+    private Proyecto crearProyectoInvestigacion(String subtipo) {
+        switch (subtipo) {
+            case "INTERNO":
+                return new Interno();
+            case "SEMILLA":
+                return new Semilla();
+            case "GRUPAL":
+                return new Grupal();
+            case "MULTIDISCIPLINARIO":
+                return new Multidisciplinario();
+            default:
+                throw new IllegalArgumentException("Subtipo de investigación no válido: " + subtipo);
+        }
+    }
+
+    private String obtenerNombreTipo(ProyectoRequestDTO dto) {
+        if ("INVESTIGACION".equals(dto.getTipoProyecto())) {
+            return "de Investigación (" + dto.getSubtipoInvestigacion() + ")";
+        } else if ("VINCULACION".equals(dto.getTipoProyecto())) {
+            return "de Vinculación";
+        } else {
+            return "de Transición Tecnológica";
         }
     }
 
@@ -58,7 +120,7 @@ public class ProyectoController {
     @GetMapping("/director/{correo}")
     public ResponseEntity<?> listarPorDirector(@PathVariable String correo) {
         try {
-            List<ProyectoInvestigacion> proyectos = servicio.obtenerProyectosPorDirector(correo);
+            List<Proyecto> proyectos = servicio.obtenerProyectosPorDirector(correo);
             return ResponseEntity.ok(proyectos != null ? proyectos : new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error al listar proyectos: {}", e.getMessage(), e);

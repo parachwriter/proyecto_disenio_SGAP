@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import proyectos.gestionproyectos.model.IntegranteProyecto;
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.repository.IntegranteRepository;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 import proyectos.gestionusuario.model.DirectorProyecto;
@@ -24,7 +24,7 @@ public class ServicioGestionProyecto {
     @Autowired
     private ServicioGestionUsuario servicioUsuario;
 
-    public void registrarProyecto(ProyectoInvestigacion proyecto) {
+    public void registrarProyecto(Proyecto proyecto) {
         // 1. Extraemos el director ANTES de guardar el proyecto
         DirectorProyecto directorAsignado = proyecto.getDirector();
 
@@ -44,18 +44,17 @@ public class ServicioGestionProyecto {
     }
 
     public void asignarIntegranteAProyecto(Long proyectoId, Long integranteId) {
-        ProyectoInvestigacion proyecto = proyectoRepo.findById(proyectoId)
+        Proyecto proyecto = proyectoRepo.findById(proyectoId)
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
 
         IntegranteProyecto integrante = integranteRepo.findById(integranteId)
                 .orElseThrow(() -> new RuntimeException("Integrante no encontrado"));
 
-        proyecto.getListaIntegrantes().add(integrante); // Asegúrate que este nombre coincida con tu clase
-                                                        // ProyectoInvestigacion
+        proyecto.getListaIntegrantes().add(integrante);
         proyectoRepo.save(proyecto);
     }
 
-    public List<ProyectoInvestigacion> obtenerProyectosPorDirector(String correo) {
+    public List<Proyecto> obtenerProyectosPorDirector(String correo) {
         return proyectoRepo.findByDirectorCorreoInstitucional(correo);
     }
 }

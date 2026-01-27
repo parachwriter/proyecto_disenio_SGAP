@@ -29,7 +29,7 @@ public abstract class IntegranteProyecto {
     @ManyToOne
     @JoinColumn(name = "proyecto_id")
     @JsonIgnore
-    private ProyectoInvestigacion proyecto;
+    private Proyecto proyecto;
 
     // --- MÉTODOS GETTER Y SETTER ---
 
@@ -37,11 +37,11 @@ public abstract class IntegranteProyecto {
         return id;
     }
 
-    public void setProyecto(ProyectoInvestigacion proyecto) {
+    public void setProyecto(Proyecto proyecto) {
         this.proyecto = proyecto;
     }
 
-    public ProyectoInvestigacion getProyecto() {
+    public Proyecto getProyecto() {
         return proyecto;
     }
 

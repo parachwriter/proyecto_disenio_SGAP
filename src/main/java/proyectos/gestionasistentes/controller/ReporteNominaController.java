@@ -25,7 +25,7 @@ import proyectos.gestionasistentes.dto.NominaRequestDTO;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.service.ServicioGestionAsistente;
 import proyectos.gestionproyectos.model.Asistente;
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 
 @RestController
@@ -113,7 +113,7 @@ public class ReporteNominaController {
     @GetMapping("/fechas-proyecto/{proyectoId}")
     public ResponseEntity<?> obtenerFechasProyecto(@PathVariable Long proyectoId) {
         try {
-            ProyectoInvestigacion proyecto = proyectoRepository.findById(proyectoId)
+            Proyecto proyecto = proyectoRepository.findById(proyectoId)
                     .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
 
             Map<String, Object> response = new HashMap<>();
@@ -131,7 +131,7 @@ public class ReporteNominaController {
     @GetMapping("/meses-atrasados/{proyectoId}")
     public ResponseEntity<?> obtenerMesesAtrasados(@PathVariable Long proyectoId) {
         try {
-            ProyectoInvestigacion proyecto = proyectoRepository.findById(proyectoId)
+            Proyecto proyecto = proyectoRepository.findById(proyectoId)
                     .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
 
             // Obtener todos los reportes de nómina para este proyecto

@@ -1,105 +1,44 @@
 package proyectos.gestionproyectos.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import proyectos.gestionusuario.model.DirectorProyecto;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 
+/**
+ * Clase base abstracta para todos los tipos de proyectos de investigación.
+ * Los subtipos específicos son: Interno, Semilla, Grupal y Multidisciplinario.
+ */
 @Entity
-public class ProyectoInvestigacion {
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+public abstract class ProyectoInvestigacion extends Proyecto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    // --- NUEVO: Estos atributos crean las columnas faltantes ---
-    private String nombre;
-    private Double presupuesto;
-    private Integer maxAsistentes;
-    private String fechaInicio; // Puedes usar LocalDate si prefieres
-    private String fechaFin;
-    // ---------------------------------------------------------
-
-    // Relación con el Director (ManyToOne: muchos proyectos pueden tener el mismo
-    // director)
-    @ManyToOne
-    @JoinColumn(name = "director_id")
-    private DirectorProyecto director;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "proyecto_id")
-    private List<IntegranteProyecto> listaIntegrantes = new ArrayList<>();
+    // Atributos comunes a todos los proyectos de investigación
+    private String hipotesis;
+    private String metodologiaCientifica;
+    private String estadoDelArte;
 
     // --- GETTERS Y SETTERS ---
-    public Long getId() {
-        return id;
+    public String getHipotesis() {
+        return hipotesis;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setHipotesis(String hipotesis) {
+        this.hipotesis = hipotesis;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getMetodologiaCientifica() {
+        return metodologiaCientifica;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setMetodologiaCientifica(String metodologiaCientifica) {
+        this.metodologiaCientifica = metodologiaCientifica;
     }
 
-    public Double getPresupuesto() {
-        return presupuesto;
+    public String getEstadoDelArte() {
+        return estadoDelArte;
     }
 
-    public void setPresupuesto(Double presupuesto) {
-        this.presupuesto = presupuesto;
-    }
-
-    public DirectorProyecto getDirector() {
-        return director;
-    }
-
-    public void setDirector(DirectorProyecto director) {
-        this.director = director;
-    }
-
-    public List<IntegranteProyecto> getListaIntegrantes() {
-        return listaIntegrantes;
-    }
-
-    public void setListaIntegrantes(List<IntegranteProyecto> listaIntegrantes) {
-        this.listaIntegrantes = listaIntegrantes;
-    }
-
-    public Integer getMaxAsistentes() {
-        return maxAsistentes;
-    }
-
-    public void setMaxAsistentes(Integer maxAsistentes) {
-        this.maxAsistentes = maxAsistentes;
-    }
-
-    public String getFechaInicio() {
-        return fechaInicio;
-    }
-
-    public void setFechaInicio(String fechaInicio) {
-        this.fechaInicio = fechaInicio;
-    }
-
-    public String getFechaFin() {
-        return fechaFin;
-    }
-
-    public void setFechaFin(String fechaFin) {
-        this.fechaFin = fechaFin;
+    public void setEstadoDelArte(String estadoDelArte) {
+        this.estadoDelArte = estadoDelArte;
     }
 }

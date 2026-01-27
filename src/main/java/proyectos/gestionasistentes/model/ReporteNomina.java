@@ -15,7 +15,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import proyectos.gestionproyectos.model.Asistente;
-import proyectos.gestionproyectos.model.ProyectoInvestigacion;
+import proyectos.gestionproyectos.model.Proyecto;
 
 @Entity
 public class ReporteNomina {
@@ -33,7 +33,7 @@ public class ReporteNomina {
     @ManyToOne
     @JoinColumn(name = "id_proyecto")
     @JsonIgnore
-    private ProyectoInvestigacion proyecto;
+    private Proyecto proyecto;
 
     @ManyToMany
     @JoinTable(name = "reporte_nomina_asistentes", joinColumns = @JoinColumn(name = "id_reporte"), inverseJoinColumns = @JoinColumn(name = "id_asistente"))
@@ -43,11 +43,11 @@ public class ReporteNomina {
     }
 
     // --- NUEVO GETTER Y SETTER (Soluciona el error de compilación) ---
-    public ProyectoInvestigacion getProyecto() {
+    public Proyecto getProyecto() {
         return proyecto;
     }
 
-    public void setProyecto(ProyectoInvestigacion proyecto) {
+    public void setProyecto(Proyecto proyecto) {
         this.proyecto = proyecto;
     }
 
