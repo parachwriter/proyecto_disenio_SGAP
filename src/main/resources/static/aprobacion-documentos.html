@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprobación de Documentos - SGAP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2rem;
+        }
+
+        .btn-back {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .info-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 4px;
+        }
+
+        .info-box p {
+            color: #555;
+            margin: 0.3rem 0;
+        }
+
+        .info-box strong {
+            color: #667eea;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .seccion-oculta {
+            display: none;
+        }
+
+        .periodo-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 0.3rem;
+        }
+
+        .periodo-actual {
+            background: #28a745;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Aprobación de Documentos</h1>
+            <button class="btn-back" onclick="window.location.href='menu-director.html'">
+                ← Volver al Menú
+            </button>
+        </div>
+
+        <div class="card">
+            <h2>Selección de Proyecto y Periodo</h2>
+            
+            <div class="form-group">
+                <label for="selectProyecto">Proyecto de Investigación:</label>
+                <select id="selectProyecto" onchange="cargarPeriodosProyecto()">
+                    <option value="">-- Seleccione un proyecto --</option>
+                </select>
+            </div>
+
+            <div id="infoProyecto" class="info-box seccion-oculta">
+                <p><strong>Fecha Inicio:</strong> <span id="fechaInicio">-</span></p>
+                <p><strong>Fecha Fin:</strong> <span id="fechaFin">-</span></p>
+                <p><strong>Estado:</strong> <span id="estadoProyecto">-</span></p>
+            </div>
+
+            <div id="seccionPeriodos" class="seccion-oculta" style="margin-top: 2rem;">
+                <div class="alert alert-info">
+                    <strong>ℹ️ Información:</strong> Solo se muestran los periodos académicos desde el inicio del proyecto hasta el periodo actual.
+                </div>
+
+                <div class="form-group">
+                    <label for="selectPeriodo">Periodo Académico:</label>
+                    <select id="selectPeriodo" onchange="seleccionarPeriodo()">
+                        <option value="">-- Seleccione un periodo --</option>
+                    </select>
+                </div>
+
+                <div id="infoPeriodo" class="info-box seccion-oculta">
+                    <p><strong>Periodo:</strong> <span id="codigoPeriodo">-</span></p>
+                    <p><strong>Rango:</strong> <span id="rangoPeriodo">-</span></p>
+                </div>
+
+                <button id="btnContinuar" class="btn-primary" onclick="continuarAprobacion()" disabled>
+                    Continuar a Aprobación →
+                </button>
+            </div>
+        </div>
+
+        <div id="seccionDocumentos" class="card seccion-oculta">
+            <h2>Documentos del Periodo <span id="periodoSeleccionado"></span></h2>
+            <div class="alert alert-warning">
+                <strong>⚠️ En desarrollo:</strong> Funcionalidad de aprobación de documentos próximamente.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let proyectosGlobal = [];
+        let proyectoSeleccionado = null;
+
+        // Al cargar la página
+        window.addEventListener("DOMContentLoaded", async () => {
+            // Protección de ruta
+            if (localStorage.getItem("sesion") !== "director") {
+                window.location.href = "login.html";
+            }
+
+            await cargarProyectos();
+        });
+
+        // Cargar proyectos del director
+        async function cargarProyectos() {
+            const emailDirector = localStorage.getItem("userEmail");
+            
+            if (!emailDirector) {
+                alert("No se encontró información del director. Redirigiendo al login.");
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/proyectos/listar-por-director?emailDirector=${emailDirector}`);
+                
+                if (!response.ok) {
+                    throw new Error("Error al cargar proyectos");
+                }
+
+                const proyectos = await response.json();
+                proyectosGlobal = proyectos;
+
+                const select = document.getElementById("selectProyecto");
+                select.innerHTML = '<option value="">-- Seleccione un proyecto --</option>';
+
+                // Solo mostrar proyectos EN_VIGENCIA
+                const proyectosVigentes = proyectos.filter(p => p.estado === 'EN_VIGENCIA');
+
+                if (proyectosVigentes.length === 0) {
+                    select.innerHTML += '<option value="" disabled>No hay proyectos en vigencia</option>';
+                    return;
+                }
+
+                proyectosVigentes.forEach(proyecto => {
+                    const option = document.createElement("option");
+                    option.value = proyecto.id;
+                    option.textContent = `${proyecto.titulo} (${proyecto.codigoProyecto})`;
+                    select.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error("Error al cargar proyectos:", error);
+                alert("Error al cargar los proyectos");
+            }
+        }
+
+        // Cargar periodos académicos del proyecto seleccionado
+        function cargarPeriodosProyecto() {
+            const selectProyecto = document.getElementById("selectProyecto");
+            const proyectoId = selectProyecto.value;
+
+            if (!proyectoId) {
+                document.getElementById("infoProyecto").classList.add("seccion-oculta");
+                document.getElementById("seccionPeriodos").classList.add("seccion-oculta");
+                return;
+            }
+
+            proyectoSeleccionado = proyectosGlobal.find(p => p.id == proyectoId);
+
+            if (!proyectoSeleccionado) {
+                alert("Proyecto no encontrado");
+                return;
+            }
+
+            // Mostrar información del proyecto
+            document.getElementById("fechaInicio").textContent = proyectoSeleccionado.fechaInicio;
+            document.getElementById("fechaFin").textContent = proyectoSeleccionado.fechaFin;
+            document.getElementById("estadoProyecto").textContent = proyectoSeleccionado.estado;
+            document.getElementById("infoProyecto").classList.remove("seccion-oculta");
+
+            // Calcular periodos académicos
+            const periodos = calcularPeriodosProyecto(
+                proyectoSeleccionado.fechaInicio, 
+                proyectoSeleccionado.fechaFin
+            );
+
+            // Llenar el select de periodos
+            const selectPeriodo = document.getElementById("selectPeriodo");
+            selectPeriodo.innerHTML = '<option value="">-- Seleccione un periodo --</option>';
+
+            periodos.forEach(periodo => {
+                const option = document.createElement("option");
+                option.value = periodo.codigo;
+                option.textContent = `${periodo.codigo} (${periodo.rangoFechas})`;
+                if (periodo.esActual) {
+                    option.textContent += " - ACTUAL";
+                }
+                selectPeriodo.appendChild(option);
+            });
+
+            document.getElementById("seccionPeriodos").classList.remove("seccion-oculta");
+        }
+
+        // Calcular periodos académicos entre dos fechas (solo hasta el actual)
+        function calcularPeriodosProyecto(fechaInicioStr, fechaFinStr) {
+            const fechaInicio = new Date(fechaInicioStr);
+            const fechaFin = new Date(fechaFinStr);
+            const fechaActual = new Date();
+
+            // Limitar fechaFin al periodo actual
+            const fechaLimite = fechaFin < fechaActual ? fechaFin : fechaActual;
+
+            const periodos = [];
+            let fecha = new Date(fechaInicio);
+
+            while (fecha <= fechaLimite) {
+                const periodo = obtenerPeriodoAcademico(fecha);
+                
+                // Evitar duplicados
+                if (!periodos.some(p => p.codigo === periodo.codigo)) {
+                    // Verificar si es el periodo actual
+                    const periodoActual = obtenerPeriodoAcademico(fechaActual);
+                    periodo.esActual = periodo.codigo === periodoActual.codigo;
+                    
+                    periodos.push(periodo);
+                }
+
+                // Avanzar 6 meses para el siguiente periodo
+                fecha.setMonth(fecha.getMonth() + 6);
+            }
+
+            return periodos;
+        }
+
+        // Obtener periodo académico de una fecha
+        function obtenerPeriodoAcademico(fecha) {
+            const mes = fecha.getMonth() + 1; // 1-12
+            const anio = fecha.getFullYear();
+
+            let codigo, inicioMes, finMes, inicioAnio, finAnio;
+
+            // Periodo A: Marzo (3) - Agosto (8)
+            if (mes >= 3 && mes <= 8) {
+                codigo = `${anio}A`;
+                inicioMes = 3;
+                finMes = 8;
+                inicioAnio = anio;
+                finAnio = anio;
+            }
+            // Periodo B: Septiembre (9) - Diciembre (12)
+            else if (mes >= 9 && mes <= 12) {
+                codigo = `${anio}B`;
+                inicioMes = 9;
+                finMes = 2;
+                inicioAnio = anio;
+                finAnio = anio + 1;
+            }
+            // Periodo B del año anterior: Enero (1) - Febrero (2)
+            else {
+                codigo = `${anio - 1}B`;
+                inicioMes = 9;
+                finMes = 2;
+                inicioAnio = anio - 1;
+                finAnio = anio;
+            }
+
+            const nombresMeses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            const rangoFechas = `${nombresMeses[inicioMes]} ${inicioAnio} - ${nombresMeses[finMes]} ${finAnio}`;
+
+            return { codigo, rangoFechas };
+        }
+
+        // Seleccionar periodo
+        function seleccionarPeriodo() {
+            const selectPeriodo = document.getElementById("selectPeriodo");
+            const codigoPeriodo = selectPeriodo.value;
+
+            if (!codigoPeriodo) {
+                document.getElementById("infoPeriodo").classList.add("seccion-oculta");
+                document.getElementById("btnContinuar").disabled = true;
+                return;
+            }
+
+            const selectedOption = selectPeriodo.options[selectPeriodo.selectedIndex];
+            const rangoTexto = selectedOption.textContent;
+
+            document.getElementById("codigoPeriodo").textContent = codigoPeriodo;
+            document.getElementById("rangoPeriodo").textContent = rangoTexto;
+            document.getElementById("infoPeriodo").classList.remove("seccion-oculta");
+            document.getElementById("btnContinuar").disabled = false;
+        }
+
+        // Continuar a la aprobación
+        function continuarAprobacion() {
+            const codigoPeriodo = document.getElementById("selectPeriodo").value;
+            
+            if (!codigoPeriodo || !proyectoSeleccionado) {
+                alert("Debe seleccionar un proyecto y un periodo");
+                return;
+            }
+
+            // Mostrar sección de documentos (en desarrollo)
+            document.getElementById("periodoSeleccionado").textContent = codigoPeriodo;
+            document.getElementById("seccionDocumentos").classList.remove("seccion-oculta");
+            
+            // Scroll hacia la sección
+            document.getElementById("seccionDocumentos").scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
