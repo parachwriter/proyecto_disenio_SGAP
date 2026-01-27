@@ -2,32 +2,325 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGAP - Menú Director</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f0f8ff; }
-        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; margin-top: 20px; }
-        .card { padding: 30px; border: 1px solid #28a745; border-radius: 8px; text-align: center; cursor: pointer; background: white; transition: 0.3s; }
-        .card:hover { background: #28a745; color: white; transform: translateY(-5px); }
-        .header { display: flex; justify-content: space-between; align-items: center; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
+            opacity: 0.3;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .logo-stamp {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 70px;
+            height: 70px;
+            background: white;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-stamp img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem;
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header-content h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .user-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+            color: white;
+            border: none;
+            padding: 0.85rem 1.75rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+            white-space: nowrap;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 101, 101, 0.5);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem 2rem;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(72, 187, 120, 0.4);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        .card h3 {
+            color: #2d3748;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+            transition: color 0.3s ease;
+        }
+
+        .card:hover h3 {
+            color: white;
+        }
+
+        .card p {
+            color: #718096;
+            font-size: 0.95rem;
+            position: relative;
+            z-index: 1;
+            transition: color 0.3s ease;
+        }
+
+        .card:hover p {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .card.primary .card-icon {
+            color: #48bb78;
+        }
+
+        .card.secondary .card-icon {
+            color: #4299e1;
+        }
+
+        .card.accent .card-icon {
+            color: #9f7aea;
+        }
+
+        @media (max-width: 768px) {
+            .logo-stamp {
+                width: 55px;
+                height: 55px;
+                top: 15px;
+                left: 15px;
+            }
+
+            .header {
+                padding: 1.5rem;
+                margin-top: 50px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-content h1 {
+                font-size: 1.5rem;
+            }
+
+            .user-badge {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.85rem;
+            }
+
+            .logout-btn {
+                width: 100%;
+            }
+
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .menu-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Panel del Director de Proyecto</h1>
-        <button onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
+    <!-- Logo en esquina superior izquierda -->
+    <div class="logo-stamp">
+        <img src="SGAP.png" alt="SGAP Logo">
     </div>
-    
-    <p id="bienvenida"></p>
 
-    <div class="menu-grid">
-        <div class="card" onclick="alert('Cargando sus proyectos asignados...')">
-            <h3>Consulta Proyectos</h3>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>Panel del Director de Proyecto</h1>
+                <div class="user-info">
+                    <div class="user-badge">
+                        <div class="user-icon">👤</div>
+                        <span id="bienvenida"></span>
+                    </div>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="localStorage.clear(); window.location.href='login.html'">
+                Cerrar Sesión
+            </button>
         </div>
-        <div class="card" onclick="alert('Cargando historial de nóminas...')">
-            <h3>Consulta Nóminas</h3>
+
+        <div class="menu-grid">
+            <div class="card primary" onclick="alert('Cargando sus proyectos asignados...')">
+                <div class="card-icon">📋</div>
+                <h3>Consulta Proyectos</h3>
+                <p>Ver proyectos de investigación asignados</p>
+            </div>
+
+            <div class="card secondary" onclick="alert('Cargando historial de nóminas...')">
+                <div class="card-icon">📊</div>
+                <h3>Consulta Nóminas</h3>
+                <p>Revisar historial de pagos y nóminas</p>
+            </div>
+
+            <div class="card accent" onclick="window.location.href='nomina.html'">
+                <div class="card-icon">💰</div>
+                <h3>Actualizar Nómina Mensual</h3>
+                <p>Registrar y actualizar nómina del mes</p>
+            </div>
         </div>
-        <div class="card" onclick="window.location.href='nomina.html'">
-        <h3>Actualizar Nómina Mensual</h3>
     </div>
 
     <script>
@@ -38,7 +331,11 @@
 
         // Mostrar el correo del director logueado
         const email = localStorage.getItem("userEmail");
-        document.getElementById('bienvenida').innerText = "Identificado como: " + email;
+        if (email) {
+            document.getElementById('bienvenida').innerText = email;
+        } else {
+            document.getElementById('bienvenida').innerText = "Director";
+        }
     </script>
 </body>
 </html>

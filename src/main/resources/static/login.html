@@ -2,56 +2,261 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGAP - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Sistema de Gestión Académica</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; }
-        .login-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        form { display: flex; flex-direction: column; gap: 15px; width: 300px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.05)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .logo-stamp {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-stamp img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .login-header h1 {
+            color: #2d3748;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .login-header p {
+            color: #718096;
+            font-size: 0.95rem;
+            font-weight: 400;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            color: #4a5568;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.95rem 1.2rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            color: #2d3748;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group input::placeholder {
+            color: #a0aec0;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #718096;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 480px) {
+            .logo-stamp {
+                width: 60px;
+                height: 60px;
+                top: 15px;
+                left: 15px;
+            }
+
+            .login-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .login-header h1 {
+                font-size: 1.6rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <h2>SGAP Login</h2>
-        <form id="loginForm">
-            <input type="email" id="user" placeholder="Correo" required>
-            <input type="password" id="pass" placeholder="Contraseña" required>
-            <button type="submit">Entrar</button>
-        </form>
+    <!-- Logo en esquina superior izquierda -->
+    <div class="logo-stamp">
+        <img src="SGAP.png" alt="SGAP Logo">
     </div>
 
-   <script>
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const usuario = document.getElementById('user').value;
-        const password = document.getElementById('pass').value;
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>SGAP</h1>
+                <p>Sistema de Gestión Académica y Progreso</p>
+            </div>
 
-        try {
-            // Llamada real al endpoint de autenticación
-            const response = await fetch('/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario, password })
-            });
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="user">Correo Electrónico</label>
+                    <input 
+                        type="email" 
+                        id="user" 
+                        placeholder="usuario@ejemplo.com" 
+                        required
+                        autocomplete="email"
+                    >
+                </div>
 
-            if (!response.ok) throw new Error("Error en el servidor");
+                <div class="input-group">
+                    <label for="pass">Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="pass" 
+                        placeholder="Ingrese su contraseña" 
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
 
-            const rol = await response.text(); // Recibe "ADMIN", "DIRECTOR" o "INVALIDO"
+                <button type="submit" class="submit-btn">Iniciar Sesión</button>
+            </form>
 
-            if (rol === "ADMIN") {
-                localStorage.setItem("sesion", "admin");
-                window.location.href = "dashboard.html";
-            } else if (rol === "DIRECTOR") {
-                localStorage.setItem("sesion", "director");
-                localStorage.setItem("userEmail", usuario); 
-                window.location.href = "menu-director.html";
-            } else {
-                alert("Usuario o contraseña incorrectos. Si es Director, use la clave temporal de su correo.");
+            <p class="footer-text">
+                Sistema Educativo © 2025
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usuario = document.getElementById('user').value;
+            const password = document.getElementById('pass').value;
+
+            try {
+                // Llamada real al endpoint de autenticación
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+
+                if (!response.ok) throw new Error("Error en el servidor");
+
+                const rol = await response.text(); // Recibe "ADMIN", "DIRECTOR" o "INVALIDO"
+
+                if (rol === "ADMIN") {
+                    localStorage.setItem("sesion", "admin");
+                    window.location.href = "dashboard.html";
+                } else if (rol === "DIRECTOR") {
+                    localStorage.setItem("sesion", "director");
+                    localStorage.setItem("userEmail", usuario); 
+                    window.location.href = "menu-director.html";
+                } else {
+                    alert("Usuario o contraseña incorrectos. Si es Director, use la clave temporal de su correo.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error al conectar con el servidor. Asegúrese de que el Backend esté corriendo.");
             }
-        } catch (err) {
-            console.error(err);
-            alert("Error al conectar con el servidor. Asegúrese de que el Backend esté corriendo.");
-        }
-    });
-</script>
+        });
+    </script>
 </body>
 </html>
