@@ -151,7 +151,8 @@
         input[type="text"],
         input[type="email"],
         input[type="number"],
-        input[type="date"] {
+        input[type="date"],
+        select {
             padding: 0.85rem 1.2rem;
             border-radius: 10px;
             border: 2px solid #e2e8f0;
@@ -165,10 +166,15 @@
             color: #a0aec0;
         }
 
-        input:focus {
+        input:focus,
+        select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .hidden {
+            display: none;
         }
 
         .divider {
@@ -349,6 +355,29 @@
         <div class="module">
             <h2>Registro de Proyecto</h2>
             <form id="formProyecto">
+                <!-- Tipo de Proyecto -->
+                <div class="form-group">
+                    <label for="tipoProyecto">Tipo de Proyecto *</label>
+                    <select id="tipoProyecto" required>
+                        <option value="">-- Seleccione el tipo de proyecto --</option>
+                        <option value="INVESTIGACION">Proyecto de Investigación</option>
+                        <option value="VINCULACION">Proyecto de Vinculación</option>
+                        <option value="TRANSICION">Proyecto de Transición Tecnológica</option>
+                    </select>
+                </div>
+
+                <!-- Subtipo de Investigación (solo visible si tipo = INVESTIGACION) -->
+                <div class="form-group hidden" id="divSubtipo">
+                    <label for="subtipoInvestigacion">Subtipo de Investigación *</label>
+                    <select id="subtipoInvestigacion">
+                        <option value="">-- Seleccione el subtipo --</option>
+                        <option value="INTERNO">Interno</option>
+                        <option value="SEMILLA">Semilla</option>
+                        <option value="GRUPAL">Grupal</option>
+                        <option value="MULTIDISCIPLINARIO">Multidisciplinario</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label for="nombreP">Nombre del Proyecto *</label>
                     <input type="text" id="nombreP" placeholder="Ingrese el nombre del proyecto" required>
@@ -420,6 +449,26 @@
             window.location.href = 'login.html';
         }
 
+        // Mostrar/ocultar subtipo según tipo de proyecto
+        document.getElementById('tipoProyecto').addEventListener('change', (e) => {
+            const divSubtipo = document.getElementById('divSubtipo');
+            const selectSubtipo = document.getElementById('subtipoInvestigacion');
+            
+            if (e.target.value === 'INVESTIGACION') {
+                divSubtipo.classList.remove('hidden');
+                selectSubtipo.required = true;
+            } else {
+                divSubtipo.classList.add('hidden');
+                selectSubtipo.required = false;
+                selectSubtipo.value = '';
+            }
+        });
+
+        // Validación de cédula: solo números
+        document.getElementById("cedulaD").addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
         // Validación de cédula: solo números
         document.getElementById("cedulaD").addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
@@ -442,7 +491,12 @@
         document.getElementById('formProyecto').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const tipoProyecto = document.getElementById('tipoProyecto').value;
+            const subtipoInvestigacion = document.getElementById('subtipoInvestigacion').value;
+
             const data = {
+                tipoProyecto: tipoProyecto,
+                subtipoInvestigacion: subtipoInvestigacion,
                 nombre: document.getElementById('nombreP').value,
                 presupuesto: parseFloat(document.getElementById('presupuestoP').value),
                 maxAsistentes: parseInt(document.getElementById('maxAsistentesP').value),
