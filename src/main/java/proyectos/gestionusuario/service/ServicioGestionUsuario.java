@@ -91,19 +91,24 @@ public class ServicioGestionUsuario {
 
     // 2. Método del diagrama: Autenticar Usuario (CORREGIDO PARA VALIDACIÓN REAL)
     public String autenticarUsuario(String usuario, String password) {
-        // Caso Jefe de Departamento (Admin)
+        // 1. Caso Jefe de Departamento (ADMIN) - Quemado
         if (usuario.equals("admin@sgap.com") && password.equals("admin123")) {
             return "ADMIN";
         }
 
-        // Caso Director de Proyecto: Buscamos en la tabla 'usuarios' a través del
-        // repositorio
-        // Filtramos por el usuario (email) y el password que se generó antes
+        // 2. NUEVO: Caso Director de Proyecto - Quemado para pruebas
+        // Puedes usar estas credenciales sin necesidad de que existan en la BD
+        if (usuario.equals("director@test.com") && password.equals("dir123")) {
+            return "DIRECTOR";
+        }
+
+        // 3. Caso Real: Búsqueda en Base de Datos (Persistencia)
+        // Esto permite que tus directores creados dinámicamente sigan funcionando
         return directorRepository.findAll().stream()
                 .filter(d -> d.getUsuario().equals(usuario) && d.getPassword().equals(password))
                 .findFirst()
-                .map(d -> "DIRECTOR") // Si lo encuentra, devuelve este rol
-                .orElse("INVALIDO"); // Si no coincide, devuelve este mensaje
+                .map(d -> "DIRECTOR")
+                .orElse("INVALIDO");
     }
 
     // 3. Método del diagrama: Verificar Credenciales

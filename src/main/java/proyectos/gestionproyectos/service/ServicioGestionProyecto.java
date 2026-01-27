@@ -51,11 +51,16 @@ public class ServicioGestionProyecto {
                 .orElseThrow(() -> new RuntimeException("Integrante no encontrado"));
 
         proyecto.getListaIntegrantes().add(integrante); // Asegúrate que este nombre coincida con tu clase
-                                                        // ProyectoInvestigacion
+        // ProyectoInvestigacion
         proyectoRepo.save(proyecto);
     }
 
     public List<ProyectoInvestigacion> obtenerProyectosPorDirector(String correo) {
         return proyectoRepo.findByDirectorCorreoInstitucional(correo);
+    }
+
+    // Agrega esto dentro de la clase ServicioGestionProyecto
+    public List<ProyectoInvestigacion> listarTodos() {
+        return proyectoRepo.findAll();
     }
 }

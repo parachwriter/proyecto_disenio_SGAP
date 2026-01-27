@@ -65,4 +65,19 @@ public class ProyectoController {
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en lugar de error
         }
     }
+
+    // Agrega esto dentro de la clase ProyectoController
+    @GetMapping // Esto habilita GET http://localhost:8080/proyectos
+    public ResponseEntity<List<ProyectoInvestigacion>> listarTodos() {
+        try {
+            List<ProyectoInvestigacion> proyectos = servicio.listarTodos();
+            if (proyectos.isEmpty()) {
+                return ResponseEntity.noContent().build(); // Retorna 204 si no hay datos
+            }
+            return ResponseEntity.ok(proyectos);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 }
