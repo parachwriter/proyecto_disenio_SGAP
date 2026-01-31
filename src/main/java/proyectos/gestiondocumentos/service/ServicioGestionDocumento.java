@@ -139,10 +139,13 @@ public class ServicioGestionDocumento {
                     + periodoActual.getCodigo());
 
             // Contar nóminas de este periodo mes por mes
-            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodoActual);
+            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodoActual, fechaInicio,
+                    primerPeriodoProyecto);
+            int nominasEsperadas = calcularNominasEsperadas(periodoActual, fechaInicio, primerPeriodoProyecto);
 
-            if (nominasEncontradas < 6) {
-                periodosFaltantes.add(periodoActual.getCodigo() + " (registradas: " + nominasEncontradas + "/6)");
+            if (nominasEncontradas < nominasEsperadas) {
+                periodosFaltantes.add(periodoActual.getCodigo() + " (registradas: " + nominasEncontradas + "/"
+                        + nominasEsperadas + ")");
                 System.out.println(
                         "DEBUG PLANIFICACION - Periodo " + periodoActual.getCodigo() + " agregado a faltantes");
             }
@@ -208,22 +211,26 @@ public class ServicioGestionDocumento {
         // 1. Validar periodos anteriores al seleccionado (completos)
         PeriodoAcademico periodo = primerPeriodoProyecto;
         while (periodo.compareTo(periodoSolicitado) < 0) {
-            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodo);
+            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodo, fechaInicio, primerPeriodoProyecto);
+            int nominasEsperadas = calcularNominasEsperadas(periodo, fechaInicio, primerPeriodoProyecto);
 
-            if (nominasEncontradas < 6) {
-                periodosFaltantes.add(periodo.getCodigo() + " (registradas: " + nominasEncontradas + "/6)");
+            if (nominasEncontradas < nominasEsperadas) {
+                periodosFaltantes.add(
+                        periodo.getCodigo() + " (registradas: " + nominasEncontradas + "/" + nominasEsperadas + ")");
             }
 
             periodo = periodo.siguiente();
         }
 
-        // 2. Validar que el periodo seleccionado tenga TODAS sus nóminas completas (6
-        // meses)
-        int nominasPeriodoSeleccionado = contarNominasPeriodo(proyectoId, periodoSolicitado);
+        // 2. Validar que el periodo seleccionado tenga TODAS sus nóminas completas
+        int nominasPeriodoSeleccionado = contarNominasPeriodo(proyectoId, periodoSolicitado, fechaInicio,
+                primerPeriodoProyecto);
+        int nominasEsperadasPeriodoSeleccionado = calcularNominasEsperadas(periodoSolicitado, fechaInicio,
+                primerPeriodoProyecto);
 
-        if (nominasPeriodoSeleccionado < 6) {
-            periodosFaltantes
-                    .add(periodoSolicitado.getCodigo() + " (registradas: " + nominasPeriodoSeleccionado + "/6)");
+        if (nominasPeriodoSeleccionado < nominasEsperadasPeriodoSeleccionado) {
+            periodosFaltantes.add(periodoSolicitado.getCodigo() + " (registradas: " + nominasPeriodoSeleccionado + "/"
+                    + nominasEsperadasPeriodoSeleccionado + ")");
         }
 
         // Si hay periodos con nóminas faltantes, construir mensaje detallado
@@ -249,18 +256,27 @@ public class ServicioGestionDocumento {
     /**
      * Cuenta cuántas nóminas existen para un proyecto en un periodo académico
      * específico
-     * Valida mes por mes dentro del periodo
+     * Valida mes por mes dentro del periodo, considerando la fecha de inicio del
+     * proyecto
      */
-    private int contarNominasPeriodo(Long proyectoId, PeriodoAcademico periodo) {
+    private int contarNominasPeriodo(Long proyectoId, PeriodoAcademico periodo, LocalDate fechaInicioProyecto,
+            PeriodoAcademico primerPeriodoProyecto) {
         int count = 0;
         LocalDate fecha = periodo.getFechaInicio();
+
+        // Si es el primer periodo del proyecto, empezar desde la fecha de inicio del
+        // proyecto
+        if (periodo.compareTo(primerPeriodoProyecto) == 0 && fechaInicioProyecto.isAfter(fecha)) {
+            fecha = fechaInicioProyecto;
+        }
+
         LocalDate fechaFin = periodo.getFechaFin();
 
         System.out.println("DEBUG - Contando nóminas para periodo: " + periodo.getCodigo());
-        System.out.println("DEBUG - Fecha inicio: " + fecha + ", Fecha fin: " + fechaFin);
+        System.out.println("DEBUG - Fecha inicio validación: " + fecha + ", Fecha fin: " + fechaFin);
 
-        // Iterar por 6 meses exactos (cada periodo tiene 6 meses)
-        for (int i = 0; i < 6; i++) {
+        // Iterar mes por mes desde la fecha calculada hasta el fin del periodo
+        while (!fecha.isAfter(fechaFin)) {
             int mes = fecha.getMonthValue();
             int anio = fecha.getYear();
 
@@ -283,5 +299,34 @@ public class ServicioGestionDocumento {
 
         System.out.println("DEBUG - Total nóminas encontradas en " + periodo.getCodigo() + ": " + count);
         return count;
+    }
+
+    /**
+     * Calcula cuántas nóminas se esperan en un periodo según la fecha de inicio del
+     * proyecto
+     * Si es el primer periodo, solo se cuentan los meses desde el inicio del
+     * proyecto
+     * Si es un periodo posterior, se esperan 6 meses completos
+     */
+    private int calcularNominasEsperadas(PeriodoAcademico periodo, LocalDate fechaInicioProyecto,
+            PeriodoAcademico primerPeriodoProyecto) {
+        // Si no es el primer periodo del proyecto, siempre se esperan 6 meses
+        if (periodo.compareTo(primerPeriodoProyecto) != 0) {
+            return 6;
+        }
+
+        // Es el primer periodo: contar meses desde inicio proyecto hasta fin de periodo
+        LocalDate inicioConteo = fechaInicioProyecto;
+        LocalDate finPeriodo = periodo.getFechaFin();
+
+        int mesesEsperados = 0;
+        LocalDate fecha = inicioConteo;
+        while (!fecha.isAfter(finPeriodo)) {
+            mesesEsperados++;
+            fecha = fecha.plusMonths(1);
+        }
+
+        System.out.println("DEBUG - Nóminas esperadas para periodo " + periodo.getCodigo() + ": " + mesesEsperados);
+        return mesesEsperados;
     }
 }
