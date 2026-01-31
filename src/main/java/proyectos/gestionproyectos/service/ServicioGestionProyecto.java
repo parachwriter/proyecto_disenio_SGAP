@@ -58,9 +58,17 @@ public class ServicioGestionProyecto {
         return proyectoRepo.findByDirectorCorreoInstitucional(correo);
     }
 
-
-    //retornar todos los proyectos
+    // retornar todos los proyectos
     public List<Proyecto> listarTodos() {
-      return proyectoRepo.findAll();
+        return proyectoRepo.findAll();
+    }
+
+    // Listar por tipo (acepta patrones sobre la columna discriminator
+    // tipo_proyecto)
+    public List<Proyecto> listarPorTipo(String tipoPattern) {
+        if (tipoPattern == null || tipoPattern.isBlank()) {
+            return listarTodos();
+        }
+        return proyectoRepo.findByTipoProyectoPattern(tipoPattern);
     }
 }

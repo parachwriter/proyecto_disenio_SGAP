@@ -128,19 +128,37 @@ public class ProyectoController {
         }
     }
 
-
-    //listar todos los proyectos
+    // listar todos los proyectos
     @GetMapping
-    public ResponseEntity<List<Proyecto>> listarTodos() {
+    public ResponseEntity<List<Proyecto>> listarTodos(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String tipo) {
         try {
-            List<Proyecto> proyectos = servicio.listarTodos();
-
-            if (proyectos.isEmpty()) {
-                return ResponseEntity.noContent().build(); // Retorna 204 si está vacío
+            // Mapear valores del frontend a patrones de discriminador
+            String pattern = null;
+            if (tipo != null && !tipo.isBlank()) {
+                switch (tipo) {
+                    case "ProyectoInvestigacion":
+                        pattern = "INVESTIGACION%"; // cubre INVESTIGACION_*
+                        break;
+                    case "ProyectoVinculacion":
+                        pattern = "VINCULACION";
+                        break;
+                    case "ProyectoTransicionTecnologica":
+                        pattern = "TRANSICION_TECNOLOGICA";
+                        break;
+                    default:
+                        // permitir búsquedas exactas por discriminator si se envía otro valor
+                        pattern = tipo;
+                }
             }
 
+            List<Proyecto> proyectos = servicio.listarPorTipo(pattern);
+            if (proyectos == null || proyectos.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
             return ResponseEntity.ok(proyectos);
         } catch (Exception e) {
+            logger.error("Error al listar proyectos con filtro tipo={}: {}", tipo, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

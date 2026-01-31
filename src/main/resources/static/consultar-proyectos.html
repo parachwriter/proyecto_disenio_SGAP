@@ -310,7 +310,7 @@
                 <input type="text" id="busqueda" placeholder="Buscar por nombre..." onkeyup="filtrarProyectos()">
             </div>
             <div class="filter-group">
-                <select id="filtroTipo" onchange="filtrarProyectos()">
+                <select id="filtroTipo" onchange="cargarProyectos()">
                     <option value="">Todos los tipos</option>
                     <option value="ProyectoInvestigacion">Investigación</option>
                     <option value="ProyectoVinculacion">Vinculación</option>
@@ -357,7 +357,9 @@
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('contenedorProyectos').style.display = 'none';
 
-                const response = await fetch(`${API_BASE}/proyectos`);
+                const tipo = document.getElementById('filtroTipo').value;
+                const url = tipo ? `${API_BASE}/proyectos?tipo=${encodeURIComponent(tipo)}` : `${API_BASE}/proyectos`;
+                const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar proyectos');
 
                 proyectosData = await response.json();
@@ -420,12 +422,11 @@
 
         function filtrarProyectos() {
             const busqueda = document.getElementById('busqueda').value.toLowerCase();
-            const tipo = document.getElementById('filtroTipo').value;
 
+            // Filtrado por nombre sobre los datos ya cargados desde el servidor (el tipo se solicita al backend)
             const filtrados = proyectosData.filter(p => {
-                const coincideNombre = p.nombre.toLowerCase().includes(busqueda);
-                const coincideTipo = !tipo || p.tipo === tipo;
-                return coincideNombre && coincideTipo;
+                const nombre = (p.nombre || '').toLowerCase();
+                return nombre.includes(busqueda);
             });
 
             mostrarProyectos(filtrados);
