@@ -3,6 +3,7 @@ package proyectos.gestionasistentes.controller;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.service.ServicioGestionAsistente;
 import proyectos.gestionproyectos.model.Asistente;
+import proyectos.gestionproyectos.model.IntegranteProyecto;
 import proyectos.gestionproyectos.repository.IntegranteRepository;
 
 @RestController
@@ -42,13 +44,13 @@ public class GestionAsistenteController {
         return "Estas entrando por GET. Debe ser POST /nomina/asistentes/registrar";
     }
 
-    // 1) LISTAR ASISTENTES
+    // 1) LISTAR ASISTENTES (devuelve todos los integrantes de proyectos, incluyendo
+    // técnicos y ayudantes). Mapea a DTO que incluye nombre e id del proyecto.
     @GetMapping("/asistentes")
-    public List<Asistente> listarAsistentes() {
+    public List<IntegranteDTO> listarAsistentes() {
         return integranteRepository.findAll().stream()
-                .filter(i -> i instanceof Asistente)
-                .map(i -> (Asistente) i)
-                .toList();
+                .map(IntegranteDTO::new)
+                .collect(Collectors.toList());
     }
 
     // 2) REGISTRAR ASISTENTE (POST)
@@ -69,7 +71,7 @@ public class GestionAsistenteController {
     @PostMapping("/generar")
     public ReporteNomina generar(@RequestBody GenerarNominaRequest req) {
         return servicio.confirmarActualizacionNomina(req.getIdProyecto(), req.getMes(), req.getAnio(),
-                req.getIdsAsistentes());
+                req.getIdsAsistentes(), req.getActualizadoPor());
     }
 
     // 4) VALIDAR REPORTE NOMINA
@@ -102,10 +104,11 @@ public class GestionAsistenteController {
         }
     }
 
-    // 8) OBTENER NÓMINAS POR PROYECTO
+    // 8) OBTENER NÓMINAS POR PROYECTO (con filtro opcional por quien actualizó)
     @GetMapping("/proyecto/{proyectoId}")
-    public List<ReporteNomina> obtenerNominasPorProyecto(@PathVariable Long proyectoId) {
-        return servicio.obtenerNominasPorProyecto(proyectoId);
+    public List<ReporteNomina> obtenerNominasPorProyecto(@PathVariable Long proyectoId,
+            @RequestParam(required = false) String actualizadoPor) {
+        return servicio.obtenerNominasPorProyecto(proyectoId, actualizadoPor);
     }
 
     // ===== DTOs =====
@@ -153,6 +156,7 @@ public class GestionAsistenteController {
         private Integer mes;
         private Integer anio;
         private List<Long> idsAsistentes;
+        private String actualizadoPor;
 
         public Long getIdProyecto() {
             return idProyecto;
@@ -184,6 +188,67 @@ public class GestionAsistenteController {
 
         public void setIdsAsistentes(List<Long> idsAsistentes) {
             this.idsAsistentes = idsAsistentes;
+        }
+
+        public String getActualizadoPor() {
+            return actualizadoPor;
+        }
+
+        public void setActualizadoPor(String actualizadoPor) {
+            this.actualizadoPor = actualizadoPor;
+        }
+    }
+
+    // DTO para exponer integrandes con información mínima del proyecto
+    public static class IntegranteDTO {
+        private Long id;
+        private String nombre;
+        private String cedula;
+        private String tipo;
+        private Map<String, Object> proyecto;
+        private String estado;
+        private String fechaNacimiento;
+
+        public IntegranteDTO(IntegranteProyecto i) {
+            this.id = i.getId();
+            this.nombre = i.getNombre();
+            this.cedula = i.getCedula();
+            this.tipo = i.getTipo();
+            if (i.getProyecto() != null) {
+                this.proyecto = Map.of("id", i.getProyecto().getId(), "nombre", i.getProyecto().getNombre());
+            } else {
+                this.proyecto = null;
+            }
+            this.estado = i.getEstado() != null ? i.getEstado().name() : null;
+            this.fechaNacimiento = i.getFechaNacimiento() != null ? i.getFechaNacimiento().toString() : null;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public String getNombre() {
+            return nombre;
+        }
+
+        public String getCedula() {
+            return cedula;
+        }
+
+        public String getTipo() {
+            return tipo;
+        }
+
+        public Map<String, Object> getProyecto() {
+            return proyecto;
+        }
+
+        public String getEstado() {
+            return estado;
+        }
+
+        public String getFechaNacimiento() {
+            return fechaNacimiento;
         }
     }
 }

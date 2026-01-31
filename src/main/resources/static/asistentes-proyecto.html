@@ -296,7 +296,7 @@
         <div class="header">
             <h1>👨‍💼 Asistentes de Proyecto</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-nuevo" onclick="abrirModalNuevoAsistente()">+ Nuevo Asistente</button>
+                <button id="btnNuevoAsistente" class="btn-nuevo" onclick="abrirModalNuevoAsistente()">+ Nuevo Asistente</button>
                 <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
             </div>
         </div>
@@ -391,6 +391,26 @@
         let asistenteEnEdicion = null;
 
         window.addEventListener('load', () => {
+            // Ocultar opción de "Nuevo Asistente" para usuarios con sesión de admin
+            try {
+                const sesion = localStorage.getItem('sesion');
+                if (sesion === 'admin') {
+                    const btn = document.getElementById('btnNuevoAsistente');
+                    if (btn) btn.remove();
+                    // Eliminar la columna de Acciones del encabezado
+                    try {
+                        const ths = document.querySelectorAll('#tablaAsistentes thead th');
+                        ths.forEach(th => {
+                            if (th.textContent && th.textContent.trim().toLowerCase() === 'acciones') th.remove();
+                        });
+                    } catch (e) {
+                        console.warn('No se pudo remover la columna Acciones:', e);
+                    }
+                }
+            } catch (e) {
+                console.warn('No se pudo comprobar la sesión:', e);
+            }
+
             cargarProyectos();
             cargarAsistentes();
         });
@@ -440,18 +460,31 @@
         function mostrarAsistentes(asistentes) {
             const tbody = document.getElementById('cuerpoTabla');
             tbody.innerHTML = '';
+            const sesion = (function(){ try { return localStorage.getItem('sesion'); } catch(e){ return null; } })();
+            const showAcciones = sesion !== 'admin';
+
+            // Calcular colspan dinámico según encabezados visibles
+            const headerCount = document.querySelectorAll('#tablaAsistentes thead th').length || 7;
 
             if (asistentes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #a0aec0;">No hay asistentes registrados</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${headerCount}" style="text-align: center; color: #a0aec0;">No hay asistentes registrados</td></tr>`;
                 return;
             }
 
             asistentes.forEach(asistente => {
                 const tipoClase = asistente.tipo === 'ASISTENTE' ? 'badge-tipo-asistente' : 
                                   asistente.tipo === 'AYUDANTE' ? 'badge-tipo-ayudante' : 'badge-tipo-tecnico';
-                
+
                 const estadoBadge = asistente.estado === 'ACTIVO' ? 'badge-activo' : 'badge-inactivo';
-                
+
+                const accionesCell = showAcciones ? `
+                    <td>
+                        <div class="actions">
+                            <button class="btn-accion btn-editar" onclick="editarAsistente(${asistente.id})">Editar</button>
+                            <button class="btn-accion btn-eliminar" onclick="eliminarAsistente(${asistente.id})">Eliminar</button>
+                        </div>
+                    </td>` : '';
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${asistente.id || 'N/A'}</td>
@@ -460,12 +493,7 @@
                     <td><span class="badge ${tipoClase}">${asistente.tipo || 'N/A'}</span></td>
                     <td>${asistente.proyecto?.nombre || 'Sin proyecto'}</td>
                     <td><span class="badge ${estadoBadge}">${asistente.estado || 'INACTIVO'}</span></td>
-                    <td>
-                        <div class="actions">
-                            <button class="btn-accion btn-editar" onclick="editarAsistente(${asistente.id})">Editar</button>
-                            <button class="btn-accion btn-eliminar" onclick="eliminarAsistente(${asistente.id})">Eliminar</button>
-                        </div>
-                    </td>
+                    ${accionesCell}
                 `;
                 tbody.appendChild(row);
             });
@@ -491,6 +519,16 @@
         }
 
         function editarAsistente(id) {
+            try {
+                const sesion = localStorage.getItem('sesion');
+                if (sesion === 'admin') {
+                    mostrarError('No tiene permisos para editar asistentes desde este rol.');
+                    return;
+                }
+            } catch (e) {
+                console.warn(e);
+            }
+
             const asistente = asistentesData.find(a => a.id === id);
             if (!asistente) return;
 
@@ -540,6 +578,16 @@
         }
 
         async function eliminarAsistente(id) {
+            try {
+                const sesion = localStorage.getItem('sesion');
+                if (sesion === 'admin') {
+                    mostrarError('No tiene permisos para eliminar asistentes desde este rol.');
+                    return;
+                }
+            } catch (e) {
+                console.warn(e);
+            }
+
             if (!confirm('¿Estás seguro de que deseas eliminar este asistente?')) return;
 
             try {

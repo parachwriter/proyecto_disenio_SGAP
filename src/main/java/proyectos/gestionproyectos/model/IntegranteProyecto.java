@@ -3,7 +3,7 @@ package proyectos.gestionproyectos.model;
 import java.time.LocalDate;
 import java.time.Period;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -46,7 +46,7 @@ public abstract class IntegranteProyecto {
     // --- NUEVA RELACIÓN (Necesaria para solucionar el error de compilación) ---
     @ManyToOne
     @JoinColumn(name = "proyecto_id")
-    @JsonIgnore
+    @JsonBackReference
     private Proyecto proyecto;
 
     // --- MÉTODOS GETTER Y SETTER ---

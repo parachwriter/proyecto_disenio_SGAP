@@ -40,13 +40,14 @@ public class DirectorProyectoController {
 
     // PUT - Actualizar director existente
     @PutMapping("/{id}")
-    public ResponseEntity<DirectorProyecto> actualizar(@PathVariable Long id, @RequestBody DirectorProyecto directorActualizado) {
+    public ResponseEntity<DirectorProyecto> actualizar(@PathVariable Long id,
+            @RequestBody DirectorProyecto directorActualizado) {
         return directorRepository.findById(id)
                 .map(director -> {
                     director.setNombre(directorActualizado.getNombre());
                     director.setCorreoInstitucional(directorActualizado.getCorreoInstitucional());
-                    director.setTelefono(directorActualizado.getTelefono());
-                    director.setDepartamento(directorActualizado.getDepartamento());
+                    // Usar cédula y área de investigación (en lugar de teléfono/departamento)
+                    director.setCedula(directorActualizado.getCedula());
                     director.setAreaInvestigacion(directorActualizado.getAreaInvestigacion());
                     DirectorProyecto actualizado = directorRepository.save(director);
                     return ResponseEntity.ok(actualizado);

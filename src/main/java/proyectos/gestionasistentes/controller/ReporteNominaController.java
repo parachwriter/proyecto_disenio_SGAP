@@ -63,7 +63,8 @@ public class ReporteNominaController {
         @SuppressWarnings("unchecked")
         List<Long> idsAsistentes = (List<Long>) payload.get("idsAsistentes");
 
-        return servicioAsistente.confirmarActualizacionNomina(proyectoId, mes, anio, idsAsistentes);
+        String actualizadoPor = payload.get("actualizadoPor") != null ? payload.get("actualizadoPor").toString() : null;
+        return servicioAsistente.confirmarActualizacionNomina(proyectoId, mes, anio, idsAsistentes, actualizadoPor);
     }
 
     @PostMapping("/confirmar-completo")

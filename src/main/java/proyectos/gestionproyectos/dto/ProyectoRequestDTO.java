@@ -18,6 +18,7 @@ public class ProyectoRequestDTO {
     private String fechaFin;
 
     private DirectorProyecto director;
+    private String lineaInvestigacion;
 
     // Getters y Setters
     public String getTipoProyecto() {
@@ -82,5 +83,13 @@ public class ProyectoRequestDTO {
 
     public void setDirector(DirectorProyecto director) {
         this.director = director;
+    }
+
+    public String getLineaInvestigacion() {
+        return lineaInvestigacion;
+    }
+
+    public void setLineaInvestigacion(String lineaInvestigacion) {
+        this.lineaInvestigacion = lineaInvestigacion;
     }
 }

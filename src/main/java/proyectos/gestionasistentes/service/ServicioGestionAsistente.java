@@ -79,7 +79,7 @@ public class ServicioGestionAsistente {
 
     // +confirmarActualizacionNomina() - Procesa el reporte mensual
     public ReporteNomina confirmarActualizacionNomina(Long proyectoId, Integer mes, Integer anio,
-            List<Long> idsAsistentes) {
+            List<Long> idsAsistentes, String actualizadoPor) {
         if (mes == null || anio == null)
             throw new IllegalArgumentException("Mes y año obligatorios");
 
@@ -94,6 +94,9 @@ public class ServicioGestionAsistente {
         // El proyecto es clave para filtrar reportes por director
         var proyecto = proyectoRepository.findById(proyectoId).get();
         reporte.setProyecto(proyecto);
+
+        // Registrar quién actualizó la nómina (correo)
+        reporte.setActualizadoPor(actualizadoPor);
 
         // Si la lista de IDs está vacía, se guarda como reporte "sin contrataciones"
         if (idsAsistentes != null && !idsAsistentes.isEmpty()) {
@@ -229,6 +232,18 @@ public class ServicioGestionAsistente {
             reporte.setFechaRegistro(LocalDate.now());
             reporte.setEstado("COMPLETO");
 
+            // Si el request incluye quien actualizó, persistirlo
+            try {
+                java.lang.reflect.Method m = request.getClass().getMethod("getActualizadoPor");
+                if (m != null) {
+                    Object val = m.invoke(request);
+                    if (val instanceof String) {
+                        reporte.setActualizadoPor((String) val);
+                    }
+                }
+            } catch (NoSuchMethodException ignored) {
+            }
+
             logger.info("Reporte lista de integrantes ANTES: {}",
                     reporte.getListaIntegrantes() != null ? reporte.getListaIntegrantes().size() : "null");
 
@@ -282,6 +297,15 @@ public class ServicioGestionAsistente {
     // Obtener todos los reportes de nómina de un proyecto
     public List<ReporteNomina> obtenerReportesProyecto(Long proyectoId) {
         return nominaRepository.obtenerReportesProyecto(proyectoId);
+    }
+
+    // Obtener nóminas de un proyecto, opcionalmente filtradas por quien las
+    // actualizó
+    public List<ReporteNomina> obtenerNominasPorProyecto(Long proyectoId, String actualizadoPor) {
+        if (actualizadoPor == null || actualizadoPor.isBlank()) {
+            return nominaRepository.findByProyectoId(proyectoId);
+        }
+        return nominaRepository.findByProyectoIdAndActualizadoPor(proyectoId, actualizadoPor);
     }
 
     // Obtener todas las nóminas

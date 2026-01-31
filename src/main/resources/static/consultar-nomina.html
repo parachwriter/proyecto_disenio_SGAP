@@ -334,7 +334,7 @@
     <div class="container">
         <div class="header">
             <h1>📋 Consultar Nómina</h1>
-            <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+            <button class="btn-volver" onclick="volverPanel()">← Volver</button>
         </div>
 
         <div class="info-box">
@@ -434,12 +434,19 @@
 
         window.addEventListener('load', () => {
             cargarProyectos();
-            cargarNominas();
+            // cargarNominas se ejecutará después de poblar proyectos (ver cargarProyectos)
         });
 
         async function cargarProyectos() {
             try {
-                const response = await fetch(`${API_BASE}/proyectos`);
+                // Si es director, solicitar solo sus proyectos
+                const sesion = localStorage.getItem('sesion');
+                const userEmail = localStorage.getItem('userEmail');
+                let url = `${API_BASE}/proyectos`;
+                if (sesion === 'director' && userEmail) {
+                    url = `${API_BASE}/proyectos/director/${encodeURIComponent(userEmail)}`;
+                }
+                const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar proyectos');
 
                 proyectosData = await response.json();
@@ -449,6 +456,14 @@
                 proyectosData.forEach(p => {
                     selectProyecto.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
                 });
+
+                // Si es director y tiene proyectos, seleccionar el primero por defecto y cargar sus nóminas
+                if (sesion === 'director' && proyectosData.length > 0) {
+                    selectProyecto.value = proyectosData[0].id;
+                }
+
+                // Cargar nóminas según la selección actual (o por defecto)
+                cargarNominas();
             } catch (error) {
                 mostrarError('Error al cargar proyectos: ' + error.message);
             }
@@ -458,8 +473,18 @@
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('contenedorResultados').style.display = 'none';
-
-                const response = await fetch(`${API_BASE}/nomina`);
+                // Buscar por proyecto seleccionado. Si no hay proyecto seleccionado y el usuario es director,
+                // intentar cargar las nóminas del primer proyecto disponible.
+                const proyectoId = document.getElementById('filtroProyecto').value || null;
+                let response;
+                if (proyectoId) {
+                    const userEmail = localStorage.getItem('userEmail');
+                    const query = userEmail ? `?actualizadoPor=${encodeURIComponent(userEmail)}` : '';
+                    response = await fetch(`${API_BASE}/nomina/proyecto/${proyectoId}${query}`);
+                } else {
+                    // Si no hay proyecto seleccionado, cargar todas (solo para admins u otros roles)
+                    response = await fetch(`${API_BASE}/nomina`);
+                }
                 if (!response.ok) throw new Error('Error al cargar nóminas');
 
                 nominasData = await response.json();
@@ -623,6 +648,20 @@
                 cerrarModal();
             }
         });
+
+        // Redirige al panel correspondiente según el rol en localStorage
+        function volverPanel() {
+            try {
+                const sesion = localStorage.getItem('sesion');
+                if (sesion === 'director') {
+                    window.location.href = 'menu-director.html';
+                    return;
+                }
+            } catch (e) {
+                console.warn('Error comprobando sesión:', e);
+            }
+            window.location.href = 'dashboard.html';
+        }
     </script>
 </body>
 </html>

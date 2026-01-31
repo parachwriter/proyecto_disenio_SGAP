@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,8 +30,10 @@ public class ReporteNomina {
     // --- NUEVA RELACIÓN: Un reporte pertenece a un proyecto ---
     @ManyToOne
     @JoinColumn(name = "id_proyecto")
-    @JsonIgnore
     private Proyecto proyecto;
+
+    // Quién actualizó/confirmó este reporte (correo institucional)
+    private String actualizadoPor;
 
     @ManyToMany
     @JoinTable(name = "reporte_nomina_integrantes", joinColumns = @JoinColumn(name = "id_reporte"), inverseJoinColumns = @JoinColumn(name = "id_integrante"))
@@ -122,5 +122,13 @@ public class ReporteNomina {
 
     public void setListaIntegrantes(List<IntegranteProyecto> listaIntegrantes) {
         this.listaIntegrantes = listaIntegrantes;
+    }
+
+    public String getActualizadoPor() {
+        return actualizadoPor;
+    }
+
+    public void setActualizadoPor(String actualizadoPor) {
+        this.actualizadoPor = actualizadoPor;
     }
 }

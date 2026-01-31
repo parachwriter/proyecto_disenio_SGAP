@@ -261,7 +261,6 @@
         <div class="header">
             <h1>👔 Directores de Proyecto</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-nuevo" onclick="abrirModalNuevoDirector()">+ Nuevo Director</button>
                 <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
             </div>
         </div>
@@ -276,8 +275,8 @@
                     <th>ID</th>
                     <th>Nombre</th>
                     <th>Correo</th>
-                    <th>Teléfono</th>
-                    <th>Departamento</th>
+                    <th>Cédula</th>
+                    <th>Área Investigación</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -286,10 +285,10 @@
         </table>
     </div>
 
-    <!-- Modal para crear/editar director -->
+    <!-- Modal para editar director (no permite crear nuevos desde aquí) -->
     <div id="modalDirector" class="modal">
         <div class="modal-content">
-            <div class="modal-header" id="modalTitle">Nuevo Director</div>
+            <div class="modal-header" id="modalTitle">Editar Director</div>
             
             <form id="formDirector">
                 <div class="form-group">
@@ -303,13 +302,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="telefono">Teléfono:</label>
-                    <input type="tel" id="telefono">
+                    <label for="cedula">Cédula:</label>
+                    <input type="text" id="cedula" required maxlength="15">
                 </div>
 
                 <div class="form-group">
-                    <label for="departamento">Departamento:</label>
-                    <input type="text" id="departamento">
+                    <label for="areaInvestigacion">Área de Investigación:</label>
+                    <input type="text" id="areaInvestigacion">
                 </div>
 
                 <div class="modal-buttons">
@@ -362,8 +361,8 @@
                     <td>${director.id || 'N/A'}</td>
                     <td>${director.nombre || 'N/A'}</td>
                     <td>${director.correoInstitucional || 'N/A'}</td>
-                    <td>${director.telefono || 'N/A'}</td>
-                    <td>${director.departamento || 'N/A'}</td>
+                    <td>${director.cedula || 'N/A'}</td>
+                    <td>${director.areaInvestigacion || 'N/A'}</td>
                     <td><span class="badge badge-activo">Activo</span></td>
                     <td>
                         <div class="actions">
@@ -376,12 +375,8 @@
             });
         }
 
-        function abrirModalNuevoDirector() {
-            directorEnEdicion = null;
-            document.getElementById('modalTitle').textContent = 'Nuevo Director';
-            document.getElementById('formDirector').reset();
-            document.getElementById('modalDirector').style.display = 'block';
-        }
+        // Nota: Se eliminó la funcionalidad de crear nuevos directores desde esta
+        // página. El modal sólo se abre para edición mediante `editarDirector(id)`.
 
         function editarDirector(id) {
             const director = directoresData.find(d => d.id === id);
@@ -391,8 +386,8 @@
             document.getElementById('modalTitle').textContent = 'Editar Director';
             document.getElementById('nombre').value = director.nombre || '';
             document.getElementById('correo').value = director.correoInstitucional || '';
-            document.getElementById('telefono').value = director.telefono || '';
-            document.getElementById('departamento').value = director.departamento || '';
+            document.getElementById('cedula').value = director.cedula || '';
+            document.getElementById('areaInvestigacion').value = director.areaInvestigacion || '';
             document.getElementById('modalDirector').style.display = 'block';
         }
 
@@ -407,27 +402,23 @@
             const directorData = {
                 nombre: document.getElementById('nombre').value,
                 correoInstitucional: document.getElementById('correo').value,
-                telefono: document.getElementById('telefono').value,
-                departamento: document.getElementById('departamento').value
+                cedula: document.getElementById('cedula').value,
+                areaInvestigacion: document.getElementById('areaInvestigacion').value
             };
 
             try {
-                let response;
-                if (directorEnEdicion) {
-                    response = await fetch(`${API_BASE}/directores/${directorEnEdicion}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(directorData)
-                    });
-                } else {
-                    response = await fetch(`${API_BASE}/directores`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(directorData)
-                    });
+                if (!directorEnEdicion) {
+                    mostrarError('No se puede crear un nuevo director desde aquí. Usa Registrar Proyecto.');
+                    return;
                 }
 
-                if (!response.ok) throw new Error('Error al guardar director');
+                const response = await fetch(`${API_BASE}/directores/${directorEnEdicion}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(directorData)
+                });
+
+                if (!response.ok) throw new Error('Error al actualizar director');
 
                 cerrarModal();
                 cargarDirectores();

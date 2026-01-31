@@ -53,6 +53,8 @@ public class ProyectoController {
             proyecto.setFechaInicio(dto.getFechaInicio());
             proyecto.setFechaFin(dto.getFechaFin());
             proyecto.setDirector(dto.getDirector());
+            // Línea de investigación (opcional)
+            proyecto.setLineaInvestigacion(dto.getLineaInvestigacion());
 
             // Calcular duración en meses
             if (dto.getFechaInicio() != null && dto.getFechaFin() != null) {

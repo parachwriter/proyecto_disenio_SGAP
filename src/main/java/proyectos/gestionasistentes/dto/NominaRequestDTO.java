@@ -6,6 +6,7 @@ public class NominaRequestDTO {
     private Long proyectoId;
     private Integer mes;
     private Integer anio;
+    private String actualizadoPor;
     private List<AsistenteDTO> asistentes;
 
     public Long getProyectoId() {
@@ -38,6 +39,14 @@ public class NominaRequestDTO {
 
     public void setAsistentes(List<AsistenteDTO> asistentes) {
         this.asistentes = asistentes;
+    }
+
+    public String getActualizadoPor() {
+        return actualizadoPor;
+    }
+
+    public void setActualizadoPor(String actualizadoPor) {
+        this.actualizadoPor = actualizadoPor;
     }
 
     public static class AsistenteDTO {

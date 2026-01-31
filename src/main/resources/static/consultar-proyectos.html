@@ -302,7 +302,7 @@
     <div class="container">
         <div class="header">
             <h1>📊 Consultar Proyectos</h1>
-            <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+            <button class="btn-volver" onclick="volverPanel()">← Volver</button>
         </div>
 
         <div class="filters">
@@ -356,13 +356,21 @@
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('contenedorProyectos').style.display = 'none';
-
                 const tipo = document.getElementById('filtroTipo').value;
-                const url = tipo ? `${API_BASE}/proyectos?tipo=${encodeURIComponent(tipo)}` : `${API_BASE}/proyectos`;
+                // Si es director, solicitar solo sus proyectos
+                const sesion = localStorage.getItem('sesion');
+                const userEmail = localStorage.getItem('userEmail');
+                let url;
+                if (sesion === 'director' && userEmail) {
+                    url = `${API_BASE}/proyectos/director/${encodeURIComponent(userEmail)}`;
+                } else {
+                    url = tipo ? `${API_BASE}/proyectos?tipo=${encodeURIComponent(tipo)}` : `${API_BASE}/proyectos`;
+                }
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Error al cargar proyectos');
 
                 proyectosData = await response.json();
+                console.debug('Respuesta /proyectos:', proyectosData);
                 mostrarProyectos(proyectosData);
 
                 document.getElementById('loading').style.display = 'none';
@@ -386,7 +394,53 @@
                 const card = document.createElement('div');
                 card.className = 'proyecto-card';
                 
-                const tipo = proyecto.tipo || 'Investigación';
+                // Normalizar el tipo para mostrar una etiqueta legible.
+                // Intentar múltiples propiedades que podrían venir del backend
+                let tipoRaw = proyecto.tipo || proyecto.tipoProyecto || proyecto.tipo_proyecto || proyecto['@type'] || proyecto.discriminator || proyecto.tipoProyectoDiscriminator || '';
+                // Si aún no existe, intentar inferir del nombre
+                if (!tipoRaw && proyecto.nombre) {
+                    const n = proyecto.nombre.toString().toLowerCase();
+                    if (n.includes('investig')) tipoRaw = 'ProyectoInvestigacion';
+                    else if (n.includes('vincul')) tipoRaw = 'ProyectoVinculacion';
+                    else if (n.includes('trans')) tipoRaw = 'ProyectoTransicionTecnologica';
+                }
+
+                let tipo = 'N/A';
+                if (tipoRaw) {
+                    const t = tipoRaw.toString().toLowerCase();
+                    if (t.includes('investigacion') || t.includes('investigación') || t.includes('proyectoinvestigacion')) {
+                        tipo = 'Investigación';
+                    } else if (t.includes('vinculacion') || t.includes('vinculación') || t.includes('proyectovinculacion')) {
+                        tipo = 'Vinculación';
+                    } else if (t.includes('transicion') || t.includes('transición') || t.includes('proyectotransicion')) {
+                        tipo = 'Transición Tecnológica';
+                    } else {
+                        tipo = tipoRaw;
+                    }
+                }
+
+                // Si todavía no detectamos tipo, buscar en cualquier valor string del objeto
+                if (tipo === 'N/A') {
+                    const tokens = ['investig', 'vincul', 'trans'];
+                    const queue = [proyecto];
+                    let found = null;
+                    while (queue.length && !found) {
+                        const obj = queue.shift();
+                        if (!obj || typeof obj !== 'object') continue;
+                        for (const key of Object.keys(obj)) {
+                            const val = obj[key];
+                            if (typeof val === 'string') {
+                                const s = val.toLowerCase();
+                                if (s.includes('investig')) { found = 'Investigación'; break; }
+                                if (s.includes('vincul')) { found = 'Vinculación'; break; }
+                                if (s.includes('trans')) { found = 'Transición Tecnológica'; break; }
+                            } else if (typeof val === 'object') {
+                                queue.push(val);
+                            }
+                        }
+                    }
+                    if (found) tipo = found;
+                }
                 const presupuesto = proyecto.presupuesto ? `$${proyecto.presupuesto.toLocaleString()}` : 'N/A';
                 const director = proyecto.director?.nombre || 'Sin director';
                 const maxAsistentes = proyecto.maxAsistentes || '0';
@@ -507,6 +561,20 @@
             setTimeout(() => {
                 errorDiv.style.display = 'none';
             }, 5000);
+        }
+
+        // Redirige al panel correspondiente según el rol en localStorage
+        function volverPanel() {
+            try {
+                const sesion = localStorage.getItem('sesion');
+                if (sesion === 'director') {
+                    window.location.href = 'menu-director.html';
+                    return;
+                }
+            } catch (e) {
+                console.warn('Error comprobando sesión:', e);
+            }
+            window.location.href = 'dashboard.html';
         }
 
         window.addEventListener('click', (event) => {
