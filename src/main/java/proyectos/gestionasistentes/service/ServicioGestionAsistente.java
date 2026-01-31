@@ -283,4 +283,14 @@ public class ServicioGestionAsistente {
     public List<ReporteNomina> obtenerReportesProyecto(Long proyectoId) {
         return nominaRepository.obtenerReportesProyecto(proyectoId);
     }
+
+    // Obtener todas las nóminas
+    public List<ReporteNomina> obtenerTodasLasNominas() {
+        return nominaRepository.findAll();
+    }
+
+    // Obtener nóminas por proyecto
+    public List<ReporteNomina> obtenerNominasPorProyecto(Long proyectoId) {
+        return nominaRepository.findByProyectoId(proyectoId);
+    }
 }

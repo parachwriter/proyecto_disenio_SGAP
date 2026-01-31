@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Directores de Proyecto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .btn-volver {
+            padding: 10px 20px;
+            background: #718096;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-volver:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        .btn-nuevo {
+            padding: 10px 20px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-nuevo:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f7;
+            color: #4a5568;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f7fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-activo {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-inactivo {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-accion {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-editar {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-editar:hover {
+            background: #3182ce;
+        }
+
+        .btn-eliminar {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-eliminar:hover {
+            background: #e53e3e;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #f9fafb;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-guardar, .btn-cancelar {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-guardar {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-guardar:hover {
+            background: #38a169;
+        }
+
+        .btn-cancelar {
+            background: #cbd5e0;
+            color: #2d3748;
+        }
+
+        .btn-cancelar:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>👔 Directores de Proyecto</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-nuevo" onclick="abrirModalNuevoDirector()">+ Nuevo Director</button>
+                <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+            </div>
+        </div>
+
+        <div class="error" id="errorDiv"></div>
+
+        <div class="loading" id="loading">⏳ Cargando directores...</div>
+
+        <table id="tablaDirectores" style="display: none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Departamento</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+
+    <!-- Modal para crear/editar director -->
+    <div id="modalDirector" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Nuevo Director</div>
+            
+            <form id="formDirector">
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="correo">Correo Institucional:</label>
+                    <input type="email" id="correo" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono:</label>
+                    <input type="tel" id="telefono">
+                </div>
+
+                <div class="form-group">
+                    <label for="departamento">Departamento:</label>
+                    <input type="text" id="departamento">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let directoresData = [];
+        let directorEnEdicion = null;
+
+        // Cargar directores al abrir la página
+        window.addEventListener('load', cargarDirectores);
+
+        async function cargarDirectores() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('tablaDirectores').style.display = 'none';
+
+                const response = await fetch(`${API_BASE}/directores`);
+                if (!response.ok) throw new Error('Error al cargar directores');
+
+                directoresData = await response.json();
+                mostrarDirectores(directoresData);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('tablaDirectores').style.display = 'table';
+            } catch (error) {
+                mostrarError('Error al cargar directores: ' + error.message);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function mostrarDirectores(directores) {
+            const tbody = document.getElementById('cuerpoTabla');
+            tbody.innerHTML = '';
+
+            if (directores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #a0aec0;">No hay directores registrados</td></tr>';
+                return;
+            }
+
+            directores.forEach(director => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${director.id || 'N/A'}</td>
+                    <td>${director.nombre || 'N/A'}</td>
+                    <td>${director.correoInstitucional || 'N/A'}</td>
+                    <td>${director.telefono || 'N/A'}</td>
+                    <td>${director.departamento || 'N/A'}</td>
+                    <td><span class="badge badge-activo">Activo</span></td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-accion btn-editar" onclick="editarDirector(${director.id})">Editar</button>
+                            <button class="btn-accion btn-eliminar" onclick="eliminarDirector(${director.id})">Eliminar</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function abrirModalNuevoDirector() {
+            directorEnEdicion = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Director';
+            document.getElementById('formDirector').reset();
+            document.getElementById('modalDirector').style.display = 'block';
+        }
+
+        function editarDirector(id) {
+            const director = directoresData.find(d => d.id === id);
+            if (!director) return;
+
+            directorEnEdicion = id;
+            document.getElementById('modalTitle').textContent = 'Editar Director';
+            document.getElementById('nombre').value = director.nombre || '';
+            document.getElementById('correo').value = director.correoInstitucional || '';
+            document.getElementById('telefono').value = director.telefono || '';
+            document.getElementById('departamento').value = director.departamento || '';
+            document.getElementById('modalDirector').style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalDirector').style.display = 'none';
+            directorEnEdicion = null;
+        }
+
+        async function guardarDirector(event) {
+            event.preventDefault();
+
+            const directorData = {
+                nombre: document.getElementById('nombre').value,
+                correoInstitucional: document.getElementById('correo').value,
+                telefono: document.getElementById('telefono').value,
+                departamento: document.getElementById('departamento').value
+            };
+
+            try {
+                let response;
+                if (directorEnEdicion) {
+                    response = await fetch(`${API_BASE}/directores/${directorEnEdicion}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(directorData)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE}/directores`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(directorData)
+                    });
+                }
+
+                if (!response.ok) throw new Error('Error al guardar director');
+
+                cerrarModal();
+                cargarDirectores();
+            } catch (error) {
+                mostrarError('Error al guardar: ' + error.message);
+            }
+        }
+
+        async function eliminarDirector(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este director?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/directores/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Error al eliminar director');
+
+                cargarDirectores();
+            } catch (error) {
+                mostrarError('Error al eliminar: ' + error.message);
+            }
+        }
+
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.textContent = mensaje;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        document.getElementById('formDirector').addEventListener('submit', guardarDirector);
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('modalDirector');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        });
+    </script>
+</body>
+</html>

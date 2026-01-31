@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Consultar Nómina</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        label {
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .btn-volver {
+            padding: 10px 20px;
+            background: #718096;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-volver:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        .btn-buscar {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-buscar:hover {
+            background: #5a67d8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f7;
+            color: #4a5568;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f7fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-aprobado {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-pendiente {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+
+        .badge-rechazado {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-accion {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-ver {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-ver:hover {
+            background: #3182ce;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .info-box {
+            background: #e6fffa;
+            border-left: 4px solid #38b2ac;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #234e52;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: #f9fafb;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .reporte-detalles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detalle-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .detalle-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .detalle-valor {
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .integrantes-list {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .integrantes-title {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .integrante-item {
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cerrar {
+            padding: 10px 20px;
+            background: #cbd5e0;
+            color: #2d3748;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-cerrar:hover {
+            background: #a0aec0;
+        }
+
+        .sin-resultados {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+            font-size: 1.1rem;
+        }
+
+        .resumen-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-top: 3px solid #667eea;
+        }
+
+        .stat-numero {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>📋 Consultar Nómina</h1>
+            <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+        </div>
+
+        <div class="info-box">
+            💡 Consulta los reportes de nómina por proyecto y período académico
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="filtroProyecto">Proyecto:</label>
+                <select id="filtroProyecto" onchange="aplicarFiltros()">
+                    <option value="">Todos los proyectos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="mes">Mes:</label>
+                <select id="mes" onchange="aplicarFiltros()">
+                    <option value="">Todos</option>
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="anio">Año:</label>
+                <select id="anio" onchange="aplicarFiltros()">
+                    <option value="">Todos</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="estado">Estado:</label>
+                <select id="estado" onchange="aplicarFiltros()">
+                    <option value="">Todos</option>
+                    <option value="APROBADO">Aprobado</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="RECHAZADO">Rechazado</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="error" id="errorDiv"></div>
+
+        <div class="loading" id="loading">⏳ Cargando nóminas...</div>
+
+        <div id="contenedorResultados" style="display: none;">
+            <div class="resumen-stats" id="stats"></div>
+
+            <table id="tablaNominas">
+                <thead>
+                    <tr>
+                        <th>Proyecto</th>
+                        <th>Mes/Año</th>
+                        <th>Integrantes</th>
+                        <th>Estado</th>
+                        <th>Fecha Registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoTabla"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles del reporte -->
+    <div id="modalDetalles" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Detalles del Reporte de Nómina</div>
+            
+            <div class="reporte-detalles" id="detallesContenido"></div>
+            
+            <div class="integrantes-list">
+                <div class="integrantes-title">Integrantes en Nómina</div>
+                <div id="integrantesList"></div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let nominasData = [];
+        let proyectosData = [];
+
+        window.addEventListener('load', () => {
+            cargarProyectos();
+            cargarNominas();
+        });
+
+        async function cargarProyectos() {
+            try {
+                const response = await fetch(`${API_BASE}/proyectos`);
+                if (!response.ok) throw new Error('Error al cargar proyectos');
+
+                proyectosData = await response.json();
+                const selectProyecto = document.getElementById('filtroProyecto');
+                selectProyecto.innerHTML = '<option value="">Todos los proyectos</option>';
+                
+                proyectosData.forEach(p => {
+                    selectProyecto.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+                });
+            } catch (error) {
+                mostrarError('Error al cargar proyectos: ' + error.message);
+            }
+        }
+
+        async function cargarNominas() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('contenedorResultados').style.display = 'none';
+
+                const response = await fetch(`${API_BASE}/nomina`);
+                if (!response.ok) throw new Error('Error al cargar nóminas');
+
+                nominasData = await response.json();
+                mostrarNominas(nominasData);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('contenedorResultados').style.display = 'block';
+            } catch (error) {
+                mostrarError('Error al cargar nóminas: ' + error.message);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function mostrarNominas(nominas) {
+            const tbody = document.getElementById('cuerpoTabla');
+            tbody.innerHTML = '';
+
+            // Calcular estadísticas
+            const aprobadas = nominas.filter(n => n.estado === 'APROBADO').length;
+            const pendientes = nominas.filter(n => n.estado === 'PENDIENTE').length;
+            const rechazadas = nominas.filter(n => n.estado === 'RECHAZADO').length;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-numero">${nominas.length}</div>
+                    <div class="stat-label">Reportes Totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-numero" style="color: #48bb78;">${aprobadas}</div>
+                    <div class="stat-label">Aprobados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-numero" style="color: #ed8936;">${pendientes}</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-numero" style="color: #f56565;">${rechazadas}</div>
+                    <div class="stat-label">Rechazados</div>
+                </div>
+            `;
+
+            if (nominas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #a0aec0;">No hay nóminas registradas</td></tr>';
+                return;
+            }
+
+            nominas.forEach(nomina => {
+                const estadoBadge = nomina.estado === 'APROBADO' ? 'badge-aprobado' : 
+                                   nomina.estado === 'PENDIENTE' ? 'badge-pendiente' : 'badge-rechazado';
+                
+                const mes = nomina.mes || 'N/A';
+                const anio = nomina.anio || 'N/A';
+                const proyecto = nomina.proyecto?.nombre || 'N/A';
+                const integrantes = nomina.listaIntegrantes?.length || 0;
+                const fecha = nomina.fechaRegistro || 'N/A';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${proyecto}</td>
+                    <td>${mes}/${anio}</td>
+                    <td>${integrantes}</td>
+                    <td><span class="badge ${estadoBadge}">${nomina.estado}</span></td>
+                    <td>${fecha}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-accion btn-ver" onclick="verDetalles(${nomina.idReporte})">Ver</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function aplicarFiltros() {
+            const proyectoId = document.getElementById('filtroProyecto').value;
+            const mes = document.getElementById('mes').value;
+            const anio = document.getElementById('anio').value;
+            const estado = document.getElementById('estado').value;
+
+            const filtrados = nominasData.filter(n => {
+                return (!proyectoId || (n.proyecto?.id == proyectoId)) &&
+                       (!mes || n.mes == mes) &&
+                       (!anio || n.anio == anio) &&
+                       (!estado || n.estado === estado);
+            });
+
+            mostrarNominas(filtrados);
+        }
+
+        function verDetalles(reporteId) {
+            const nomina = nominasData.find(n => n.idReporte === reporteId);
+            if (!nomina) return;
+
+            const modal = document.getElementById('modalDetalles');
+            const detalles = document.getElementById('detallesContenido');
+            
+            const proyecto = nomina.proyecto?.nombre || 'N/A';
+            const mes = nomina.mes || 'N/A';
+            const anio = nomina.anio || 'N/A';
+            const estado = nomina.estado || 'N/A';
+            const fecha = nomina.fechaRegistro || 'N/A';
+
+            detalles.innerHTML = `
+                <div class="detalle-item">
+                    <div class="detalle-label">Proyecto</div>
+                    <div class="detalle-valor">${proyecto}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Mes/Año</div>
+                    <div class="detalle-valor">${mes}/${anio}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Estado</div>
+                    <div class="detalle-valor"><span class="badge badge-${estado.toLowerCase()}">${estado}</span></div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Fecha Registro</div>
+                    <div class="detalle-valor">${fecha}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Total Integrantes</div>
+                    <div class="detalle-valor">${nomina.listaIntegrantes?.length || 0}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">ID Reporte</div>
+                    <div class="detalle-valor">${nomina.idReporte}</div>
+                </div>
+            `;
+
+            const integrantesList = document.getElementById('integrantesList');
+            if (nomina.listaIntegrantes && nomina.listaIntegrantes.length > 0) {
+                integrantesList.innerHTML = nomina.listaIntegrantes.map(i => `
+                    <div class="integrante-item">
+                        <strong>${i.nombre}</strong> (${i.cedula})
+                        <br><small>${i.tipo || 'N/A'} - ${i.estado || 'ACTIVO'}</small>
+                    </div>
+                `).join('');
+            } else {
+                integrantesList.innerHTML = '<p style="color: #a0aec0;">Sin integrantes en este reporte</p>';
+            }
+
+            modal.style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalDetalles').style.display = 'none';
+        }
+
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.textContent = mensaje;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('modalDetalles');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Consultar Proyectos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .btn-volver {
+            padding: 10px 20px;
+            background: #718096;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-volver:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        .proyectos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .proyecto-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .proyecto-card:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .proyecto-titulo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .proyecto-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.95rem;
+            color: #4a5568;
+        }
+
+        .proyecto-info-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .badge-tipo {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .proyecto-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-ver, .btn-editar {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-ver {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-ver:hover {
+            background: #3182ce;
+        }
+
+        .btn-editar {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-editar:hover {
+            background: #38a169;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: #f9fafb;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .proyecto-detalles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detalle-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .detalle-label {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .detalle-valor {
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .integrantes-list {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .integrantes-title {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .integrante-item {
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cerrar {
+            padding: 10px 20px;
+            background: #cbd5e0;
+            color: #2d3748;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-cerrar:hover {
+            background: #a0aec0;
+        }
+
+        .sin-resultados {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>📊 Consultar Proyectos</h1>
+            <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <input type="text" id="busqueda" placeholder="Buscar por nombre..." onkeyup="filtrarProyectos()">
+            </div>
+            <div class="filter-group">
+                <select id="filtroTipo" onchange="filtrarProyectos()">
+                    <option value="">Todos los tipos</option>
+                    <option value="ProyectoInvestigacion">Investigación</option>
+                    <option value="ProyectoVinculacion">Vinculación</option>
+                    <option value="ProyectoTransicionTecnologica">Transición Tecnológica</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="error" id="errorDiv"></div>
+
+        <div class="loading" id="loading">⏳ Cargando proyectos...</div>
+
+        <div id="contenedorProyectos">
+            <div class="proyectos-grid" id="proyectosGrid"></div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles -->
+    <div id="modalDetalles" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Detalles del Proyecto</div>
+            
+            <div class="proyecto-detalles" id="detallesContenido"></div>
+            
+            <div class="integrantes-list">
+                <div class="integrantes-title">Integrantes del Proyecto</div>
+                <div id="integrantesList"></div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let proyectosData = [];
+
+        window.addEventListener('load', cargarProyectos);
+
+        async function cargarProyectos() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('contenedorProyectos').style.display = 'none';
+
+                const response = await fetch(`${API_BASE}/proyectos`);
+                if (!response.ok) throw new Error('Error al cargar proyectos');
+
+                proyectosData = await response.json();
+                mostrarProyectos(proyectosData);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('contenedorProyectos').style.display = 'block';
+            } catch (error) {
+                mostrarError('Error al cargar proyectos: ' + error.message);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function mostrarProyectos(proyectos) {
+            const grid = document.getElementById('proyectosGrid');
+            grid.innerHTML = '';
+
+            if (proyectos.length === 0) {
+                grid.innerHTML = '<div class="sin-resultados">No hay proyectos que coincidan con tu búsqueda</div>';
+                return;
+            }
+
+            proyectos.forEach(proyecto => {
+                const card = document.createElement('div');
+                card.className = 'proyecto-card';
+                
+                const tipo = proyecto.tipo || 'Investigación';
+                const presupuesto = proyecto.presupuesto ? `$${proyecto.presupuesto.toLocaleString()}` : 'N/A';
+                const director = proyecto.director?.nombre || 'Sin director';
+                const maxAsistentes = proyecto.maxAsistentes || '0';
+                
+                card.innerHTML = `
+                    <div class="proyecto-titulo">${proyecto.nombre}</div>
+                    <div class="proyecto-info">
+                        <div class="proyecto-info-item">
+                            <span class="label">Director:</span>
+                            <span>${director}</span>
+                        </div>
+                        <div class="proyecto-info-item">
+                            <span class="label">Presupuesto:</span>
+                            <span>${presupuesto}</span>
+                        </div>
+                        <div class="proyecto-info-item">
+                            <span class="label">Max Asistentes:</span>
+                            <span>${maxAsistentes}</span>
+                        </div>
+                        <div class="proyecto-info-item">
+                            <span class="label">Integrantes:</span>
+                            <span>${proyecto.listaIntegrantes?.length || 0}</span>
+                        </div>
+                        <span class="badge badge-tipo">${tipo}</span>
+                    </div>
+                    <div class="proyecto-actions">
+                        <button class="btn-ver" onclick="verDetalles(${proyecto.id})">Ver Detalles</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filtrarProyectos() {
+            const busqueda = document.getElementById('busqueda').value.toLowerCase();
+            const tipo = document.getElementById('filtroTipo').value;
+
+            const filtrados = proyectosData.filter(p => {
+                const coincideNombre = p.nombre.toLowerCase().includes(busqueda);
+                const coincideTipo = !tipo || p.tipo === tipo;
+                return coincideNombre && coincideTipo;
+            });
+
+            mostrarProyectos(filtrados);
+        }
+
+        function verDetalles(proyectoId) {
+            const proyecto = proyectosData.find(p => p.id === proyectoId);
+            if (!proyecto) return;
+
+            const modal = document.getElementById('modalDetalles');
+            const detalles = document.getElementById('detallesContenido');
+            
+            const fechaInicio = proyecto.fechaInicio || 'N/A';
+            const fechaFin = proyecto.fechaFin || 'N/A';
+            const duracion = proyecto.duracionMeses || 'N/A';
+            const linea = proyecto.lineaInvestigacion || 'N/A';
+            const director = proyecto.director?.nombre || 'Sin director';
+            const presupuesto = proyecto.presupuesto ? `$${proyecto.presupuesto.toLocaleString()}` : 'N/A';
+
+            detalles.innerHTML = `
+                <div class="detalle-item">
+                    <div class="detalle-label">Nombre del Proyecto</div>
+                    <div class="detalle-valor">${proyecto.nombre}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Director</div>
+                    <div class="detalle-valor">${director}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Presupuesto</div>
+                    <div class="detalle-valor">${presupuesto}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Duración (meses)</div>
+                    <div class="detalle-valor">${duracion}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Fecha Inicio</div>
+                    <div class="detalle-valor">${fechaInicio}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Fecha Fin</div>
+                    <div class="detalle-valor">${fechaFin}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Línea de Investigación</div>
+                    <div class="detalle-valor">${linea}</div>
+                </div>
+                <div class="detalle-item">
+                    <div class="detalle-label">Max Asistentes</div>
+                    <div class="detalle-valor">${proyecto.maxAsistentes || 'N/A'}</div>
+                </div>
+            `;
+
+            const integrantesList = document.getElementById('integrantesList');
+            if (proyecto.listaIntegrantes && proyecto.listaIntegrantes.length > 0) {
+                integrantesList.innerHTML = proyecto.listaIntegrantes.map(i => `
+                    <div class="integrante-item">
+                        <span>${i.nombre} (${i.cedula})</span>
+                        <span class="badge badge-tipo">${i.tipo || 'N/A'}</span>
+                    </div>
+                `).join('');
+            } else {
+                integrantesList.innerHTML = '<p style="color: #a0aec0;">Sin integrantes registrados</p>';
+            }
+
+            modal.style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalDetalles').style.display = 'none';
+        }
+
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.textContent = mensaje;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('modalDetalles');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Asistentes de Proyecto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .btn-volver {
+            padding: 10px 20px;
+            background: #718096;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-volver:hover {
+            background: #4a5568;
+            transform: translateY(-2px);
+        }
+
+        .btn-nuevo {
+            padding: 10px 20px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-nuevo:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #edf2f7;
+            color: #4a5568;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f7fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-activo {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-inactivo {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .badge-tipo-asistente {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .badge-tipo-ayudante {
+            background: #fbd38d;
+            color: #7c2d12;
+        }
+
+        .badge-tipo-tecnico {
+            background: #d6bcfa;
+            color: #4c1d95;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-accion {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-editar {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-editar:hover {
+            background: #3182ce;
+        }
+
+        .btn-eliminar {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-eliminar:hover {
+            background: #e53e3e;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #f9fafb;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn-guardar, .btn-cancelar {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-guardar {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-guardar:hover {
+            background: #38a169;
+        }
+
+        .btn-cancelar {
+            background: #cbd5e0;
+            color: #2d3748;
+        }
+
+        .btn-cancelar:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>👨‍💼 Asistentes de Proyecto</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-nuevo" onclick="abrirModalNuevoAsistente()">+ Nuevo Asistente</button>
+                <button class="btn-volver" onclick="window.location.href='dashboard.html'">← Volver</button>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="filtroProyecto">Filtrar por Proyecto:</label>
+                <select id="filtroProyecto" onchange="filtrarAsistentes()">
+                    <option value="">Todos los proyectos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filtroTipo">Filtrar por Tipo:</label>
+                <select id="filtroTipo" onchange="filtrarAsistentes()">
+                    <option value="">Todos los tipos</option>
+                    <option value="ASISTENTE">Asistente</option>
+                    <option value="AYUDANTE">Ayudante de Investigación</option>
+                    <option value="TECNICO">Técnico</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="error" id="errorDiv"></div>
+
+        <div class="loading" id="loading">⏳ Cargando asistentes...</div>
+
+        <table id="tablaAsistentes" style="display: none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Cédula</th>
+                    <th>Tipo</th>
+                    <th>Proyecto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla"></tbody>
+        </table>
+    </div>
+
+    <!-- Modal para crear/editar asistente -->
+    <div id="modalAsistente" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTitle">Nuevo Asistente</div>
+            
+            <form id="formAsistente">
+                <div class="form-group">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cedula">Cédula:</label>
+                    <input type="text" id="cedula" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+                    <input type="date" id="fechaNacimiento">
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo">Tipo de Integrante:</label>
+                    <select id="tipo" required>
+                        <option value="ASISTENTE">Asistente</option>
+                        <option value="AYUDANTE">Ayudante de Investigación</option>
+                        <option value="TECNICO">Técnico</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="proyecto">Proyecto:</label>
+                    <select id="proyecto" required>
+                        <option value="">Seleccionar proyecto</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn-guardar">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let asistentesData = [];
+        let proyectosData = [];
+        let asistenteEnEdicion = null;
+
+        window.addEventListener('load', () => {
+            cargarProyectos();
+            cargarAsistentes();
+        });
+
+        async function cargarProyectos() {
+            try {
+                const response = await fetch(`${API_BASE}/proyectos`);
+                if (!response.ok) throw new Error('Error al cargar proyectos');
+
+                proyectosData = await response.json();
+                
+                // Llenar selectores
+                const selectProyecto = document.getElementById('proyecto');
+                selectProyecto.innerHTML = '<option value="">Seleccionar proyecto</option>';
+                
+                const filtroProyecto = document.getElementById('filtroProyecto');
+                filtroProyecto.innerHTML = '<option value="">Todos los proyectos</option>';
+                
+                proyectosData.forEach(p => {
+                    selectProyecto.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+                    filtroProyecto.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+                });
+            } catch (error) {
+                mostrarError('Error al cargar proyectos: ' + error.message);
+            }
+        }
+
+        async function cargarAsistentes() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('tablaAsistentes').style.display = 'none';
+
+                const response = await fetch(`${API_BASE}/nomina/asistentes`);
+                if (!response.ok) throw new Error('Error al cargar asistentes');
+
+                asistentesData = await response.json();
+                mostrarAsistentes(asistentesData);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('tablaAsistentes').style.display = 'table';
+            } catch (error) {
+                mostrarError('Error al cargar asistentes: ' + error.message);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function mostrarAsistentes(asistentes) {
+            const tbody = document.getElementById('cuerpoTabla');
+            tbody.innerHTML = '';
+
+            if (asistentes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #a0aec0;">No hay asistentes registrados</td></tr>';
+                return;
+            }
+
+            asistentes.forEach(asistente => {
+                const tipoClase = asistente.tipo === 'ASISTENTE' ? 'badge-tipo-asistente' : 
+                                  asistente.tipo === 'AYUDANTE' ? 'badge-tipo-ayudante' : 'badge-tipo-tecnico';
+                
+                const estadoBadge = asistente.estado === 'ACTIVO' ? 'badge-activo' : 'badge-inactivo';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${asistente.id || 'N/A'}</td>
+                    <td>${asistente.nombre || 'N/A'}</td>
+                    <td>${asistente.cedula || 'N/A'}</td>
+                    <td><span class="badge ${tipoClase}">${asistente.tipo || 'N/A'}</span></td>
+                    <td>${asistente.proyecto?.nombre || 'Sin proyecto'}</td>
+                    <td><span class="badge ${estadoBadge}">${asistente.estado || 'INACTIVO'}</span></td>
+                    <td>
+                        <div class="actions">
+                            <button class="btn-accion btn-editar" onclick="editarAsistente(${asistente.id})">Editar</button>
+                            <button class="btn-accion btn-eliminar" onclick="eliminarAsistente(${asistente.id})">Eliminar</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function filtrarAsistentes() {
+            const proyectoId = document.getElementById('filtroProyecto').value;
+            const tipo = document.getElementById('filtroTipo').value;
+
+            const filtrados = asistentesData.filter(a => {
+                return (!proyectoId || (a.proyecto?.id == proyectoId)) &&
+                       (!tipo || a.tipo === tipo);
+            });
+
+            mostrarAsistentes(filtrados);
+        }
+
+        function abrirModalNuevoAsistente() {
+            asistenteEnEdicion = null;
+            document.getElementById('modalTitle').textContent = 'Nuevo Asistente';
+            document.getElementById('formAsistente').reset();
+            document.getElementById('modalAsistente').style.display = 'block';
+        }
+
+        function editarAsistente(id) {
+            const asistente = asistentesData.find(a => a.id === id);
+            if (!asistente) return;
+
+            asistenteEnEdicion = id;
+            document.getElementById('modalTitle').textContent = 'Editar Asistente';
+            document.getElementById('nombre').value = asistente.nombre || '';
+            document.getElementById('cedula').value = asistente.cedula || '';
+            document.getElementById('fechaNacimiento').value = asistente.fechaNacimiento || '';
+            document.getElementById('tipo').value = asistente.tipo || 'ASISTENTE';
+            document.getElementById('proyecto').value = asistente.proyecto?.id || '';
+            document.getElementById('modalAsistente').style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalAsistente').style.display = 'none';
+            asistenteEnEdicion = null;
+        }
+
+        async function guardarAsistente(event) {
+            event.preventDefault();
+
+            const proyectoId = document.getElementById('proyecto').value;
+            const asistenteData = {
+                nombre: document.getElementById('nombre').value,
+                cedula: document.getElementById('cedula').value,
+                fechaNacimiento: document.getElementById('fechaNacimiento').value,
+                tipo: document.getElementById('tipo').value
+            };
+
+            try {
+                if (!asistenteEnEdicion) {
+                    // Registrar nuevo asistente
+                    const response = await fetch(`${API_BASE}/nomina/asistentes/registrar`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...asistenteData, idProyecto: proyectoId })
+                    });
+
+                    if (!response.ok) throw new Error('Error al guardar asistente');
+                }
+
+                cerrarModal();
+                cargarAsistentes();
+            } catch (error) {
+                mostrarError('Error al guardar: ' + error.message);
+            }
+        }
+
+        async function eliminarAsistente(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este asistente?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/nomina/asistentes/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Error al eliminar asistente');
+
+                cargarAsistentes();
+            } catch (error) {
+                mostrarError('Error al eliminar: ' + error.message);
+            }
+        }
+
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.textContent = mensaje;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        document.getElementById('formAsistente').addEventListener('submit', guardarAsistente);
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('modalAsistente');
+            if (event.target == modal) {
+                cerrarModal();
+            }
+        });
+    </script>
+</body>
+</html>

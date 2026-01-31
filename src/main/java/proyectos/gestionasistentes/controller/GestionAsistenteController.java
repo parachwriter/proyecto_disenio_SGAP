@@ -29,6 +29,12 @@ public class GestionAsistenteController {
         return "OK-GestionAsistentes";
     }
 
+    // 0) OBTENER TODAS LAS NÓMINAS (endpoint raíz)
+    @GetMapping
+    public List<ReporteNomina> obtenerTodasLasNominas() {
+        return servicio.obtenerTodasLasNominas();
+    }
+
     // ✅ Debug: si entras por navegador a /registrar, el navegador hace GET (no
     // POST)
     @GetMapping("/asistentes/registrar")
@@ -70,6 +76,36 @@ public class GestionAsistenteController {
     @GetMapping("/validar")
     public Map<String, Object> validar(@RequestParam Integer mes, @RequestParam Integer anio) {
         return Map.of("mes", mes, "anio", anio, "cumplido", true);
+    }
+
+    // 5) OBTENER ASISTENTE POR ID
+    @GetMapping("/asistentes/{id}")
+    public org.springframework.http.ResponseEntity<?> obtenerAsistente(@PathVariable Long id) {
+        return integranteRepository.findById(id)
+                .map(i -> {
+                    if (i instanceof Asistente) {
+                        return org.springframework.http.ResponseEntity.ok((Asistente) i);
+                    }
+                    return org.springframework.http.ResponseEntity.badRequest().body("No es un asistente");
+                })
+                .orElse(org.springframework.http.ResponseEntity.notFound().build());
+    }
+
+    // 6) ELIMINAR ASISTENTE
+    @DeleteMapping("/asistentes/{id}")
+    public org.springframework.http.ResponseEntity<?> eliminarAsistente(@PathVariable Long id) {
+        try {
+            servicio.darDeBajaAsistente(id);
+            return org.springframework.http.ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 8) OBTENER NÓMINAS POR PROYECTO
+    @GetMapping("/proyecto/{proyectoId}")
+    public List<ReporteNomina> obtenerNominasPorProyecto(@PathVariable Long proyectoId) {
+        return servicio.obtenerNominasPorProyecto(proyectoId);
     }
 
     // ===== DTOs =====
