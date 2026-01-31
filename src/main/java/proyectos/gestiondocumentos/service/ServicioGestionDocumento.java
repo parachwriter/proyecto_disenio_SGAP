@@ -2,8 +2,11 @@ package proyectos.gestiondocumentos.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import proyectos.gestiondocumentos.dto.ValidacionDocumentoDTO;
 import proyectos.gestiondocumentos.model.Documento;
+import proyectos.gestiondocumentos.model.PlanificacionProyecto;
+import proyectos.gestiondocumentos.model.AvanceProyecto;
 import proyectos.gestiondocumentos.repository.DocumentoRepository;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.repository.NominaRepository;
@@ -12,10 +15,17 @@ import proyectos.gestionproyectos.model.PeriodoAcademico;
 import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ServicioGestionDocumento {
@@ -328,5 +338,93 @@ public class ServicioGestionDocumento {
 
         System.out.println("DEBUG - Nóminas esperadas para periodo " + periodo.getCodigo() + ": " + mesesEsperados);
         return mesesEsperados;
+    }
+
+    /**
+     * Guardar documento PDF subido por el director de proyecto
+     * 
+     * @param archivo          Archivo PDF subido
+     * @param proyectoId       ID del proyecto
+     * @param periodoAcademico Código del periodo académico (ej: "2025A")
+     * @param tipoDocumento    Tipo: "PLANIFICACION" o "AVANCE"
+     * @return Documento guardado en BD
+     * @throws IOException
+     */
+    public Documento guardarDocumento(MultipartFile archivo, Long proyectoId, String periodoAcademico,
+            String tipoDocumento) throws IOException {
+
+        // 1. Validar que el proyecto existe
+        Proyecto proyecto = proyectoRepository.findById(proyectoId)
+                .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+
+        // 2. Crear directorio si no existe
+        String directorioBase = "uploads/documentos";
+        Path directorioPath = Paths.get(directorioBase);
+        if (!Files.exists(directorioPath)) {
+            Files.createDirectories(directorioPath);
+        }
+
+        // 3. Generar nombre único para el archivo
+        String nombreOriginal = archivo.getOriginalFilename();
+        String extension = nombreOriginal.substring(nombreOriginal.lastIndexOf("."));
+        String nombreUnico = UUID.randomUUID().toString() + extension;
+
+        // 4. Guardar archivo físico
+        Path rutaArchivo = directorioPath.resolve(nombreUnico);
+        Files.copy(archivo.getInputStream(), rutaArchivo, StandardCopyOption.REPLACE_EXISTING);
+
+        // 5. Crear instancia del tipo correcto de documento
+        Documento documento;
+
+        if ("PLANIFICACION".equals(tipoDocumento)) {
+            PlanificacionProyecto planificacion = new PlanificacionProyecto();
+            planificacion.setPeriodoAcademico(periodoAcademico);
+            planificacion.setAprobado(false); // Estado inicial: Por aprobar
+            documento = planificacion;
+        } else if ("AVANCE".equals(tipoDocumento)) {
+            AvanceProyecto avance = new AvanceProyecto();
+            avance.setPeriodoAcademico(periodoAcademico);
+            avance.setAprobado(false); // Estado inicial: Por aprobar
+            documento = avance;
+        } else {
+            throw new RuntimeException("Tipo de documento no válido: " + tipoDocumento);
+        }
+
+        // 6. Establecer propiedades comunes
+        documento.setNombre(nombreOriginal);
+        documento.setFormato("pdf");
+        documento.setRutaAlmacenamiento(directorioBase);
+        documento.setFecha(LocalDateTime.now());
+        documento.setProyecto(proyecto);
+
+        // 7. Guardar en base de datos
+        Documento documentoGuardado = documentoRepository.save(documento);
+
+        System.out.println("Documento guardado: " + documentoGuardado.getNombre() +
+                " (ID: " + documentoGuardado.getIdDocumento() + ") - Proyecto: " + proyecto.getNombre() +
+                " - Periodo: " + periodoAcademico + " - Estado: Por aprobar");
+
+        return documentoGuardado;
+    }
+
+    /**
+     * Obtiene todos los documentos de un proyecto específico
+     * 
+     * @param proyectoId ID del proyecto
+     * @return Lista de documentos del proyecto
+     */
+    public List<Documento> obtenerDocumentosDeProyecto(Long proyectoId) {
+        // Verificar que el proyecto existe
+        Optional<Proyecto> proyectoOpt = proyectoRepository.findById(proyectoId);
+        if (!proyectoOpt.isPresent()) {
+            throw new RuntimeException("Proyecto no encontrado con ID: " + proyectoId);
+        }
+
+        // Buscar todos los documentos del proyecto
+        List<Documento> documentos = documentoRepository.findByProyectoId(proyectoId);
+
+        System.out.println("Documentos encontrados para proyecto " + proyectoId + ": " + documentos.size());
+
+        return documentos;
     }
 }

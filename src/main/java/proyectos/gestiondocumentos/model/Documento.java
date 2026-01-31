@@ -1,6 +1,7 @@
 package proyectos.gestiondocumentos.model;
 
 import jakarta.persistence.*;
+import proyectos.gestionproyectos.model.Proyecto;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,8 +19,14 @@ public abstract class Documento {
     protected String rutaAlmacenamiento;
     protected LocalDateTime fecha;
 
+    // Relación con Proyecto
+    @ManyToOne
+    @JoinColumn(name = "proyecto_id")
+    protected Proyecto proyecto;
+
     // --- CONSTRUCTOR VACÍO OBLIGATORIO JPA ---
-    public Documento() {}
+    public Documento() {
+    }
 
     public Documento(String nombre, String tipo, String formato, String rutaAlmacenamiento, LocalDateTime fecha) {
         this.nombre = nombre;
@@ -31,7 +38,8 @@ public abstract class Documento {
 
     // --- MÉTODOS DE NEGOCIO ---
     public boolean validarFormato() {
-        if (formato == null || formato.isEmpty()) return false;
+        if (formato == null || formato.isEmpty())
+            return false;
         return nombre.endsWith("." + formato.toLowerCase());
     }
 
@@ -40,16 +48,59 @@ public abstract class Documento {
     }
 
     // --- GETTERS Y SETTERS ---
-    public Long getIdDocumento() { return idDocumento; }
-    public void setIdDocumento(Long id) { this.idDocumento = id; }
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public String getTipo() { return tipo; }
-    public void setTipo(String tipo) { this.tipo = tipo; }
-    public String getFormato() { return formato; }
-    public void setFormato(String formato) { this.formato = formato; }
-    public String getRutaAlmacenamiento() { return rutaAlmacenamiento; }
-    public void setRutaAlmacenamiento(String ruta) { this.rutaAlmacenamiento = ruta; }
-    public LocalDateTime getFecha() { return fecha; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
+    public Long getIdDocumento() {
+        return idDocumento;
+    }
+
+    public void setIdDocumento(Long id) {
+        this.idDocumento = id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public String getFormato() {
+        return formato;
+    }
+
+    public void setFormato(String formato) {
+        this.formato = formato;
+    }
+
+    public String getRutaAlmacenamiento() {
+        return rutaAlmacenamiento;
+    }
+
+    public void setRutaAlmacenamiento(String ruta) {
+        this.rutaAlmacenamiento = ruta;
+    }
+
+    public LocalDateTime getFecha() {
+        return fecha;
+    }
+
+    public void setFecha(LocalDateTime fecha) {
+        this.fecha = fecha;
+    }
+
+    public Proyecto getProyecto() {
+        return proyecto;
+    }
+
+    public void setProyecto(Proyecto proyecto) {
+        this.proyecto = proyecto;
+    }
 }

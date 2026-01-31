@@ -291,22 +291,68 @@
         </div>
 
         <div id="seccionDocumentos" class="card seccion-oculta">
-            <h2>Documentos del Periodo <span id="periodoSeleccionado"></span></h2>
-            <div class="alert alert-warning">
-                <strong>⚠️ En desarrollo:</strong> Funcionalidad de aprobación de documentos próximamente.
+            <h2>📄 Cargar Documento</h2>
+            <p><strong>Periodo seleccionado:</strong> <span id="periodoSeleccionado"></span></p>
+            
+            <div class="form-group" style="margin-top: 2rem;">
+                <label class="form-label">
+                    <span class="form-icon">📎</span>
+                    Seleccionar archivo PDF
+                </label>
+                <input 
+                    type="file" 
+                    id="archivoDocumento" 
+                    accept=".pdf"
+                    style="padding: 1rem; border: 2px dashed #cbd5e0; border-radius: 10px; width: 100%; cursor: pointer;"
+                />
+                <p style="color: #718096; font-size: 0.9rem; margin-top: 0.5rem;">
+                    ⚠️ Solo archivos PDF. Tamaño máximo: 10MB
+                </p>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button 
+                    id="btnCargarDocumento" 
+                    class="btn-primary"
+                    onclick="cargarDocumento()"
+                    style="flex: 1;"
+                >
+                    📤 Cargar Documento
+                </button>
+                <button 
+                    class="btn-back"
+                    onclick="volverSubmenu()"
+                    style="padding: 0.75rem 1.5rem;"
+                >
+                    ← Cancelar
+                </button>
             </div>
         </div>
 
         <!-- SECCIÓN: ESTADO APROBACIONES -->
         <div id="seccionEstadoAprobaciones" class="card seccion-oculta">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h2>Estado de Aprobaciones</h2>
+                <h2>📊 Estado de Aprobaciones</h2>
                 <button class="btn-back" onclick="volverSubmenu()" style="padding: 0.5rem 1rem;">
                     ← Volver
                 </button>
             </div>
-            <div class="alert alert-warning">
-                <strong>⚠️ En desarrollo:</strong> Funcionalidad de consulta de estado de aprobaciones próximamente.
+
+            <div class="form-group">
+                <label for="selectProyectoEstado">Proyecto de Investigación:</label>
+                <select id="selectProyectoEstado" onchange="cargarEstadoDocumentos()">
+                    <option value="">-- Seleccione un proyecto --</option>
+                </select>
+            </div>
+
+            <div id="tablaEstadoDocumentos" class="seccion-oculta" style="margin-top: 2rem;">
+                <h3 style="color: #667eea; margin-bottom: 1rem;">Documentos Cargados</h3>
+                <div id="listaDocumentos" style="display: grid; gap: 1rem;">
+                    <!-- Los documentos se cargarán aquí dinámicamente -->
+                </div>
+                <div id="mensajeSinDocumentos" class="alert alert-info" style="display: none;">
+                    ℹ️ No hay documentos cargados para este proyecto.
+                </div>
             </div>
         </div>
     </div>
@@ -644,6 +690,177 @@
                 console.error("Error al validar nóminas:", error);
                 alert("Error al validar las nóminas del proyecto. Por favor intente nuevamente.");
             }
+        }
+
+        // Cargar archivo PDF
+        async function cargarDocumento() {
+            const archivoInput = document.getElementById("archivoDocumento");
+            const archivo = archivoInput.files[0];
+
+            if (!archivo) {
+                alert("Por favor seleccione un archivo PDF");
+                return;
+            }
+
+            // Validar que sea PDF
+            if (!archivo.name.toLowerCase().endsWith('.pdf')) {
+                alert("❌ Solo se permiten archivos PDF");
+                return;
+            }
+
+            // Validar tamaño máximo (por ejemplo 10MB)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (archivo.size > maxSize) {
+                alert("❌ El archivo es demasiado grande. Tamaño máximo: 10MB");
+                return;
+            }
+
+            const codigoPeriodo = document.getElementById("selectPeriodo").value;
+            const tipoDocumento = document.getElementById("selectTipoDocumento").value;
+
+            // Crear FormData para enviar el archivo
+            const formData = new FormData();
+            formData.append("archivo", archivo);
+            formData.append("proyectoId", proyectoSeleccionado.id);
+            formData.append("periodoAcademico", codigoPeriodo);
+            formData.append("tipoDocumento", tipoDocumento);
+
+            try {
+                document.getElementById("btnCargarDocumento").disabled = true;
+                document.getElementById("btnCargarDocumento").textContent = "Cargando...";
+
+                const response = await fetch('/api/documentos/cargar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    alert("❌ Error al cargar el documento: " + error);
+                    return;
+                }
+
+                const resultado = await response.json();
+                alert("✅ Documento cargado exitosamente\n\nID: " + resultado.idDocumento + "\nEstado: Por aprobar");
+                
+                // Limpiar formulario
+                archivoInput.value = "";
+                document.getElementById("seccionDocumentos").classList.add("seccion-oculta");
+                
+                // Resetear selecciones
+                document.getElementById("selectProyecto").value = "";
+                document.getElementById("selectPeriodo").value = "";
+                document.getElementById("selectTipoDocumento").value = "";
+                proyectoSeleccionado = null;
+                
+                // Ocultar secciones
+                document.getElementById("infoPeriodo").classList.add("seccion-oculta");
+                document.getElementById("infoTipoDocumento").classList.add("seccion-oculta");
+                document.getElementById("btnContinuar").disabled = true;
+                
+            } catch (error) {
+                console.error("Error al cargar documento:", error);
+                alert("❌ Error al cargar el documento. Por favor intente nuevamente.");
+            } finally {
+                document.getElementById("btnCargarDocumento").disabled = false;
+                document.getElementById("btnCargarDocumento").textContent = "📤 Cargar Documento";
+            }
+        }
+
+        // Función para cargar el estado de documentos
+        async function cargarEstadoDocumentos() {
+            const selectProyecto = document.getElementById("selectProyectoEstado");
+            const proyectoId = selectProyecto.value;
+            
+            const tablaEstado = document.getElementById("tablaEstadoDocumentos");
+            const listaDocumentos = document.getElementById("listaDocumentos");
+            const mensajeSin = document.getElementById("mensajeSinDocumentos");
+            
+            if (!proyectoId) {
+                tablaEstado.classList.add("seccion-oculta");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/documentos/proyecto/${proyectoId}`);
+                
+                if (!response.ok) {
+                    alert("Error al cargar los documentos");
+                    return;
+                }
+
+                const documentos = await response.json();
+                
+                tablaEstado.classList.remove("seccion-oculta");
+                
+                if (documentos.length === 0) {
+                    listaDocumentos.innerHTML = "";
+                    mensajeSin.style.display = "block";
+                    return;
+                }
+
+                mensajeSin.style.display = "none";
+                
+                // Generar tarjetas de documentos
+                listaDocumentos.innerHTML = documentos.map(doc => {
+                    const estadoBadge = doc.aprobado 
+                        ? '<span style="background: #48bb78; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">✅ Aprobado</span>'
+                        : '<span style="background: #ed8936; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">⏳ Pendiente</span>';
+                    
+                    const tipoTexto = doc.nombre.includes("Planificacion") ? "📋 Planificación" : "📈 Avance";
+                    
+                    return `
+                        <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 1.5rem; background: #f8f9ff;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <div>
+                                    <h4 style="color: #667eea; margin: 0 0 0.5rem 0;">${tipoTexto}</h4>
+                                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Periodo: <strong>${doc.periodoAcademico}</strong></p>
+                                </div>
+                                ${estadoBadge}
+                            </div>
+                            <div style="font-size: 0.9rem; color: #666;">
+                                <p style="margin: 0.3rem 0;">📄 Archivo: ${doc.nombre}</p>
+                                <p style="margin: 0.3rem 0;">📅 Fecha de carga: ${formatearFecha(doc.fechaCarga)}</p>
+                                ${doc.aprobado ? `<p style="margin: 0.3rem 0;">✅ Fecha aprobación: ${formatearFecha(doc.fechaAprobacion)}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error("Error al cargar documentos:", error);
+                alert("Error al cargar la lista de documentos");
+            }
+        }
+
+        // Función auxiliar para formatear fechas
+        function formatearFecha(fechaStr) {
+            if (!fechaStr) return '-';
+            const fecha = new Date(fechaStr);
+            const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+            return fecha.toLocaleDateString('es-ES', opciones);
+        }
+
+        // Función modificada para mostrar estado aprobaciones
+        function mostrarEstadoAprobaciones() {
+            // Cargar proyectos en el select de estado si aún no está cargado
+            const selectEstado = document.getElementById("selectProyectoEstado");
+            if (selectEstado.options.length === 1) {
+                // Mostrar TODOS los proyectos del director (incluyendo finalizados)
+                if (proyectosGlobal && proyectosGlobal.length > 0) {
+                    proyectosGlobal.forEach(proyecto => {
+                        const option = document.createElement("option");
+                        option.value = proyecto.id;
+                        option.textContent = `${proyecto.nombre} (ID: ${proyecto.id})`;
+                        selectEstado.appendChild(option);
+                    });
+                } else {
+                    selectEstado.innerHTML += '<option value="" disabled>No hay proyectos disponibles</option>';
+                }
+            }
+            
+            document.getElementById("submenu").classList.add("seccion-oculta");
+            document.getElementById("seccionEstadoAprobaciones").classList.remove("seccion-oculta");
         }
     </script>
 </body>
