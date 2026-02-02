@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ServicioGestionDocumento {
@@ -376,15 +377,16 @@ public class ServicioGestionDocumento {
         // 5. Crear instancia del tipo correcto de documento
         Documento documento;
 
+        // EN EL MÉTODO guardarDocumento:
+
         if ("PLANIFICACION".equals(tipoDocumento)) {
             PlanificacionProyecto planificacion = new PlanificacionProyecto();
             planificacion.setPeriodoAcademico(periodoAcademico);
-            planificacion.setAprobado(false); // Estado inicial: Por aprobar
             documento = planificacion;
         } else if ("AVANCE".equals(tipoDocumento)) {
             AvanceProyecto avance = new AvanceProyecto();
             avance.setPeriodoAcademico(periodoAcademico);
-            avance.setAprobado(false); // Estado inicial: Por aprobar
+            // avance.setAprobado(false); <-- ¡BORRA ESTA LÍNEA TAMBIÉN!
             documento = avance;
         } else {
             throw new RuntimeException("Tipo de documento no válido: " + tipoDocumento);
@@ -426,5 +428,34 @@ public class ServicioGestionDocumento {
         System.out.println("Documentos encontrados para proyecto " + proyectoId + ": " + documentos.size());
 
         return documentos;
+    }
+
+    /**
+     * Obtener un documento por su ID
+     */
+    public Documento obtenerDocumentoPorId(Long idDocumento) {
+        return documentoRepository.findById(idDocumento)
+                .orElseThrow(() -> new RuntimeException("Documento no encontrado con ID: " + idDocumento));
+    }
+
+    /**
+     * Guardar un documento actualizado (para aprobación/rechazo)
+     */
+    public void guardarDocumentoActualizado(Documento documento) {
+        documentoRepository.save(documento);
+    }
+
+    // Método para la Jefa: Busca documentos pendientes de TODOS los proyectos
+    public List<Documento> obtenerTodosLosPendientes() {
+        return documentoRepository.findAll().stream()
+                .filter(doc -> {
+                    if (doc instanceof PlanificacionProyecto) {
+                        return ((PlanificacionProyecto) doc).getAprobado() == null;
+                    } else if (doc instanceof AvanceProyecto) {
+                        return ((AvanceProyecto) doc).getAprobado() == null;
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
     }
 }

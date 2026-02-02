@@ -18,7 +18,7 @@ public class AvanceProyecto extends Documento {
     private Integer porcentajeAvance; // 0-100
 
     @Column(name = "aprobado")
-    private Boolean aprobado = false;
+    private Boolean aprobado;
 
     private LocalDateTime fechaAprobacion;
     private String observaciones;
