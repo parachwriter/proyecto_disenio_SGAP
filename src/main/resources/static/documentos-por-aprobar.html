@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGAP - Documentos por Aprobar</title>
+    <style>
+        /* --- ESTILOS (Mismos que tenías, sin cambios visuales) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .logo-stamp { position: fixed; top: 20px; left: 20px; width: 70px; height: 70px; background: white; border-radius: 50%; padding: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .logo-stamp img { width: 100%; height: 100%; object-fit: contain; }
+        .container { max-width: 1400px; margin: 0 auto; margin-top: 80px; }
+        .header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); margin-bottom: 2rem; position: relative; }
+        .header h1 { color: #2d3748; font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .btn-back { position: absolute; top: 2rem; right: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
+        .btn-back:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+        .content-section { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); }
+        .content-section h2 { color: #2d3748; font-size: 1.5rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0; }
+        
+        /* Tablas y Estados */
+        .documentos-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        .documentos-table th { background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; padding: 1rem; text-align: left; font-weight: 600; }
+        .documentos-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; color: #4a5568; }
+        .documentos-table tr:hover { background-color: #f7fafc; }
+        .estado-por-aprobar { background-color: #feebc8; color: #744210; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 600; display: inline-block; }
+        .tipo-documento { font-weight: 600; color: #2d3748; }
+        .proyecto-nombre { font-weight: 600; color: #2b6cb0; }
+        
+        /* Botones Acción */
+        .acciones { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn-aprobar { background: #48bb78; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; font-weight: 600; }
+        .btn-aprobar:hover { background: #38a169; transform: translateY(-2px); }
+        .btn-rechazar { background: #f56565; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; font-weight: 600; }
+        .btn-rechazar:hover { background: #e53e3e; transform: translateY(-2px); }
+        .btn-ver { background: #4299e1; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; font-weight: 600; }
+        .btn-ver:hover { background: #3182ce; transform: translateY(-2px); }
+        .btn-refresh { background: #9f7aea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; font-weight: 600; margin-left: 10px; }
+        .btn-refresh:hover { background: #805ad5; transform: translateY(-2px); }
+        
+        /* Feedback */
+        .loading { text-align: center; padding: 3rem; color: #718096; }
+        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .no-documentos { text-align: center; padding: 3rem; color: #718096; font-size: 1.1rem; }
+        .mensaje-exito, .mensaje-error { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: none; }
+        .mensaje-exito { background-color: #c6f6d5; color: #22543d; border-left: 4px solid #48bb78; }
+        .mensaje-error { background-color: #fed7d7; color: #742a2a; border-left: 4px solid #f56565; }
+
+        /* Modales */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 2rem; border-radius: 15px; width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+        .modal h3 { color: #2d3748; margin-bottom: 1rem; }
+        .modal-documento-info { background: #f7fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #4299e1; }
+        .modal textarea { width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; font-family: inherit; resize: vertical; min-height: 120px; }
+        .modal textarea:focus { outline: none; border-color: #4299e1; }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: flex-end; }
+        .btn-cancelar { background: #a0aec0; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .btn-cancelar:hover { background: #718096; }
+        .btn-confirmar { background: #48bb78; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .btn-confirmar:hover { background: #38a169; }
+        .btn-confirmar-rechazar { background: #f56565; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .btn-confirmar-rechazar:hover { background: #e53e3e; }
+
+        /* Visor PDF */
+        .pdf-viewer-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .pdf-viewer { width: 90%; height: 90%; background: white; border-radius: 10px; overflow: hidden; }
+        .pdf-viewer iframe { width: 100%; height: 100%; border: none; }
+        .close-pdf-viewer { position: absolute; top: 20px; right: 20px; background: #f56565; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 3001; }
+
+        @media (max-width: 768px) {
+            .container { margin-top: 60px; }
+            .header { padding: 1.5rem; }
+            .header h1 { font-size: 1.5rem; }
+            .btn-back { position: static; margin-top: 1rem; width: 100%; }
+            .documentos-table { display: block; overflow-x: auto; }
+            .acciones { flex-direction: column; }
+            .modal-content { width: 95%; padding: 1rem; }
+            .pdf-viewer { width: 95%; height: 95%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-stamp">
+        <img src="SGAP.png" alt="SGAP Logo">
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>⏳ Documentos por Aprobar</h1>
+            <p>Revisar y aprobar documentos pendientes de proyectos</p>
+            <a href="dashboard.html" class="btn-back">← Volver al Panel</a>
+        </div>
+
+        <div class="content-section">
+            <h2>📋 Documentos Pendientes de Aprobación</h2>
+            
+            <div id="mensajeExito" class="mensaje-exito"></div>
+            <div id="mensajeError" class="mensaje-error"></div>
+            
+            <div style="text-align: right; margin-bottom: 1rem;">
+                <button class="btn-refresh" onclick="cargarDocumentosPendientes()">🔄 Actualizar Lista</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Buscando documentos pendientes de aprobación...</p>
+            </div>
+
+            <table class="documentos-table" id="tablaDocumentos" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Proyecto / Director</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th>Período</th>
+                        <th>Fecha Subida</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyDocumentos">
+                    </tbody>
+            </table>
+
+            <div id="noDocumentos" class="no-documentos" style="display: none;">
+                <p>🎉 ¡No hay documentos pendientes de aprobación!</p>
+                <p>Todos los documentos han sido revisados.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modalAccion">
+        <div class="modal-content">
+            <h3 id="modalTitulo">Aprobar Documento</h3>
+            <div class="modal-documento-info">
+                <p><strong>Documento:</strong> <span id="modalDocNombre"></span></p>
+                <p><strong>Tipo:</strong> <span id="modalDocTipo"></span></p>
+                <p><strong>Proyecto:</strong> <span id="modalDocProyecto"></span></p>
+                <p><strong>ID:</strong> <span id="modalDocId"></span></p>
+            </div>
+            <textarea id="modalComentarios" placeholder="Ingrese observaciones o comentarios (opcional para aprobar, obligatorio para rechazar)"></textarea>
+            <div class="modal-buttons">
+                <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-confirmar" id="btnConfirmarAccion" onclick="confirmarAccion()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="pdf-viewer-container" id="pdfViewerContainer">
+        <button class="close-pdf-viewer" onclick="cerrarPDF()">✕</button>
+        <div class="pdf-viewer">
+            <iframe id="pdfFrame" src="" title="Vista previa del documento"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURACIÓN
+        // ============================================
+        const API_BASE = 'http://localhost:8080';
+        let documentoActual = null;
+        let accionActual = null;
+
+        // ============================================
+        // FUNCIÓN PRINCIPAL (CORREGIDA PARA USAR NUEVO ENDPOINT)
+        // ============================================
+        async function cargarDocumentosPendientes() {
+            try {
+                console.log('🔍 Buscando documentos pendientes en toda la base de datos...');
+                mostrarLoading();
+                ocultarMensajes();
+                
+                // --- CAMBIO CLAVE AQUÍ ---
+                // Ya no buscamos proyecto por proyecto. 
+                // Llamamos directamente al endpoint GLOBAL que creamos para la Jefa.
+                const response = await fetch(`${API_BASE}/api/documentos/pendientes-globales`);
+                
+                // Si retorna 204 No Content, es que no hay nada
+                if (response.status === 204) {
+                    mostrarNoDocumentos();
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('No se pudo conectar con el servidor para obtener documentos.');
+                }
+
+                const documentos = await response.json();
+                console.log(`📊 Documentos pendientes encontrados: ${documentos.length}`);
+                
+                if (documentos.length > 0) {
+                    mostrarDocumentos(documentos);
+                } else {
+                    mostrarNoDocumentos();
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando documentos:', error);
+                mostrarMensajeError('Error al cargar documentos: ' + error.message);
+                mostrarNoDocumentos();
+            } finally {
+                ocultarLoading();
+            }
+        }
+
+        // ============================================
+        // MOSTRAR DOCUMENTOS EN TABLA
+        // ============================================
+        function mostrarDocumentos(documentos) {
+            const tbody = document.getElementById('tbodyDocumentos');
+            tbody.innerHTML = '';
+            
+            documentos.forEach(doc => {
+                const row = document.createElement('tr');
+                
+                // Formatear fecha
+                const fecha = doc.fecha ? new Date(doc.fecha).toLocaleDateString('es-ES', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                }) : 'No disponible';
+                
+                // Manejo seguro de datos del proyecto (por si vienen nulos)
+                const nombreProyecto = doc.proyecto ? doc.proyecto.nombre : 'Sin Proyecto Asignado';
+                const nombreDirector = (doc.proyecto && doc.proyecto.director) ? doc.proyecto.director.nombre : 'Sin Director';
+
+                // Determinar tipo de documento visualmente
+                let tipoDoc = doc.tipo || 'DESCONOCIDO';
+                if (doc.objetivos) tipoDoc = 'PLANIFICACION'; // Detectar por campos únicos si el tipo falla
+                if (doc.porcentajeAvance !== undefined) tipoDoc = 'AVANCE';
+                
+                row.innerHTML = `
+                    <td>${doc.idDocumento || doc.id}</td>
+                    <td>
+                        <span class="proyecto-nombre">${nombreProyecto}</span><br>
+                        <small style="color: #666;">Dir: ${nombreDirector}</small>
+                    </td>
+                    <td><span class="tipo-documento">${tipoDoc}</span></td>
+                    <td>
+                        <strong>${doc.nombre || 'Sin nombre'}</strong>
+                    </td>
+                    <td>${doc.periodoAcademico || 'N/A'}</td>
+                    <td>${fecha}</td>
+                    <td><span class="estado-por-aprobar">POR APROBAR</span></td>
+                    <td class="acciones">
+                        <button class="btn-ver" onclick="verDocumento(${doc.idDocumento || doc.id}, '${doc.nombre}')" title="Ver documento PDF">
+                            👁️ Ver
+                        </button>
+                        <button class="btn-aprobar" onclick="mostrarModalAprobar(
+                            ${doc.idDocumento || doc.id}, 
+                            '${(doc.nombre || 'Doc').replace(/'/g, "\\'")}', 
+                            '${tipoDoc}', 
+                            '${nombreProyecto.replace(/'/g, "\\'")}'
+                        )" title="Aprobar documento">
+                            ✓ Aprobar
+                        </button>
+                        <button class="btn-rechazar" onclick="mostrarModalRechazar(
+                            ${doc.idDocumento || doc.id}, 
+                            '${(doc.nombre || 'Doc').replace(/'/g, "\\'")}', 
+                            '${tipoDoc}', 
+                            '${nombreProyecto.replace(/'/g, "\\'")}'
+                        )" title="Rechazar documento">
+                            ✗ Rechazar
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('tablaDocumentos').style.display = 'table';
+            document.getElementById('noDocumentos').style.display = 'none';
+        }
+
+        // ============================================
+        // FUNCIONES PARA VER PDF
+        // ============================================
+        function verDocumento(id, nombreArchivo) {
+            // Asumiendo que los archivos se sirven desde la carpeta estática /uploads/documentos/
+            // Si el backend tiene un endpoint específico para servir bytes, cámbialo aquí.
+            const pdfUrl = `${API_BASE}/uploads/documentos/${nombreArchivo}`;
+            console.log('📄 Abriendo PDF:', pdfUrl);
+            
+            document.getElementById('pdfFrame').src = pdfUrl;
+            document.getElementById('pdfViewerContainer').style.display = 'flex';
+        }
+
+        function cerrarPDF() {
+            document.getElementById('pdfViewerContainer').style.display = 'none';
+            document.getElementById('pdfFrame').src = '';
+        }
+
+        // ============================================
+        // FUNCIONES PARA APROBAR/RECHAZAR (MODALES)
+        // ============================================
+        function mostrarModalAprobar(id, nombre, tipo, proyecto) {
+            prepararModal(id, nombre, tipo, proyecto, 'aprobar');
+        }
+
+        function mostrarModalRechazar(id, nombre, tipo, proyecto) {
+            prepararModal(id, nombre, tipo, proyecto, 'rechazar');
+        }
+
+        function prepararModal(id, nombre, tipo, proyecto, accion) {
+            documentoActual = { id };
+            accionActual = accion;
+            
+            document.getElementById('modalDocNombre').textContent = nombre;
+            document.getElementById('modalDocTipo').textContent = tipo;
+            document.getElementById('modalDocProyecto').textContent = proyecto;
+            document.getElementById('modalDocId').textContent = id;
+            document.getElementById('modalComentarios').value = '';
+            
+            const titulo = document.getElementById('modalTitulo');
+            const btn = document.getElementById('btnConfirmarAccion');
+            
+            if (accion === 'aprobar') {
+                titulo.textContent = 'Aprobar Documento';
+                titulo.style.color = '#2d3748';
+                btn.className = 'btn-confirmar';
+                btn.textContent = '✓ Aprobar';
+                document.getElementById('modalComentarios').placeholder = 'Observaciones (opcional)';
+            } else {
+                titulo.textContent = 'Rechazar Documento';
+                titulo.style.color = '#e53e3e';
+                btn.className = 'btn-confirmar-rechazar';
+                btn.textContent = '✗ Rechazar';
+                document.getElementById('modalComentarios').placeholder = 'Razones del rechazo (OBLIGATORIO)';
+            }
+            
+            document.getElementById('modalAccion').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalAccion').style.display = 'none';
+            documentoActual = null;
+            accionActual = null;
+        }
+
+        async function confirmarAccion() {
+            if (!documentoActual) return;
+            
+            const comentarios = document.getElementById('modalComentarios').value;
+            
+            // Validación para rechazo
+            if (accionActual === 'rechazar' && !comentarios.trim()) {
+                alert('⚠️ Para rechazar un documento debe ingresar las razones del rechazo.');
+                return;
+            }
+            
+            // Deshabilitar botón para evitar doble clic
+            const btn = document.getElementById('btnConfirmarAccion');
+            btn.disabled = true;
+            btn.textContent = "Procesando...";
+            
+            const endpoint = accionActual === 'aprobar' ? 'aprobar' : 'rechazar';
+            // Construir URL: /api/documentos/{id}/aprobar?observaciones=...
+            const url = `${API_BASE}/api/documentos/${documentoActual.id}/${endpoint}?observaciones=${encodeURIComponent(comentarios || 'Sin observaciones')}`;
+            
+            try {
+                const response = await fetch(url, { 
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || `Error ${response.status}`);
+                }
+                
+                const resultado = await response.json();
+                mostrarMensajeExito(resultado.mensaje || `✅ Documento ${accionActual === 'aprobar' ? 'aprobado' : 'rechazado'} correctamente`);
+                
+                cerrarModal();
+                
+                // Recargar la lista automáticamente
+                setTimeout(() => {
+                    cargarDocumentosPendientes();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Error procesando acción:', error);
+                mostrarMensajeError('Error al procesar la acción: ' + error.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================
+        // UTILIDADES VISUALES
+        // ============================================
+        function mostrarLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('tablaDocumentos').style.display = 'none';
+            document.getElementById('noDocumentos').style.display = 'none';
+        }
+        function ocultarLoading() { document.getElementById('loading').style.display = 'none'; }
+        function mostrarNoDocumentos() {
+            document.getElementById('tablaDocumentos').style.display = 'none';
+            document.getElementById('noDocumentos').style.display = 'block';
+        }
+        function mostrarMensajeExito(msg) {
+            const div = document.getElementById('mensajeExito');
+            div.innerHTML = msg; div.style.display = 'block';
+            setTimeout(() => div.style.display = 'none', 5000);
+        }
+        function mostrarMensajeError(msg) {
+            const div = document.getElementById('mensajeError');
+            div.innerHTML = msg; div.style.display = 'block';
+            setTimeout(() => div.style.display = 'none', 5000);
+        }
+        function ocultarMensajes() {
+            document.getElementById('mensajeExito').style.display = 'none';
+            document.getElementById('mensajeError').style.display = 'none';
+        }
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando página de documentos por aprobar...');
+            
+            // Verificar sesión (Opcional)
+            const sesion = localStorage.getItem("sesion");
+            if (sesion !== "admin") {
+                // window.location.href = "login.html"; // Descomentar en producción
+            }
+
+            cargarDocumentosPendientes();
+            
+            // Configurar cierre de modales con clic fuera o ESC
+            window.addEventListener('click', (event) => {
+                if (event.target === document.getElementById('modalAccion')) cerrarModal();
+                if (event.target === document.getElementById('pdfViewerContainer')) cerrarPDF();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') { cerrarModal(); cerrarPDF(); }
+            });
+        });
+    </script>
+</body>
+</html>
