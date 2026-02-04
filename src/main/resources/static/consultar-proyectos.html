@@ -371,6 +371,19 @@
 
                 proyectosData = await response.json();
                 console.debug('Respuesta /proyectos:', proyectosData);
+                
+                // Filtrar proyectos duplicados por ID y asegurar que tengan ID válido
+                const idsVistos = new Set();
+                const proyectosUnicos = [];
+                proyectosData.forEach(proyecto => {
+                    if (proyecto.id && !idsVistos.has(proyecto.id)) {
+                        idsVistos.add(proyecto.id);
+                        proyectosUnicos.push(proyecto);
+                    }
+                });
+                
+                console.debug('Proyectos originales:', proyectosData.length, 'Únicos:', proyectosUnicos.length);
+                proyectosData = proyectosUnicos; // Actualizar los datos globales
                 mostrarProyectos(proyectosData);
 
                 document.getElementById('loading').style.display = 'none';
