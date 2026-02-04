@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.repository.NominaRepository;
+import jakarta.transaction.Transactional;
 import proyectos.gestionproyectos.model.Asistente;
 import proyectos.gestionproyectos.model.AyudanteInvestigacion;
 import proyectos.gestionproyectos.model.IntegranteProyecto;
@@ -35,7 +36,7 @@ public class ServicioGestionAsistente {
     /**
      * Crea una instancia del tipo de integrante correcto según el tipo especificado
      */
-    private IntegranteProyecto crearIntegranteSegunTipo(String tipo) {
+    public IntegranteProyecto crearIntegranteSegunTipo(String tipo) {
         if (tipo == null || tipo.isEmpty()) {
             return new Asistente(); // Por defecto
         }
@@ -52,29 +53,30 @@ public class ServicioGestionAsistente {
     }
 
     // +registrarAsistenteAProyecto()
-    public Asistente registrarAsistenteAProyecto(Long proyectoId, Asistente asistente) {
+    public IntegranteProyecto registrarAsistenteAProyecto(Long proyectoId, IntegranteProyecto integrante) {
         // Buscamos el proyecto
         var proyecto = proyectoRepository.findById(proyectoId)
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
 
-        // 1. Usar el setter que añadimos a IntegranteProyecto
-        asistente.setProyecto(proyecto);
+        integrante.setProyecto(proyecto);
+        integrante.activar();
 
-        // 2. Usar el método activar() definido en tu clase Asistente
-        asistente.activar();
-
-        return (Asistente) integranteRepository.save(asistente);
+        return integranteRepository.save(integrante);
     }
 
     // +darDeBajaAsistente() - Ahora funciona con cualquier tipo de integrante
+    @Transactional
     public IntegranteProyecto darDeBajaAsistente(Long idAsistente) {
+        logger.info("Intentando dar de baja integrante id={}", idAsistente);
+
         IntegranteProyecto integrante = integranteRepository.findById(idAsistente)
-                .orElseThrow(() -> new RuntimeException("Integrante no encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Integrante no encontrado"));
 
-        // Usar desactivar() que ahora está en la clase padre
         integrante.desactivar();
+        IntegranteProyecto guardado = integranteRepository.save(integrante);
 
-        return integranteRepository.save(integrante);
+        logger.info("Integrante id={} marcado como {}", guardado.getId(), guardado.getEstado());
+        return guardado;
     }
 
     // +confirmarActualizacionNomina() - Procesa el reporte mensual

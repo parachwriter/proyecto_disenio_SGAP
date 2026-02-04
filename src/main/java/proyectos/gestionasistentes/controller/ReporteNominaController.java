@@ -43,7 +43,7 @@ public class ReporteNominaController {
 
     // 1. Registrar un nuevo asistente a un proyecto específico
     @PostMapping("/registrar-asistente/{proyectoId}")
-    public Asistente registrarAsistente(@PathVariable Long proyectoId, @RequestBody Asistente asistente) {
+    public IntegranteProyecto registrarAsistente(@PathVariable Long proyectoId, @RequestBody Asistente asistente) {
         return servicioAsistente.registrarAsistenteAProyecto(proyectoId, asistente);
     }
 
