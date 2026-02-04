@@ -2,6 +2,7 @@ package proyectos.gestioncomunicacion.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "comunicados")
@@ -37,8 +38,6 @@ public class Comunicado {
                 return "Sistema de Gestión Académica y Progreso – Credenciales de Director de Proyecto.";
             case "RECORDATORIO_NOMINA":
                 return "Recordatorio: Actualización de Nómina Mensual";
-            case "CONFIRMACION_NOMINA":
-                return "Confirmación: Nómina Actualizada Exitosamente";
             case "NOMINA_EXITOSA":
                 return "Confirmación: Nómina Procesada Exitosamente";
             default:
@@ -59,8 +58,24 @@ public class Comunicado {
                 "Sistema de Gestión Académica y Progreso.";
     }
 
-    public static String getContenidoRecordatorioNomina(String nombreDirector) {
-        return "Estimado " + nombreDirector + ", por favor ingrese al sistema para reportar su nómina.";
+    public static String getContenidoRecordatorioNomina(String nombreDirector, List<String> nominasPendientes) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Estimado ").append(nombreDirector).append(",\n\n");
+        sb.append("Le recordamos que tiene las siguientes nóminas pendientes de reportar:\n\n");
+
+        if (nominasPendientes.isEmpty()) {
+            sb.append("- No hay nóminas pendientes.\n");
+        } else {
+            for (String pendiente : nominasPendientes) {
+                sb.append("- ").append(pendiente).append("\n");
+            }
+        }
+
+        sb.append("\nPor favor ingrese al sistema para reportar su nómina.\n\n");
+        sb.append("Atentamente,\n");
+        sb.append("Sistema de Gestión Académica y Progreso.");
+
+        return sb.toString();
     }
 
     public static String getContenidoConfirmacionNomina(String nombreDirector) {
@@ -68,14 +83,6 @@ public class Comunicado {
                 "Le informamos que el reporte de asistentes para su proyecto " +
                 "ha sido registrado correctamente en la base de datos.\n\n" +
                 "Fecha de registro: " + java.time.LocalDateTime.now();
-    }
-
-    public static String getContenidoNominaExitosa(String nombreDirector) {
-        return "Estimado/a " + nombreDirector + ",\n\n" +
-                "Le informamos que la nómina de su proyecto ha sido procesada y registrada correctamente en el sistema.\n\n" +
-                "Fecha de procesamiento: " + java.time.LocalDate.now() + "\n\n" +
-                "Atentamente,\n" +
-                "Sistema de Gestión Académica y Progreso.";
     }
 
     // Getters y Setters

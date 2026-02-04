@@ -313,4 +313,10 @@ public class ReporteNominaController {
         }
         return view;
     }
+
+    @GetMapping("/test-email")
+    public String testEmail() {
+        servicioGestionComunicacion.enviarCorreoRecordatorioNominaMensual();
+        return "Email enviado (ver logs)";
+    }
 }
