@@ -8,7 +8,6 @@ import jakarta.persistence.Entity;
  * Proyectos que integran múltiples disciplinas y áreas del conocimiento.
  */
 @Entity
-@DiscriminatorValue("INVESTIGACION_MULTIDISCIPLINARIO")
 public class Multidisciplinario extends ProyectoInvestigacion {
 
     // Atributos específicos del proyecto multidisciplinario
@@ -18,6 +17,7 @@ public class Multidisciplinario extends ProyectoInvestigacion {
 
     // --- CONSTRUCTORES ---
     public Multidisciplinario() {
+        this.setTipoProyecto("INVESTIGACION_MULTIDISCIPLINARIO");
     }
 
     // --- GETTERS Y SETTERS ---

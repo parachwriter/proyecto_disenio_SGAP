@@ -12,6 +12,9 @@ public interface ProyectoRepository extends JpaRepository<Proyecto, Long> {
     // Busca proyectos comparando el correo institucional del director asignado
     List<Proyecto> findByDirectorCorreoInstitucional(String correo);
 
-    @Query(value = "SELECT * FROM proyecto_investigacion WHERE tipo_proyecto LIKE :tipoPattern", nativeQuery = true)
+    @Query("SELECT DISTINCT p FROM Proyecto p")
+    List<Proyecto> findAllDistinct();
+
+    @Query(value = "SELECT DISTINCT * FROM proyecto_investigacion WHERE tipo_proyecto LIKE :tipoPattern", nativeQuery = true)
     List<Proyecto> findByTipoProyectoPattern(@Param("tipoPattern") String tipoPattern);
 }

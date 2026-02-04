@@ -60,7 +60,7 @@ public class ServicioGestionProyecto {
 
     // retornar todos los proyectos
     public List<Proyecto> listarTodos() {
-        return proyectoRepo.findAll();
+        return proyectoRepo.findAllDistinct();
     }
 
     // Listar por tipo (acepta patrones sobre la columna discriminator

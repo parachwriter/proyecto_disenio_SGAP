@@ -1,15 +1,12 @@
 package proyectos.gestionproyectos.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 
 /**
  * Clase base abstracta para todos los tipos de proyectos de investigación.
  * Los subtipos específicos son: Interno, Semilla, Grupal y Multidisciplinario.
  */
 @Entity
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public abstract class ProyectoInvestigacion extends Proyecto {
 
     // Atributos comunes a todos los proyectos de investigación
