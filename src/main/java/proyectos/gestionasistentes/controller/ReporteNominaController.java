@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.time.format.DateTimeParseException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,17 @@ public class ReporteNominaController {
     @Autowired
     private ProyectoRepository proyectoRepository;
 
+    // DTO compacto para exponer nóminas (registradas y pendientes)
+    public static class NominaView {
+        public Long idReporte;
+        public Integer mes;
+        public Integer anio;
+        public String estado;
+        public String fechaRegistro;
+        public Map<String, Object> proyecto;
+        public List<Map<String, Object>> listaIntegrantes;
+    }
+
     // 1. Registrar un nuevo asistente a un proyecto específico
     @PostMapping("/registrar-asistente/{proyectoId}")
     public IntegranteProyecto registrarAsistente(@PathVariable Long proyectoId, @RequestBody Asistente asistente) {
@@ -52,6 +65,82 @@ public class ReporteNominaController {
     @PutMapping("/dar-de-baja/{idAsistente}")
     public IntegranteProyecto darDeBaja(@PathVariable Long idAsistente) {
         return servicioAsistente.darDeBajaAsistente(idAsistente);
+    }
+
+    // 2b. Estado de nóminas de un proyecto (registradas + pendientes hasta la
+    // fecha)
+    @GetMapping("/estado-proyecto/{proyectoId}")
+    public ResponseEntity<?> obtenerEstadoProyecto(@PathVariable Long proyectoId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String actualizadoPor) {
+        try {
+            Proyecto proyecto = proyectoRepository.findById(proyectoId)
+                    .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+
+            // Crear pendientes en BD antes de responder
+            servicioAsistente.generarPendientesProyecto(proyecto);
+
+            // Reportes ya registrados (opcionalmente filtrados por quien los actualizó)
+            List<ReporteNomina> reportes = (actualizadoPor != null && !actualizadoPor.isBlank())
+                    ? servicioAsistente.obtenerNominasPorProyecto(proyectoId, actualizadoPor)
+                    : servicioAsistente.obtenerReportesProyecto(proyectoId);
+
+            Map<String, ReporteNomina> completadosPorMes = new HashMap<>();
+            for (ReporteNomina r : reportes) {
+                String clave = r.getAnio() + "-" + String.format("%02d", r.getMes());
+                completadosPorMes.put(clave, r);
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            YearMonth fechaInicio = parseYearMonthSafe(proyecto.getFechaInicio(), formatter);
+            YearMonth fechaFin = parseYearMonthSafe(proyecto.getFechaFin(), formatter);
+            YearMonth limite = YearMonth.now().isBefore(fechaFin) ? YearMonth.now() : fechaFin;
+
+            List<NominaView> resultado = new ArrayList<>();
+
+            // Agregar registradas
+            for (ReporteNomina r : reportes) {
+                resultado.add(mapearNomina(r, proyecto));
+            }
+
+            // Agregar pendientes hasta el mes límite
+            YearMonth actual = fechaInicio;
+            while (!actual.isAfter(limite)) {
+                String clave = actual.getYear() + "-" + String.format("%02d", actual.getMonthValue());
+                if (!completadosPorMes.containsKey(clave)) {
+                    NominaView pendiente = new NominaView();
+                    pendiente.idReporte = -(long) (actual.getYear() * 100 + actual.getMonthValue());
+                    pendiente.mes = actual.getMonthValue();
+                    pendiente.anio = actual.getYear();
+                    pendiente.estado = "PENDIENTE";
+                    pendiente.fechaRegistro = null;
+                    pendiente.proyecto = Map.of("id", proyecto.getId(), "nombre", proyecto.getNombre());
+                    pendiente.listaIntegrantes = List.of();
+                    resultado.add(pendiente);
+                }
+                actual = actual.plusMonths(1);
+            }
+
+            // Ordenar por anio/mes descendente
+            resultado = resultado.stream()
+                    .sorted((a, b) -> {
+                        int cmp = b.anio.compareTo(a.anio);
+                        if (cmp != 0)
+                            return cmp;
+                        return b.mes.compareTo(a.mes);
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("pendientes", resultado.stream().filter(r -> "PENDIENTE".equals(r.estado)).count());
+            response.put("registradas",
+                    resultado.stream().filter(r -> !"PENDIENTE".equals(r.estado)).count());
+            response.put("nominas", resultado);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Error obteniendo estado de nóminas: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     // 3. Confirmar la nómina mensual y guardar el reporte
@@ -142,16 +231,20 @@ public class ReporteNominaController {
             List<ReporteNomina> reportes = servicioAsistente.obtenerReportesProyecto(proyectoId);
 
             // Crear mapa de meses completados (año-mes -> completado)
+            // SOLO cuenta los reportes con estado "COMPLETO", NO los "PENDIENTE"
             Map<String, Boolean> mesesCompletados = new HashMap<>();
             for (ReporteNomina reporte : reportes) {
-                String clave = reporte.getAnio() + "-" + String.format("%02d", reporte.getMes());
-                mesesCompletados.put(clave, true);
+                // Solo marcar como completado si el estado es "COMPLETO"
+                if ("COMPLETO".equals(reporte.getEstado())) {
+                    String clave = reporte.getAnio() + "-" + String.format("%02d", reporte.getMes());
+                    mesesCompletados.put(clave, true);
+                }
             }
 
             // Parsear fechas del proyecto
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            YearMonth fechaInicio = YearMonth.parse(proyecto.getFechaInicio(), formatter);
-            YearMonth fechaFin = YearMonth.parse(proyecto.getFechaFin(), formatter);
+            YearMonth fechaInicio = parseYearMonthSafe(proyecto.getFechaInicio(), formatter);
+            YearMonth fechaFin = parseYearMonthSafe(proyecto.getFechaFin(), formatter);
             YearMonth ahora = YearMonth.now();
 
             // Generar lista de meses atrasados
@@ -174,5 +267,43 @@ public class ReporteNominaController {
             logger.error("Error obteniendo meses atrasados: {}", e.getMessage(), e);
             return ResponseEntity.ok(new ArrayList<>()); // Retorna lista vacía en caso de error
         }
+    }
+
+    private YearMonth parseYearMonthSafe(String dateStr, DateTimeFormatter formatter) {
+        try {
+            if (dateStr == null || dateStr.isBlank()) {
+                logger.warn("Fecha de proyecto vacía; usando YearMonth.now() como fallback");
+                return YearMonth.now();
+            }
+            return YearMonth.parse(dateStr, formatter);
+        } catch (DateTimeParseException ex) {
+            logger.warn("Fecha de proyecto con formato inválido (se espera yyyy-MM-dd): {}. Usando YearMonth.now()",
+                    dateStr);
+            return YearMonth.now();
+        }
+    }
+
+    private NominaView mapearNomina(ReporteNomina r, Proyecto proyecto) {
+        NominaView view = new NominaView();
+        view.idReporte = r.getIdReporte();
+        view.mes = r.getMes();
+        view.anio = r.getAnio();
+        view.estado = r.getEstado() != null ? r.getEstado() : "COMPLETO";
+        view.fechaRegistro = r.getFechaRegistro() != null ? r.getFechaRegistro().toString() : null;
+        view.proyecto = Map.of("id", proyecto.getId(), "nombre", proyecto.getNombre());
+        if (r.getListaIntegrantes() != null) {
+            view.listaIntegrantes = r.getListaIntegrantes().stream().map(i -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", i.getId());
+                map.put("nombre", i.getNombre());
+                map.put("cedula", i.getCedula());
+                map.put("tipo", i.getTipo());
+                map.put("estado", i.getEstado() != null ? i.getEstado().name() : "ACTIVO");
+                return map;
+            }).collect(Collectors.toList());
+        } else {
+            view.listaIntegrantes = List.of();
+        }
+        return view;
     }
 }

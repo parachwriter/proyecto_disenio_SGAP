@@ -23,6 +23,9 @@ public class AvanceProyecto extends Documento {
     private LocalDateTime fechaAprobacion;
     private String observaciones;
 
+    // Ruta del documento firmado por la jefa (se guarda al aprobar)
+    private String documentoFirmado;
+
     // --- CONSTRUCTORES ---
     public AvanceProyecto() {
         super();
@@ -42,9 +45,16 @@ public class AvanceProyecto extends Documento {
         this.observaciones = observaciones;
     }
 
+    public void aprobar(String observaciones, String rutaDocumentoFirmado) {
+        this.aprobado = true;
+        this.fechaAprobacion = LocalDateTime.now();
+        this.observaciones = observaciones;
+        this.documentoFirmado = rutaDocumentoFirmado;
+    }
+
     public void rechazar(String observaciones) {
         this.aprobado = false;
-        this.fechaAprobacion = null;
+        this.fechaAprobacion = LocalDateTime.now(); // Guardar fecha de respuesta también para rechazos
         this.observaciones = observaciones;
     }
 
@@ -119,5 +129,13 @@ public class AvanceProyecto extends Documento {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public String getDocumentoFirmado() {
+        return documentoFirmado;
+    }
+
+    public void setDocumentoFirmado(String documentoFirmado) {
+        this.documentoFirmado = documentoFirmado;
     }
 }

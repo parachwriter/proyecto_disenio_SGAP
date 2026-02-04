@@ -69,10 +69,13 @@
         .btn-confirmar-rechazar:hover { background: #e53e3e; }
 
         /* Visor PDF */
-        .pdf-viewer-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .pdf-viewer { width: 90%; height: 90%; background: white; border-radius: 10px; overflow: hidden; }
+        .pdf-viewer-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 3000; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .pdf-viewer-header { width: 90%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 1.5rem; border-radius: 10px 10px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .pdf-viewer-header h3 { margin: 0; font-size: 1.1rem; }
+        .pdf-viewer-header .btn-close-pdf { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .pdf-viewer-header .btn-close-pdf:hover { background: rgba(255,255,255,0.3); }
+        .pdf-viewer { width: 90%; height: calc(90% - 60px); background: white; border-radius: 0 0 10px 10px; overflow: hidden; }
         .pdf-viewer iframe { width: 100%; height: 100%; border: none; }
-        .close-pdf-viewer { position: absolute; top: 20px; right: 20px; background: #f56565; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; z-index: 3001; }
 
         @media (max-width: 768px) {
             .container { margin-top: 60px; }
@@ -146,6 +149,19 @@
                 <p><strong>Proyecto:</strong> <span id="modalDocProyecto"></span></p>
                 <p><strong>ID:</strong> <span id="modalDocId"></span></p>
             </div>
+            
+            <!-- Campo para subir PDF firmado (solo visible al aprobar) -->
+            <div id="campoArchivoFirmado" style="margin-bottom: 1rem; display: none;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2d3748;">
+                    📎 Cargar documento firmado (PDF) <span style="color: #e53e3e;">*</span>
+                </label>
+                <input type="file" id="archivoFirmado" accept=".pdf" 
+                    style="width: 100%; padding: 0.5rem; border: 2px dashed #4299e1; border-radius: 8px; background: #f0f8ff;">
+                <small style="color: #718096; display: block; margin-top: 0.3rem;">
+                    Debe cargar el documento con su firma para aprobar
+                </small>
+            </div>
+            
             <textarea id="modalComentarios" placeholder="Ingrese observaciones o comentarios (opcional para aprobar, obligatorio para rechazar)"></textarea>
             <div class="modal-buttons">
                 <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
@@ -155,7 +171,10 @@
     </div>
 
     <div class="pdf-viewer-container" id="pdfViewerContainer">
-        <button class="close-pdf-viewer" onclick="cerrarPDF()">✕</button>
+        <div class="pdf-viewer-header">
+            <h3>📄 <span id="pdfViewerTitle">Documento</span></h3>
+            <button class="btn-close-pdf" onclick="cerrarPDF()">✕ Cerrar</button>
+        </div>
         <div class="pdf-viewer">
             <iframe id="pdfFrame" src="" title="Vista previa del documento"></iframe>
         </div>
@@ -230,10 +249,23 @@
                 const nombreProyecto = doc.proyecto ? doc.proyecto.nombre : 'Sin Proyecto Asignado';
                 const nombreDirector = (doc.proyecto && doc.proyecto.director) ? doc.proyecto.director.nombre : 'Sin Director';
 
-                // Determinar tipo de documento visualmente
-                let tipoDoc = doc.tipo || 'DESCONOCIDO';
-                if (doc.objetivos) tipoDoc = 'PLANIFICACION'; // Detectar por campos únicos si el tipo falla
-                if (doc.porcentajeAvance !== undefined) tipoDoc = 'AVANCE';
+                // Obtener nombre original para mostrar (si existe el método en el JSON)
+                // El backend ahora devuelve nombreOriginal como un getter
+                const nombreMostrar = doc.nombreOriginal || doc.nombre || 'Sin nombre';
+
+                // Determinar tipo de documento - usar campo 'tipo' del backend
+                // Si no está disponible, detectar por campos específicos de cada clase
+                let tipoDoc = doc.tipo;
+                if (!tipoDoc || tipoDoc === 'DESCONOCIDO') {
+                    // Fallback: detectar por campos únicos de cada tipo de documento
+                    if (doc.objetivos !== undefined || doc.metodologia !== undefined || doc.cronograma !== undefined) {
+                        tipoDoc = 'PLANIFICACION';
+                    } else if (doc.porcentajeAvance !== undefined || doc.actividadesRealizadas !== undefined) {
+                        tipoDoc = 'AVANCE';
+                    } else {
+                        tipoDoc = 'DESCONOCIDO';
+                    }
+                }
                 
                 row.innerHTML = `
                     <td>${doc.idDocumento || doc.id}</td>
@@ -243,18 +275,18 @@
                     </td>
                     <td><span class="tipo-documento">${tipoDoc}</span></td>
                     <td>
-                        <strong>${doc.nombre || 'Sin nombre'}</strong>
+                        <strong>${nombreMostrar}</strong>
                     </td>
                     <td>${doc.periodoAcademico || 'N/A'}</td>
                     <td>${fecha}</td>
                     <td><span class="estado-por-aprobar">POR APROBAR</span></td>
                     <td class="acciones">
-                        <button class="btn-ver" onclick="verDocumento(${doc.idDocumento || doc.id}, '${doc.nombre}')" title="Ver documento PDF">
-                            👁️ Ver
+                        <button class="btn-ver" onclick="verDocumento(${doc.idDocumento || doc.id}, '${nombreMostrar.replace(/'/g, "\\'")}')" title="Ver o descargar documento PDF">
+                            👁️ Ver/Descargar
                         </button>
                         <button class="btn-aprobar" onclick="mostrarModalAprobar(
                             ${doc.idDocumento || doc.id}, 
-                            '${(doc.nombre || 'Doc').replace(/'/g, "\\'")}', 
+                            '${nombreMostrar.replace(/'/g, "\\'")}', 
                             '${tipoDoc}', 
                             '${nombreProyecto.replace(/'/g, "\\'")}'
                         )" title="Aprobar documento">
@@ -262,7 +294,7 @@
                         </button>
                         <button class="btn-rechazar" onclick="mostrarModalRechazar(
                             ${doc.idDocumento || doc.id}, 
-                            '${(doc.nombre || 'Doc').replace(/'/g, "\\'")}', 
+                            '${nombreMostrar.replace(/'/g, "\\'")}', 
                             '${tipoDoc}', 
                             '${nombreProyecto.replace(/'/g, "\\'")}'
                         )" title="Rechazar documento">
@@ -281,11 +313,12 @@
         // FUNCIONES PARA VER PDF
         // ============================================
         function verDocumento(id, nombreArchivo) {
-            // Asumiendo que los archivos se sirven desde la carpeta estática /uploads/documentos/
-            // Si el backend tiene un endpoint específico para servir bytes, cámbialo aquí.
-            const pdfUrl = `${API_BASE}/uploads/documentos/${nombreArchivo}`;
+            // Usar el endpoint del backend para obtener el PDF
+            const pdfUrl = `${API_BASE}/api/documentos/${id}/ver`;
             console.log('📄 Abriendo PDF:', pdfUrl);
             
+            // Mostrar nombre del documento en el header del visor
+            document.getElementById('pdfViewerTitle').textContent = nombreArchivo || 'Documento';
             document.getElementById('pdfFrame').src = pdfUrl;
             document.getElementById('pdfViewerContainer').style.display = 'flex';
         }
@@ -293,6 +326,7 @@
         function cerrarPDF() {
             document.getElementById('pdfViewerContainer').style.display = 'none';
             document.getElementById('pdfFrame').src = '';
+            document.getElementById('pdfViewerTitle').textContent = 'Documento';
         }
 
         // ============================================
@@ -315,22 +349,26 @@
             document.getElementById('modalDocProyecto').textContent = proyecto;
             document.getElementById('modalDocId').textContent = id;
             document.getElementById('modalComentarios').value = '';
+            document.getElementById('archivoFirmado').value = ''; // Limpiar archivo
             
             const titulo = document.getElementById('modalTitulo');
             const btn = document.getElementById('btnConfirmarAccion');
+            const campoArchivo = document.getElementById('campoArchivoFirmado');
             
             if (accion === 'aprobar') {
-                titulo.textContent = 'Aprobar Documento';
-                titulo.style.color = '#2d3748';
+                titulo.textContent = '✅ Aprobar Documento';
+                titulo.style.color = '#38a169';
                 btn.className = 'btn-confirmar';
-                btn.textContent = '✓ Aprobar';
+                btn.textContent = '✓ Aprobar con Firma';
                 document.getElementById('modalComentarios').placeholder = 'Observaciones (opcional)';
+                campoArchivo.style.display = 'block'; // Mostrar campo de archivo
             } else {
-                titulo.textContent = 'Rechazar Documento';
+                titulo.textContent = '❌ Rechazar Documento';
                 titulo.style.color = '#e53e3e';
                 btn.className = 'btn-confirmar-rechazar';
                 btn.textContent = '✗ Rechazar';
                 document.getElementById('modalComentarios').placeholder = 'Razones del rechazo (OBLIGATORIO)';
+                campoArchivo.style.display = 'none'; // Ocultar campo de archivo
             }
             
             document.getElementById('modalAccion').style.display = 'flex';
@@ -338,6 +376,7 @@
 
         function cerrarModal() {
             document.getElementById('modalAccion').style.display = 'none';
+            document.getElementById('archivoFirmado').value = '';
             documentoActual = null;
             accionActual = null;
         }
@@ -346,10 +385,23 @@
             if (!documentoActual) return;
             
             const comentarios = document.getElementById('modalComentarios').value;
+            const archivoFirmado = document.getElementById('archivoFirmado').files[0];
             
             // Validación para rechazo
             if (accionActual === 'rechazar' && !comentarios.trim()) {
                 alert('⚠️ Para rechazar un documento debe ingresar las razones del rechazo.');
+                return;
+            }
+            
+            // Validación para aprobación: debe tener archivo firmado
+            if (accionActual === 'aprobar' && !archivoFirmado) {
+                alert('⚠️ Para aprobar un documento debe cargar el PDF firmado.');
+                return;
+            }
+            
+            // Validar que sea PDF si es aprobación
+            if (accionActual === 'aprobar' && !archivoFirmado.name.toLowerCase().endsWith('.pdf')) {
+                alert('⚠️ El documento firmado debe ser un archivo PDF.');
                 return;
             }
             
@@ -358,15 +410,27 @@
             btn.disabled = true;
             btn.textContent = "Procesando...";
             
-            const endpoint = accionActual === 'aprobar' ? 'aprobar' : 'rechazar';
-            // Construir URL: /api/documentos/{id}/aprobar?observaciones=...
-            const url = `${API_BASE}/api/documentos/${documentoActual.id}/${endpoint}?observaciones=${encodeURIComponent(comentarios || 'Sin observaciones')}`;
-            
             try {
-                const response = await fetch(url, { 
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+                let response;
+                
+                if (accionActual === 'aprobar') {
+                    // Para aprobar: usar FormData con el archivo
+                    const formData = new FormData();
+                    formData.append('archivoFirmado', archivoFirmado);
+                    formData.append('observaciones', comentarios || 'Documento aprobado');
+                    
+                    response = await fetch(`${API_BASE}/api/documentos/${documentoActual.id}/aprobar`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                } else {
+                    // Para rechazar: solo observaciones
+                    const url = `${API_BASE}/api/documentos/${documentoActual.id}/rechazar?observaciones=${encodeURIComponent(comentarios)}`;
+                    response = await fetch(url, { 
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
                 
                 if (!response.ok) {
                     const errorText = await response.text();
@@ -388,6 +452,7 @@
                 mostrarMensajeError('Error al procesar la acción: ' + error.message);
             } finally {
                 btn.disabled = false;
+                btn.textContent = accionActual === 'aprobar' ? '✓ Aprobar con Firma' : '✗ Rechazar';
             }
         }
 

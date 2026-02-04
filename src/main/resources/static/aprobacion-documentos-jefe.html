@@ -256,10 +256,10 @@
             </div>
 
             <div class="submenu-container">
-                <div class="submenu-card" onclick="mostrarDocumentosAprobados()">
+                <div class="submenu-card" onclick="mostrarDocumentosRespondidos()">
                     <div class="card-icon consultar">📋</div>
-                    <h3>Consultar Documentos Aprobados</h3>
-                    <p>Ver y consultar todos los documentos que han sido aprobados</p>
+                    <h3>Consultar Respuesta Documentos</h3>
+                    <p>Ver documentos aprobados y rechazados con filtros por proyecto y periodo</p>
                 </div>
 
                 <div class="submenu-card" onclick="mostrarColaAprobacion()">
@@ -270,13 +270,37 @@
             </div>
         </div>
 
-        <!-- Sección: Documentos Aprobados -->
-        <div id="seccionDocumentosAprobados" class="seccion-oculta">
+        <!-- Sección: Documentos Respondidos (Aprobados y Rechazados) -->
+        <div id="seccionDocumentosRespondidos" class="seccion-oculta">
             <div class="content-section">
                 <button class="btn-volver" onclick="volverSubmenu()">← Volver</button>
-                <h2>📋 Documentos Aprobados</h2>
-                <p style="color: #718096; margin-top: 1rem;">Aquí se mostrarán todos los documentos aprobados...</p>
-                <!-- Aquí irá la lista de documentos aprobados -->
+                <h2>📋 Consultar Respuesta Documentos</h2>
+                
+                <!-- Filtros -->
+                <div style="display: flex; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap; align-items: flex-end;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500;">Filtrar por Proyecto:</label>
+                        <select id="filtroProyecto" onchange="filtrarDocumentosRespondidos()" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Todos los proyectos</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500;">Filtrar por Periodo:</label>
+                        <select id="filtroPeriodo" onchange="filtrarDocumentosRespondidos()" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Todos los periodos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button onclick="limpiarFiltros()" style="padding: 0.75rem 1.5rem; background: #718096; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                            🔄 Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabla de documentos respondidos -->
+                <div id="tablaDocumentosRespondidos" style="margin-top: 1rem;">
+                    <p style="color: #718096; text-align: center; padding: 2rem;">Cargando documentos...</p>
+                </div>
             </div>
         </div>
 
@@ -297,21 +321,198 @@
             window.location.href = "login.html";
         }
 
-        function mostrarDocumentosAprobados() {
+        // Variables globales para almacenar datos
+        let proyectosCache = [];
+        let periodosCache = new Set();
+
+        // Cargar proyectos al iniciar
+        async function cargarProyectos() {
+            try {
+                const response = await fetch('/api/proyectos');
+                if (response.ok) {
+                    proyectosCache = await response.json();
+                    const select = document.getElementById('filtroProyecto');
+                    select.innerHTML = '<option value="">Todos los proyectos</option>';
+                    proyectosCache.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.idProyecto;
+                        option.textContent = p.nombre || `Proyecto ${p.idProyecto}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar proyectos:', error);
+            }
+        }
+
+        // Cargar documentos respondidos
+        async function cargarDocumentosRespondidos(proyectoId = '', periodo = '') {
+            const container = document.getElementById('tablaDocumentosRespondidos');
+            container.innerHTML = '<p style="color: #718096; text-align: center; padding: 2rem;">Cargando documentos...</p>';
+
+            try {
+                let url = '/api/documentos/respondidos';
+                const params = new URLSearchParams();
+                if (proyectoId) params.append('proyectoId', proyectoId);
+                if (periodo) params.append('periodo', periodo);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error al obtener documentos');
+
+                const documentos = await response.json();
+                
+                // Extraer periodos únicos para el filtro
+                periodosCache.clear();
+                documentos.forEach(doc => {
+                    const per = doc.periodoAcademico;
+                    if (per) periodosCache.add(per);
+                });
+                actualizarFiltroPeriodos();
+
+                if (documentos.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #718096;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📭</div>
+                            <p style="font-size: 1.2rem;">No hay documentos respondidos con los filtros seleccionados</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Construir tabla
+                let html = `
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <th style="padding: 1rem; text-align: left; border-radius: 10px 0 0 0;">Proyecto</th>
+                                <th style="padding: 1rem; text-align: center;">Tipo</th>
+                                <th style="padding: 1rem; text-align: center;">Periodo</th>
+                                <th style="padding: 1rem; text-align: center;">Estado</th>
+                                <th style="padding: 1rem; text-align: left;">Observaciones</th>
+                                <th style="padding: 1rem; text-align: center;">Fecha Respuesta</th>
+                                <th style="padding: 1rem; text-align: center; border-radius: 0 10px 0 0;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                documentos.forEach((doc, index) => {
+                    const esAprobado = doc.aprobado === true;
+                    const estadoTexto = esAprobado ? 'Aprobado' : 'Rechazado';
+                    const estadoColor = esAprobado ? '#48bb78' : '#f56565';
+                    const estadoIcon = esAprobado ? '✅' : '❌';
+                    
+                    const proyecto = proyectosCache.find(p => p.idProyecto === doc.proyectoId);
+                    const nombreProyecto = proyecto ? proyecto.nombre : `Proyecto ${doc.proyectoId}`;
+                    
+                    const fechaRespuesta = doc.fechaAprobacion ? 
+                        new Date(doc.fechaAprobacion).toLocaleDateString('es-EC') : '-';
+
+                    html += `
+                        <tr style="border-bottom: 1px solid #e2e8f0; ${index % 2 === 0 ? 'background: #f7fafc;' : ''}">
+                            <td style="padding: 1rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${nombreProyecto}">${nombreProyecto}</td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="background: ${doc.tipo === 'PLANIFICACION' ? '#4299e1' : '#ed8936'}; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem;">
+                                    ${doc.tipo === 'PLANIFICACION' ? '📋 Planificación' : '📈 Avance'}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center; font-weight: 500;">${doc.periodoAcademico || '-'}</td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="background: ${estadoColor}20; color: ${estadoColor}; padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: 600;">
+                                    ${estadoIcon} ${estadoTexto}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${doc.observaciones || 'Sin observaciones'}">${doc.observaciones || '-'}</td>
+                            <td style="padding: 1rem; text-align: center; color: #718096;">${fechaRespuesta}</td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <button onclick="verDocumento(${doc.idDocumento})" 
+                                        style="background: #4299e1; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-right: 0.25rem;"
+                                        title="Ver documento original">
+                                    👁️ Ver
+                                </button>
+                                ${esAprobado ? `
+                                    <button onclick="descargarFirmado(${doc.idDocumento})" 
+                                            style="background: #48bb78; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;"
+                                            title="Descargar documento firmado">
+                                        📥 Firmado
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #f56565;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                        <p style="font-size: 1.2rem;">Error al cargar los documentos</p>
+                        <p style="color: #718096;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function actualizarFiltroPeriodos() {
+            const select = document.getElementById('filtroPeriodo');
+            const valorActual = select.value;
+            select.innerHTML = '<option value="">Todos los periodos</option>';
+            
+            const periodosOrdenados = Array.from(periodosCache).sort().reverse();
+            periodosOrdenados.forEach(periodo => {
+                const option = document.createElement('option');
+                option.value = periodo;
+                option.textContent = periodo;
+                select.appendChild(option);
+            });
+            
+            if (valorActual && periodosCache.has(valorActual)) {
+                select.value = valorActual;
+            }
+        }
+
+        function filtrarDocumentosRespondidos() {
+            const proyectoId = document.getElementById('filtroProyecto').value;
+            const periodo = document.getElementById('filtroPeriodo').value;
+            cargarDocumentosRespondidos(proyectoId, periodo);
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtroProyecto').value = '';
+            document.getElementById('filtroPeriodo').value = '';
+            cargarDocumentosRespondidos();
+        }
+
+        function verDocumento(idDocumento) {
+            window.open(`/api/documentos/${idDocumento}/ver`, '_blank');
+        }
+
+        function descargarFirmado(idDocumento) {
+            window.open(`/api/documentos/${idDocumento}/firmado`, '_blank');
+        }
+
+        function mostrarDocumentosRespondidos() {
             document.getElementById('seccionSubmenu').classList.add('seccion-oculta');
-            document.getElementById('seccionDocumentosAprobados').classList.remove('seccion-oculta');
+            document.getElementById('seccionDocumentosRespondidos').classList.remove('seccion-oculta');
             document.getElementById('seccionColaAprobacion').classList.add('seccion-oculta');
+            cargarProyectos();
+            cargarDocumentosRespondidos();
         }
 
         function mostrarColaAprobacion() {
             document.getElementById('seccionSubmenu').classList.add('seccion-oculta');
-            document.getElementById('seccionDocumentosAprobados').classList.add('seccion-oculta');
+            document.getElementById('seccionDocumentosRespondidos').classList.add('seccion-oculta');
             document.getElementById('seccionColaAprobacion').classList.remove('seccion-oculta');
         }
 
         function volverSubmenu() {
             document.getElementById('seccionSubmenu').classList.remove('seccion-oculta');
-            document.getElementById('seccionDocumentosAprobados').classList.add('seccion-oculta');
+            document.getElementById('seccionDocumentosRespondidos').classList.add('seccion-oculta');
             document.getElementById('seccionColaAprobacion').classList.add('seccion-oculta');
         }
     </script>

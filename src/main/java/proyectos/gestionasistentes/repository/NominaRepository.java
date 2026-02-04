@@ -44,4 +44,17 @@ public interface NominaRepository extends JpaRepository<ReporteNomina, Long> {
         @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto AND r.actualizadoPor = :email ORDER BY r.anio DESC, r.mes DESC")
         List<ReporteNomina> findByProyectoIdAndActualizadoPor(@Param("idProyecto") Long idProyecto,
                         @Param("email") String email);
+
+        // ========== MÉTODOS PARA VALIDACIÓN DE DOCUMENTOS ==========
+
+        // Contar nóminas COMPLETAS de un proyecto (solo las confirmadas, no pendientes)
+        @Query("SELECT COUNT(r) FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto AND r.estado = 'COMPLETO'")
+        int contarNominasCompletasProyecto(@Param("idProyecto") Long idProyecto);
+
+        // Buscar nómina COMPLETA por proyecto, mes y año
+        @Query("SELECT r FROM ReporteNomina r WHERE r.proyecto.id = :idProyecto AND r.mes = :mes AND r.anio = :anio AND r.estado = 'COMPLETO'")
+        Optional<ReporteNomina> buscarNominaCompletaPorProyectoMesAnio(
+                        @Param("idProyecto") Long idProyecto,
+                        @Param("mes") Integer mes,
+                        @Param("anio") Integer anio);
 }

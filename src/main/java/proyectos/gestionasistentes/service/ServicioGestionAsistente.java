@@ -12,9 +12,12 @@ import org.slf4j.LoggerFactory;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.repository.NominaRepository;
 import jakarta.transaction.Transactional;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import proyectos.gestionproyectos.model.Asistente;
 import proyectos.gestionproyectos.model.AyudanteInvestigacion;
 import proyectos.gestionproyectos.model.IntegranteProyecto;
+import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.model.TecnicoInvestigacion;
 import proyectos.gestionproyectos.repository.IntegranteRepository;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
@@ -299,6 +302,55 @@ public class ServicioGestionAsistente {
     // Obtener todos los reportes de nómina de un proyecto
     public List<ReporteNomina> obtenerReportesProyecto(Long proyectoId) {
         return nominaRepository.obtenerReportesProyecto(proyectoId);
+    }
+
+    /**
+     * Genera en BD los reportes pendientes (estado PENDIENTE) para cada mes desde
+     * fechaInicio del proyecto hasta min(fechaFin, hoy), sin duplicar los ya
+     * existentes.
+     */
+    @Transactional
+    public void generarPendientesProyecto(Proyecto proyecto) {
+        if (proyecto == null)
+            return;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        YearMonth inicio = parseYearMonthSafe(proyecto.getFechaInicio(), formatter);
+        YearMonth fin = parseYearMonthSafe(proyecto.getFechaFin(), formatter);
+        YearMonth limite = YearMonth.now().isBefore(fin) ? YearMonth.now() : fin;
+
+        YearMonth actual = inicio;
+        while (!actual.isAfter(limite)) {
+            int mes = actual.getMonthValue();
+            int anio = actual.getYear();
+
+            boolean existe = nominaRepository.buscarPorProyectoMesAnio(proyecto.getId(), mes, anio).isPresent();
+            if (!existe) {
+                ReporteNomina pendiente = new ReporteNomina();
+                pendiente.setProyecto(proyecto);
+                pendiente.setMes(mes);
+                pendiente.setAnio(anio);
+                pendiente.setEstado("PENDIENTE");
+                pendiente.setFechaRegistro(null);
+                pendiente.setListaIntegrantes(new ArrayList<>());
+                nominaRepository.save(pendiente);
+                logger.info("Creada nómina pendiente en BD para proyecto={} mes={} anio={}", proyecto.getId(), mes,
+                        anio);
+            }
+
+            actual = actual.plusMonths(1);
+        }
+    }
+
+    private YearMonth parseYearMonthSafe(String dateStr, DateTimeFormatter formatter) {
+        try {
+            if (dateStr == null || dateStr.isBlank()) {
+                return YearMonth.now();
+            }
+            return YearMonth.parse(dateStr, formatter);
+        } catch (Exception ex) {
+            return YearMonth.now();
+        }
     }
 
     // Obtener nóminas de un proyecto, opcionalmente filtradas por quien las

@@ -43,8 +43,52 @@ public abstract class Documento {
         return nombre.endsWith("." + formato.toLowerCase());
     }
 
+    /**
+     * Obtiene la ruta completa del archivo físico
+     * Formato almacenado nuevo: "directorio|nombreOriginal" con nombre = UUID.pdf
+     * Formato almacenado viejo: "directorio" con nombre = nombreOriginal.pdf
+     */
     public String obtenerRutaCompleta() {
-        return rutaAlmacenamiento + "/" + nombre;
+        String directorio = rutaAlmacenamiento;
+
+        // Si rutaAlmacenamiento contiene "|", extraer solo el directorio
+        if (rutaAlmacenamiento != null && rutaAlmacenamiento.contains("|")) {
+            directorio = rutaAlmacenamiento.split("\\|")[0];
+        }
+
+        // Si el directorio es null o vacío, usar valor por defecto
+        if (directorio == null || directorio.isEmpty()) {
+            directorio = "uploads/documentos";
+        }
+
+        return directorio + "/" + nombre;
+    }
+
+    /**
+     * Obtiene el nombre original del archivo para mostrar al usuario
+     * Si hay formato nuevo (con |), extraer el nombre original
+     * Si no, el nombre guardado ES el original
+     */
+    public String getNombreOriginal() {
+        if (rutaAlmacenamiento != null && rutaAlmacenamiento.contains("|")) {
+            String[] partes = rutaAlmacenamiento.split("\\|");
+            if (partes.length > 1) {
+                return partes[1];
+            }
+        }
+        // Formato antiguo o sin separador: el nombre es el original
+        return nombre;
+    }
+
+    /**
+     * Verifica si el nombre del archivo parece ser un UUID
+     */
+    public boolean tieneNombreUUID() {
+        if (nombre == null)
+            return false;
+        // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.pdf
+        String nombreSinExtension = nombre.replaceAll("\\.[^.]+$", "");
+        return nombreSinExtension.matches("[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}");
     }
 
     // --- GETTERS Y SETTERS ---

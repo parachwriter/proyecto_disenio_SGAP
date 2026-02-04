@@ -344,7 +344,7 @@
         <div class="filters">
             <div class="filter-group">
                 <label for="filtroProyecto">Proyecto:</label>
-                <select id="filtroProyecto" onchange="aplicarFiltros()">
+                <select id="filtroProyecto" onchange="onProyectoChange()">
                     <option value="">Todos los proyectos</option>
                 </select>
             </div>
@@ -379,9 +379,8 @@
                 <label for="estado">Estado:</label>
                 <select id="estado" onchange="aplicarFiltros()">
                     <option value="">Todos</option>
-                    <option value="APROBADO">Aprobado</option>
                     <option value="PENDIENTE">Pendiente</option>
-                    <option value="RECHAZADO">Rechazado</option>
+                    <option value="COMPLETO">Registrada</option>
                 </select>
             </div>
         </div>
@@ -454,41 +453,79 @@
                 selectProyecto.innerHTML = '<option value="">Todos los proyectos</option>';
                 
                 proyectosData.forEach(p => {
-                    selectProyecto.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nombre;
+                    selectProyecto.appendChild(opt);
                 });
 
-                // Si es director y tiene proyectos, seleccionar el primero por defecto y cargar sus nóminas
+                // Si es director y tiene proyectos, seleccionar el primero; si es otro rol, no forzar selección
                 if (sesion === 'director' && proyectosData.length > 0) {
                     selectProyecto.value = proyectosData[0].id;
+                } else {
+                    selectProyecto.value = '';
                 }
 
                 // Cargar nóminas según la selección actual (o por defecto)
-                cargarNominas();
+                await cargarNominas();
             } catch (error) {
                 mostrarError('Error al cargar proyectos: ' + error.message);
             }
+        }
+
+        async function onProyectoChange() {
+            await cargarNominas();
+            aplicarFiltros();
         }
 
         async function cargarNominas() {
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('contenedorResultados').style.display = 'none';
-                // Buscar por proyecto seleccionado. Si no hay proyecto seleccionado y el usuario es director,
-                // intentar cargar las nóminas del primer proyecto disponible.
+
                 const proyectoId = document.getElementById('filtroProyecto').value || null;
                 let response;
+                let payload;
+
                 if (proyectoId) {
                     const userEmail = localStorage.getItem('userEmail');
                     const query = userEmail ? `?actualizadoPor=${encodeURIComponent(userEmail)}` : '';
-                    response = await fetch(`${API_BASE}/nomina/proyecto/${proyectoId}${query}`);
+                    response = await fetch(`${API_BASE}/api/nomina/estado-proyecto/${proyectoId}${query}`);
+                    if (!response.ok) throw new Error('Error al cargar estado de nóminas');
+                    payload = await response.json();
+                    nominasData = payload.nominas || [];
                 } else {
-                    // Si no hay proyecto seleccionado, cargar todas (solo para admins u otros roles)
-                    response = await fetch(`${API_BASE}/nomina`);
-                }
-                if (!response.ok) throw new Error('Error al cargar nóminas');
+                    // Todos los proyectos: juntar estado de cada proyecto (registradas + pendientes)
+                    if (!proyectosData || proyectosData.length === 0) {
+                        const proyectosRes = await fetch(`${API_BASE}/proyectos`);
+                        if (!proyectosRes.ok) throw new Error('Error al cargar proyectos');
+                        proyectosData = await proyectosRes.json();
+                    }
 
-                nominasData = await response.json();
-                mostrarNominas(nominasData);
+                    const resultados = await Promise.all(proyectosData.map(async p => {
+                        try {
+                            const res = await fetch(`${API_BASE}/api/nomina/estado-proyecto/${p.id}`);
+                            if (!res.ok) return { nominas: [] };
+                            return await res.json();
+                        } catch (e) {
+                            console.warn('No se pudo cargar estado de proyecto', p.id, e);
+                            return { nominas: [] };
+                        }
+                    }));
+
+                    const todasNominas = resultados.flatMap(r => r.nominas || []);
+                    const totalPendientes = todasNominas.filter(n => n.estado === 'PENDIENTE').length;
+                    const totalRegistradas = todasNominas.length - totalPendientes;
+
+                    nominasData = todasNominas;
+                    payload = {
+                        nominas: todasNominas,
+                        registradas: totalRegistradas,
+                        pendientes: totalPendientes
+                    };
+                }
+
+                mostrarNominas(nominasData, payload);
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('contenedorResultados').style.display = 'block';
@@ -498,22 +535,21 @@
             }
         }
 
-        function mostrarNominas(nominas) {
+        function mostrarNominas(nominas, payloadStats = {}) {
             const tbody = document.getElementById('cuerpoTabla');
             tbody.innerHTML = '';
 
             // Calcular estadísticas
-            const aprobadas = nominas.filter(n => n.estado === 'APROBADO').length;
+            const completadas = nominas.filter(n => n.estado === 'APROBADO' || n.estado === 'COMPLETO').length;
             const pendientes = nominas.filter(n => n.estado === 'PENDIENTE').length;
-            const rechazadas = nominas.filter(n => n.estado === 'RECHAZADO').length;
 
             document.getElementById('stats').innerHTML = `
                 <div class="stat-card">
-                    <div class="stat-numero" style="color: #48bb78;">${aprobadas}</div>
-                    <div class="stat-label">Completos</div>
+                    <div class="stat-numero" style="color: #48bb78;">${payloadStats.registradas ?? completadas}</div>
+                    <div class="stat-label">Registradas</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-numero" style="color: #ed8936;">${pendientes}</div>
+                    <div class="stat-numero" style="color: #ed8936;">${payloadStats.pendientes ?? pendientes}</div>
                     <div class="stat-label">Pendientes</div>
                 </div>
             `;
@@ -524,8 +560,7 @@
             }
 
             nominas.forEach(nomina => {
-                const estadoBadge = nomina.estado === 'APROBADO' ? 'badge-aprobado' : 
-                                   nomina.estado === 'PENDIENTE' ? 'badge-pendiente' : 'badge-rechazado';
+                const estadoBadge = nomina.estado === 'PENDIENTE' ? 'badge-pendiente' : 'badge-aprobado';
                 
                 const mes = nomina.mes || 'N/A';
                 const anio = nomina.anio || 'N/A';
@@ -557,10 +592,11 @@
             const estado = document.getElementById('estado').value;
 
             const filtrados = nominasData.filter(n => {
+                const estadoMatch = !estado || n.estado === estado || (estado === 'APROBADO' && n.estado === 'COMPLETO');
                 return (!proyectoId || (n.proyecto?.id == proyectoId)) &&
                        (!mes || n.mes == mes) &&
                        (!anio || n.anio == anio) &&
-                       (!estado || n.estado === estado);
+                       estadoMatch;
             });
 
             mostrarNominas(filtrados);
@@ -602,7 +638,7 @@
                 </div>
                 <div class="detalle-item">
                     <div class="detalle-label">ID Reporte</div>
-                    <div class="detalle-valor">${nomina.idReporte}</div>
+                    <div class="detalle-valor">${nomina.idReporte ?? 'PENDIENTE'}</div>
                 </div>
             `;
 

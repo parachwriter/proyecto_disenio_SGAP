@@ -823,14 +823,44 @@
                 
                 // Generar tarjetas de documentos
                 listaDocumentos.innerHTML = documentos.map(doc => {
-                    const estadoBadge = doc.aprobado 
-                        ? '<span style="background: #48bb78; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">✅ Aprobado</span>'
-                        : '<span style="background: #ed8936; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">⏳ Pendiente</span>';
+                    // Determinar estado: aprobado puede ser true, false, o null
+                    // null = pendiente, true = aprobado, false = rechazado
+                    let estadoBadge;
+                    let estadoTexto;
                     
-                    const tipoTexto = doc.nombre.includes("Planificacion") ? "📋 Planificación" : "📈 Avance";
+                    if (doc.aprobado === true) {
+                        estadoBadge = '<span style="background: #48bb78; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">✅ Aprobado</span>';
+                        estadoTexto = 'aprobado';
+                    } else if (doc.aprobado === false) {
+                        estadoBadge = '<span style="background: #e53e3e; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">❌ Rechazado</span>';
+                        estadoTexto = 'rechazado';
+                    } else {
+                        estadoBadge = '<span style="background: #ed8936; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem;">⏳ Pendiente</span>';
+                        estadoTexto = 'pendiente';
+                    }
+                    
+                    // Determinar tipo usando el campo 'tipo' del documento
+                    const tipoTexto = doc.tipo === "PLANIFICACION" ? "📋 Planificación" : "📈 Avance";
+                    
+                    // Mostrar observaciones si existen (especialmente útil para rechazos)
+                    const observacionesHtml = doc.observaciones 
+                        ? `<p style="margin: 0.5rem 0; padding: 0.5rem; background: ${estadoTexto === 'rechazado' ? '#fed7d7' : '#e8f5e9'}; border-radius: 5px; font-size: 0.85rem;">
+                            💬 <strong>Observaciones:</strong> ${doc.observaciones}
+                           </p>` 
+                        : '';
+                    
+                    // Botón para descargar documento firmado (solo si está aprobado y tiene documento firmado)
+                    const botonFirmadoHtml = (doc.aprobado === true && doc.documentoFirmado)
+                        ? `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #c6f6d5;">
+                             <button onclick="descargarDocumentoFirmado(${doc.idDocumento})" 
+                                style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                📥 Descargar Documento Firmado
+                             </button>
+                           </div>`
+                        : '';
                     
                     return `
-                        <div style="border: 2px solid #e0e0e0; border-radius: 10px; padding: 1.5rem; background: #f8f9ff;">
+                        <div style="border: 2px solid ${estadoTexto === 'rechazado' ? '#e53e3e' : estadoTexto === 'aprobado' ? '#48bb78' : '#e0e0e0'}; border-radius: 10px; padding: 1.5rem; background: ${estadoTexto === 'rechazado' ? '#fff5f5' : estadoTexto === 'aprobado' ? '#f0fff4' : '#f8f9ff'};">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                                 <div>
                                     <h4 style="color: #667eea; margin: 0 0 0.5rem 0;">${tipoTexto}</h4>
@@ -839,10 +869,12 @@
                                 ${estadoBadge}
                             </div>
                             <div style="font-size: 0.9rem; color: #666;">
-                                <p style="margin: 0.3rem 0;">📄 Archivo: ${doc.nombre}</p>
-                                <p style="margin: 0.3rem 0;">📅 Fecha de carga: ${formatearFecha(doc.fechaCarga)}</p>
-                                ${doc.aprobado ? `<p style="margin: 0.3rem 0;">✅ Fecha aprobación: ${formatearFecha(doc.fechaAprobacion)}</p>` : ''}
+                                <p style="margin: 0.3rem 0;">📄 Archivo: ${doc.nombreOriginal || doc.nombre}</p>
+                                <p style="margin: 0.3rem 0;">📅 Fecha de carga: ${formatearFecha(doc.fecha)}</p>
+                                ${doc.aprobado === true ? `<p style="margin: 0.3rem 0;">✅ Fecha aprobación: ${formatearFecha(doc.fechaAprobacion)}</p>` : ''}
+                                ${observacionesHtml}
                             </div>
+                            ${botonFirmadoHtml}
                         </div>
                     `;
                 }).join('');
@@ -859,6 +891,13 @@
             const fecha = new Date(fechaStr);
             const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
             return fecha.toLocaleDateString('es-ES', opciones);
+        }
+        
+        // Función para descargar el documento firmado
+        function descargarDocumentoFirmado(idDocumento) {
+            // Abrir el documento firmado en una nueva ventana/pestaña
+            const url = `/api/documentos/${idDocumento}/firmado`;
+            window.open(url, '_blank');
         }
 
         // Función modificada para mostrar estado aprobaciones

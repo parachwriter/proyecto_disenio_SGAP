@@ -117,52 +117,65 @@ public class ServicioGestionDocumento {
 
     /**
      * Valida si se puede cargar una Planificación de Proyecto
-     * Requisito: Todas las nóminas de periodos anteriores deben estar completas
+     * Requisito: Debe existir al menos una nómina registrada para el proyecto
+     * Para periodos posteriores al primero, también se requieren las nóminas de
+     * periodos anteriores completas
      */
     private ValidacionDocumentoDTO validarPlanificacion(Long proyectoId, LocalDate fechaInicio,
             PeriodoAcademico periodoSolicitado) {
         ValidacionDocumentoDTO resultado = new ValidacionDocumentoDTO();
 
+        System.out.println("========== VALIDACIÓN PLANIFICACIÓN ==========");
+        System.out.println("DEBUG PLANIFICACION - Proyecto ID: " + proyectoId);
+        System.out.println("DEBUG PLANIFICACION - Fecha inicio proyecto: " + fechaInicio);
+
+        // Ya no necesitamos validación base genérica, la validación detallada
+        // por periodo calculará exactamente cuántas nóminas faltan
+
         // Verificar si el periodo solicitado es el primer periodo del proyecto
         PeriodoAcademico primerPeriodoProyecto = PeriodoAcademicoUtil.obtenerPeriodoDeFecha(fechaInicio);
 
-        if (periodoSolicitado.compareTo(primerPeriodoProyecto) == 0) {
-            // Es el primer periodo del proyecto, no hay periodos anteriores que validar
-            resultado.setPuedeCargar(true);
-            resultado.setMensaje("Es el primer periodo del proyecto. Puede cargar la Planificación.");
-            return resultado;
-        }
+        System.out.println("DEBUG PLANIFICACION - Primer periodo proyecto: " + primerPeriodoProyecto.getCodigo());
+        System.out.println("DEBUG PLANIFICACION - Periodo solicitado: " + periodoSolicitado.getCodigo());
 
         // Lista para acumular periodos con nóminas faltantes
         List<String> periodosFaltantes = new ArrayList<>();
 
-        System.out.println("DEBUG PLANIFICACION - Proyecto ID: " + proyectoId);
-        System.out.println("DEBUG PLANIFICACION - Fecha inicio proyecto: " + fechaInicio);
-        System.out.println("DEBUG PLANIFICACION - Primer periodo proyecto: " + primerPeriodoProyecto.getCodigo());
-        System.out.println("DEBUG PLANIFICACION - Periodo solicitado: " + periodoSolicitado.getCodigo());
+        // REGLA: Para el PRIMER PERIODO del proyecto, la primera planificación
+        // se puede subir SIN requisito de nóminas (el proyecto apenas inicia)
+        // Para periodos posteriores: exigir todas las nóminas de periodos anteriores
+        // COMPLETAS
+        if (periodoSolicitado.compareTo(primerPeriodoProyecto) == 0) {
+            // Es el primer periodo del proyecto - SE PERMITE SUBIR SIN NÓMINAS
+            System.out.println("DEBUG PLANIFICACION - Es el primer periodo, se permite subir sin requisito de nóminas");
+            resultado.setPuedeCargar(true);
+            resultado.setMensaje("Puede cargar la Planificación del primer periodo del proyecto.");
+            return resultado;
+        } else {
+            // Es un periodo posterior al primero
+            // Generar todos los periodos desde el primero hasta el solicitado (exclusive)
+            PeriodoAcademico periodoActual = primerPeriodoProyecto;
+            int iteracion = 0;
+            while (periodoActual.compareTo(periodoSolicitado) < 0) {
+                iteracion++;
+                System.out.println("DEBUG PLANIFICACION - Iteración " + iteracion + ": Validando periodo "
+                        + periodoActual.getCodigo());
 
-        // Generar todos los periodos anteriores al solicitado
-        PeriodoAcademico periodoActual = primerPeriodoProyecto;
-        int iteracion = 0;
-        while (periodoActual.compareTo(periodoSolicitado) < 0) {
-            iteracion++;
-            System.out.println("DEBUG PLANIFICACION - Iteración " + iteracion + ": Validando periodo "
-                    + periodoActual.getCodigo());
+                // Contar nóminas de este periodo mes por mes
+                int nominasEncontradas = contarNominasPeriodo(proyectoId, periodoActual, fechaInicio,
+                        primerPeriodoProyecto);
+                int nominasEsperadas = calcularNominasEsperadas(periodoActual, fechaInicio, primerPeriodoProyecto);
 
-            // Contar nóminas de este periodo mes por mes
-            int nominasEncontradas = contarNominasPeriodo(proyectoId, periodoActual, fechaInicio,
-                    primerPeriodoProyecto);
-            int nominasEsperadas = calcularNominasEsperadas(periodoActual, fechaInicio, primerPeriodoProyecto);
+                if (nominasEncontradas < nominasEsperadas) {
+                    periodosFaltantes.add(periodoActual.getCodigo() + " (registradas: " + nominasEncontradas + "/"
+                            + nominasEsperadas + ")");
+                    System.out.println(
+                            "DEBUG PLANIFICACION - Periodo " + periodoActual.getCodigo() + " agregado a faltantes");
+                }
 
-            if (nominasEncontradas < nominasEsperadas) {
-                periodosFaltantes.add(periodoActual.getCodigo() + " (registradas: " + nominasEncontradas + "/"
-                        + nominasEsperadas + ")");
-                System.out.println(
-                        "DEBUG PLANIFICACION - Periodo " + periodoActual.getCodigo() + " agregado a faltantes");
+                periodoActual = periodoActual.siguiente();
+                System.out.println("DEBUG PLANIFICACION - Siguiente periodo: " + periodoActual.getCodigo());
             }
-
-            periodoActual = periodoActual.siguiente();
-            System.out.println("DEBUG PLANIFICACION - Siguiente periodo: " + periodoActual.getCodigo());
         }
 
         System.out.println("DEBUG PLANIFICACION - Total periodos faltantes: " + periodosFaltantes.size());
@@ -171,20 +184,53 @@ public class ServicioGestionDocumento {
         if (!periodosFaltantes.isEmpty()) {
             resultado.setPuedeCargar(false);
             StringBuilder mensaje = new StringBuilder();
-            mensaje.append("No puede cargar Planificación para el periodo ").append(periodoSolicitado.getCodigo())
-                    .append(".\n\nFaltan nóminas completas en los siguientes periodos anteriores:\n");
+            mensaje.append("No puede cargar la Planificación para el periodo ").append(periodoSolicitado.getCodigo())
+                    .append(".\n\n");
+            mensaje.append("Le faltan registrar reportes de nómina confirmados en los siguientes periodos:\n\n");
             for (String periodoFaltante : periodosFaltantes) {
                 mensaje.append("• ").append(periodoFaltante).append("\n");
             }
-            mensaje.append("\nDebe completar todas las nóminas antes de cargar el documento.");
+            mensaje.append("\nNota: Solo cuentan las nóminas con estado 'Completo', no las pendientes.");
             resultado.setMensaje(mensaje.toString());
             return resultado;
         }
 
         resultado.setPuedeCargar(true);
-        resultado
-                .setMensaje("Todas las nóminas de periodos anteriores están completas. Puede cargar la Planificación.");
+        resultado.setMensaje("Todas las nóminas requeridas están registradas. Puede cargar la Planificación.");
         return resultado;
+    }
+
+    /**
+     * Cuenta el total de nóminas COMPLETAS (confirmadas) para un proyecto.
+     * NO cuenta las nóminas con estado PENDIENTE.
+     */
+    private int contarTotalNominasCompletasProyecto(Long proyectoId) {
+        int cantidad = nominaRepository.contarNominasCompletasProyecto(proyectoId);
+        System.out.println("DEBUG - Proyecto " + proyectoId + " total nóminas COMPLETAS: " + cantidad);
+        return cantidad;
+    }
+
+    /**
+     * @deprecated Usar contarTotalNominasCompletasProyecto en su lugar
+     */
+    @SuppressWarnings("unused")
+    private int contarTotalNominasProyecto(Long proyectoId) {
+        List<ReporteNomina> nominas = nominaRepository.findByProyectoId(proyectoId);
+        int cantidad = (nominas != null) ? nominas.size() : 0;
+        System.out.println("DEBUG - Proyecto " + proyectoId + " total nóminas (todas): " + cantidad);
+        return cantidad;
+    }
+
+    /**
+     * @deprecated Usar contarTotalNominasCompletasProyecto en su lugar
+     */
+    @SuppressWarnings("unused")
+    private boolean tieneAlMenosUnaNomina(Long proyectoId) {
+        List<ReporteNomina> nominas = nominaRepository.findByProyectoId(proyectoId);
+        boolean tieneNominas = nominas != null && !nominas.isEmpty();
+        System.out.println("DEBUG - Proyecto " + proyectoId + " tiene nóminas: " + tieneNominas +
+                " (cantidad: " + (nominas != null ? nominas.size() : 0) + ")");
+        return tieneNominas;
     }
 
     /**
@@ -196,6 +242,12 @@ public class ServicioGestionDocumento {
     private ValidacionDocumentoDTO validarAvance(Long proyectoId, LocalDate fechaInicio, LocalDate fechaActual,
             PeriodoAcademico periodoSolicitado) {
         ValidacionDocumentoDTO resultado = new ValidacionDocumentoDTO();
+
+        System.out.println("========== VALIDACIÓN AVANCE ==========");
+        System.out.println("DEBUG AVANCE - Proyecto ID: " + proyectoId);
+
+        // Ya no necesitamos validación base genérica, la validación detallada
+        // por periodo calculará exactamente cuántas nóminas faltan
 
         // Verificar que el periodo solicitado no sea futuro
         PeriodoAcademico periodoActual = PeriodoAcademicoUtil.obtenerPeriodoActual();
@@ -248,12 +300,13 @@ public class ServicioGestionDocumento {
         if (!periodosFaltantes.isEmpty()) {
             resultado.setPuedeCargar(false);
             StringBuilder mensaje = new StringBuilder();
-            mensaje.append("No puede cargar Avance para el periodo ").append(periodoSolicitado.getCodigo())
-                    .append(".\n\nFaltan nóminas completas en los siguientes periodos:\n");
+            mensaje.append("No puede cargar el Avance para el periodo ").append(periodoSolicitado.getCodigo())
+                    .append(".\n\n");
+            mensaje.append("Le faltan registrar reportes de nómina confirmados en los siguientes periodos:\n\n");
             for (String periodoFaltante : periodosFaltantes) {
                 mensaje.append("• ").append(periodoFaltante).append("\n");
             }
-            mensaje.append("\nDebe completar todas las nóminas antes de cargar el documento.");
+            mensaje.append("\nNota: Solo cuentan las nóminas con estado 'Completo', no las pendientes.");
             resultado.setMensaje(mensaje.toString());
             return resultado;
         }
@@ -283,7 +336,7 @@ public class ServicioGestionDocumento {
 
         LocalDate fechaFin = periodo.getFechaFin();
 
-        System.out.println("DEBUG - Contando nóminas para periodo: " + periodo.getCodigo());
+        System.out.println("DEBUG - Contando nóminas COMPLETAS para periodo: " + periodo.getCodigo());
         System.out.println("DEBUG - Fecha inicio validación: " + fecha + ", Fecha fin: " + fechaFin);
 
         // Iterar mes por mes desde la fecha calculada hasta el fin del periodo
@@ -291,24 +344,26 @@ public class ServicioGestionDocumento {
             int mes = fecha.getMonthValue();
             int anio = fecha.getYear();
 
-            System.out.println("DEBUG - Buscando nómina: mes=" + mes + ", año=" + anio);
+            System.out.println("DEBUG - Buscando nómina COMPLETA: mes=" + mes + ", año=" + anio);
 
-            Optional<ReporteNomina> nominaOpt = nominaRepository.buscarPorProyectoMesAnio(
+            // Buscar solo nóminas con estado COMPLETO (no pendientes)
+            Optional<ReporteNomina> nominaOpt = nominaRepository.buscarNominaCompletaPorProyectoMesAnio(
                     proyectoId,
                     mes,
                     anio);
 
             if (nominaOpt.isPresent()) {
                 count++;
-                System.out.println("DEBUG - Nómina encontrada para mes " + mes + "/" + anio);
+                System.out.println("DEBUG - Nómina COMPLETA encontrada para mes " + mes + "/" + anio);
             } else {
-                System.out.println("DEBUG - NO encontrada nómina para mes " + mes + "/" + anio);
+                System.out.println("DEBUG - NO encontrada nómina COMPLETA para mes " + mes + "/" + anio
+                        + " (puede estar pendiente o no existir)");
             }
 
             fecha = fecha.plusMonths(1);
         }
 
-        System.out.println("DEBUG - Total nóminas encontradas en " + periodo.getCodigo() + ": " + count);
+        System.out.println("DEBUG - Total nóminas COMPLETAS encontradas en " + periodo.getCodigo() + ": " + count);
         return count;
     }
 
@@ -338,6 +393,42 @@ public class ServicioGestionDocumento {
         }
 
         System.out.println("DEBUG - Nóminas esperadas para periodo " + periodo.getCodigo() + ": " + mesesEsperados);
+        return mesesEsperados;
+    }
+
+    /**
+     * Calcula cuántas nóminas se esperan desde el inicio del proyecto hasta el mes
+     * ANTERIOR al actual
+     * (no se puede exigir la nómina del mes en curso porque aún no ha terminado)
+     * Esto se usa para el primer periodo del proyecto
+     */
+    private int calcularNominasEsperadasHastaHoy(PeriodoAcademico periodo, LocalDate fechaInicioProyecto,
+            PeriodoAcademico primerPeriodoProyecto) {
+        LocalDate fechaActual = LocalDate.now();
+        // El mes anterior al actual (no se puede exigir nómina del mes en curso)
+        LocalDate fechaLimite = fechaActual.minusMonths(1);
+
+        // Si la fecha límite es anterior al inicio del proyecto, no se esperan nóminas
+        if (fechaLimite.isBefore(fechaInicioProyecto)) {
+            System.out.println("DEBUG - Fecha límite " + fechaLimite + " es anterior al inicio del proyecto "
+                    + fechaInicioProyecto);
+            return 0;
+        }
+
+        // Contar meses desde inicio proyecto hasta el mes anterior al actual
+        // pero sin exceder el fin del periodo
+        LocalDate finPeriodo = periodo.getFechaFin();
+        LocalDate fechaFinConteo = fechaLimite.isBefore(finPeriodo) ? fechaLimite : finPeriodo;
+
+        int mesesEsperados = 0;
+        LocalDate fecha = fechaInicioProyecto;
+        while (!fecha.isAfter(fechaFinConteo)) {
+            mesesEsperados++;
+            fecha = fecha.plusMonths(1);
+        }
+
+        System.out.println("DEBUG - Nóminas esperadas hasta hoy para periodo " + periodo.getCodigo() +
+                " (desde " + fechaInicioProyecto + " hasta " + fechaFinConteo + "): " + mesesEsperados);
         return mesesEsperados;
     }
 
@@ -393,11 +484,14 @@ public class ServicioGestionDocumento {
         }
 
         // 6. Establecer propiedades comunes
-        documento.setNombre(nombreOriginal);
+        // IMPORTANTE: Guardamos el nombre único (UUID) para poder encontrar el archivo
+        // pero mantenemos referencia al nombre original para mostrar al usuario
+        documento.setNombre(nombreUnico); // Nombre del archivo físico (UUID)
         documento.setFormato("pdf");
-        documento.setRutaAlmacenamiento(directorioBase);
+        documento.setRutaAlmacenamiento(directorioBase + "|" + nombreOriginal); // ruta|nombreOriginal
         documento.setFecha(LocalDateTime.now());
         documento.setProyecto(proyecto);
+        documento.setTipo(tipoDocumento); // Asegurar que el tipo se establece explícitamente
 
         // 7. Guardar en base de datos
         Documento documentoGuardado = documentoRepository.save(documento);
@@ -424,6 +518,18 @@ public class ServicioGestionDocumento {
 
         // Buscar todos los documentos del proyecto
         List<Documento> documentos = documentoRepository.findByProyectoId(proyectoId);
+
+        // Asegurar que el campo 'tipo' esté correctamente establecido para cada
+        // documento
+        for (Documento doc : documentos) {
+            if (doc.getTipo() == null || doc.getTipo().isEmpty()) {
+                if (doc instanceof PlanificacionProyecto) {
+                    doc.setTipo("PLANIFICACION");
+                } else if (doc instanceof AvanceProyecto) {
+                    doc.setTipo("AVANCE");
+                }
+            }
+        }
 
         System.out.println("Documentos encontrados para proyecto " + proyectoId + ": " + documentos.size());
 
@@ -456,6 +562,133 @@ public class ServicioGestionDocumento {
                     }
                     return false;
                 })
+                .peek(doc -> {
+                    // Asegurar que el campo 'tipo' esté correctamente establecido
+                    if (doc.getTipo() == null || doc.getTipo().isEmpty()) {
+                        if (doc instanceof PlanificacionProyecto) {
+                            doc.setTipo("PLANIFICACION");
+                        } else if (doc instanceof AvanceProyecto) {
+                            doc.setTipo("AVANCE");
+                        }
+                    }
+                })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener documentos respondidos (aprobados y rechazados) con filtros
+     * opcionales
+     * Para la Jefa de Departamento - Consultar Respuesta Documentos
+     * 
+     * @param proyectoId Filtro opcional por proyecto
+     * @param periodo    Filtro opcional por periodo académico
+     * @return Lista de documentos que han sido aprobados o rechazados
+     */
+    public List<Documento> obtenerDocumentosRespondidos(Long proyectoId, String periodo) {
+        List<Documento> documentos;
+
+        // Si hay filtro de proyecto, obtener solo de ese proyecto
+        if (proyectoId != null) {
+            documentos = documentoRepository.findByProyectoId(proyectoId);
+        } else {
+            documentos = documentoRepository.findAll();
+        }
+
+        return documentos.stream()
+                // Filtrar solo documentos respondidos (aprobado != null)
+                .filter(doc -> {
+                    Boolean aprobado = null;
+                    if (doc instanceof PlanificacionProyecto) {
+                        aprobado = ((PlanificacionProyecto) doc).getAprobado();
+                    } else if (doc instanceof AvanceProyecto) {
+                        aprobado = ((AvanceProyecto) doc).getAprobado();
+                    }
+                    return aprobado != null; // Solo documentos que tienen respuesta
+                })
+                // Corregir fechas faltantes para rechazados y guardar
+                .peek(doc -> {
+                    boolean necesitaGuardar = false;
+                    if (doc instanceof PlanificacionProyecto) {
+                        PlanificacionProyecto plan = (PlanificacionProyecto) doc;
+                        if (plan.getAprobado() != null && !plan.getAprobado() && plan.getFechaAprobacion() == null) {
+                            plan.setFechaAprobacion(LocalDateTime.now());
+                            necesitaGuardar = true;
+                        }
+                    } else if (doc instanceof AvanceProyecto) {
+                        AvanceProyecto avance = (AvanceProyecto) doc;
+                        if (avance.getAprobado() != null && !avance.getAprobado()
+                                && avance.getFechaAprobacion() == null) {
+                            avance.setFechaAprobacion(LocalDateTime.now());
+                            necesitaGuardar = true;
+                        }
+                    }
+                    if (necesitaGuardar) {
+                        documentoRepository.save(doc);
+                    }
+                })
+                // Filtrar por periodo si se especifica
+                .filter(doc -> {
+                    if (periodo == null || periodo.isEmpty()) {
+                        return true;
+                    }
+                    String periodoDoc = null;
+                    if (doc instanceof PlanificacionProyecto) {
+                        periodoDoc = ((PlanificacionProyecto) doc).getPeriodoAcademico();
+                    } else if (doc instanceof AvanceProyecto) {
+                        periodoDoc = ((AvanceProyecto) doc).getPeriodoAcademico();
+                    }
+                    return periodo.equals(periodoDoc);
+                })
+                .peek(doc -> {
+                    // Asegurar que el campo 'tipo' esté correctamente establecido
+                    if (doc.getTipo() == null || doc.getTipo().isEmpty()) {
+                        if (doc instanceof PlanificacionProyecto) {
+                            doc.setTipo("PLANIFICACION");
+                        } else if (doc instanceof AvanceProyecto) {
+                            doc.setTipo("AVANCE");
+                        }
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Corrige las fechas de documentos rechazados que no tienen fecha de respuesta
+     * (para datos históricos que fueron rechazados antes de la corrección del
+     * código)
+     * 
+     * @return número de documentos corregidos
+     */
+    public int corregirFechasDocumentosRechazados() {
+        List<Documento> todosDocumentos = documentoRepository.findAll();
+        int corregidos = 0;
+
+        for (Documento doc : todosDocumentos) {
+            boolean modificado = false;
+
+            if (doc instanceof PlanificacionProyecto) {
+                PlanificacionProyecto plan = (PlanificacionProyecto) doc;
+                // Si está rechazado (aprobado = false) pero no tiene fecha
+                if (plan.getAprobado() != null && !plan.getAprobado() && plan.getFechaAprobacion() == null) {
+                    plan.setFechaAprobacion(java.time.LocalDateTime.now());
+                    modificado = true;
+                }
+            } else if (doc instanceof AvanceProyecto) {
+                AvanceProyecto avance = (AvanceProyecto) doc;
+                // Si está rechazado (aprobado = false) pero no tiene fecha
+                if (avance.getAprobado() != null && !avance.getAprobado() && avance.getFechaAprobacion() == null) {
+                    avance.setFechaAprobacion(java.time.LocalDateTime.now());
+                    modificado = true;
+                }
+            }
+
+            if (modificado) {
+                documentoRepository.save(doc);
+                corregidos++;
+            }
+        }
+
+        System.out.println("Documentos rechazados corregidos: " + corregidos);
+        return corregidos;
     }
 }

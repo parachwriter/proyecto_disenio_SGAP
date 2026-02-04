@@ -106,9 +106,6 @@
             border: 2px solid transparent;
             position: relative;
             overflow: hidden;
-            text-decoration: none;
-            color: inherit;
-            display: block;
         }
 
         .submenu-card::before {
@@ -180,6 +177,45 @@
             color: #ed8936;
         }
 
+        .seccion-oculta {
+            display: none;
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-top: 2rem;
+        }
+
+        .content-section h2 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .btn-volver {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-volver:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 85, 104, 0.4);
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin-top: 60px;
@@ -211,24 +247,61 @@
     </div>
 
     <div class="container">
-        <div class="header">
-            <h1>Aprobación de Documentos</h1>
-            <p>Gestionar documentos de proyectos de investigación</p>
-            <a href="dashboard.html" class="btn-back">← Volver al Menú</a>
+        <!-- Sección principal con submenú -->
+        <div id="seccionSubmenu">
+            <div class="header">
+                <h1>Aprobación de Documentos</h1>
+                <p>Gestionar documentos de proyectos de investigación</p>
+                <a href="dashboard.html" class="btn-back">← Volver al Menú</a>
+            </div>
+
+            <div class="submenu-container">
+                <div class="submenu-card" onclick="mostrarDocumentosRespondidos()">
+                    <div class="card-icon consultar">📋</div>
+                    <h3>Consultar Respuesta Documentos</h3>
+                    <p>Ver documentos aprobados y rechazados con filtros por proyecto y periodo</p>
+                </div>
+
+                <div class="submenu-card" onclick="window.location.href='documentos-por-aprobar.html'">
+                    <div class="card-icon cola">⏳</div>
+                    <h3>Documentos por Aprobar</h3>
+                    <p>Revisar y aprobar documentos pendientes de proyectos</p>
+                </div>
+            </div>
         </div>
 
-        <div class="submenu-container">
-            <a href="documentos-aprobados.html" class="submenu-card">
-                <div class="card-icon consultar">📋</div>
-                <h3>Consultar Documentos Aprobados</h3>
-                <p>Ver y consultar todos los documentos que han sido aprobados</p>
-            </a>
+        <!-- Sección: Documentos Respondidos (Aprobados y Rechazados) -->
+        <div id="seccionDocumentosRespondidos" class="seccion-oculta">
+            <div class="content-section">
+                <button class="btn-volver" onclick="volverSubmenu()">← Volver</button>
+                <h2>📋 Consultar Respuesta Documentos</h2>
+                
+                <!-- Filtros -->
+                <div style="display: flex; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap; align-items: flex-end;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500;">Filtrar por Proyecto:</label>
+                        <select id="filtroProyecto" onchange="filtrarDocumentosRespondidos()" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Todos los proyectos</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #4a5568; font-weight: 500;">Filtrar por Periodo:</label>
+                        <select id="filtroPeriodo" onchange="filtrarDocumentosRespondidos()" style="width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                            <option value="">Todos los periodos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button onclick="limpiarFiltros()" style="padding: 0.75rem 1.5rem; background: #718096; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                            🔄 Limpiar
+                        </button>
+                    </div>
+                </div>
 
-            <a href="documentos-por-aprobar.html" class="submenu-card">
-                <div class="card-icon cola">⏳</div>
-                <h3>Documentos por Aprobar</h3>
-                <p>Revisar y aprobar documentos pendientes de proyectos</p>
-            </a>
+                <!-- Tabla de documentos respondidos -->
+                <div id="tablaDocumentosRespondidos" style="margin-top: 1rem;">
+                    <p style="color: #718096; text-align: center; padding: 2rem;">Cargando documentos...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -236,6 +309,208 @@
         // Verificar sesión
         if (localStorage.getItem("sesion") !== "admin") {
             window.location.href = "login.html";
+        }
+
+        // Variables globales para almacenar datos
+        let proyectosCache = [];
+        let periodosCache = new Set();
+
+        // Cargar proyectos al iniciar
+        async function cargarProyectos() {
+            try {
+                const response = await fetch('/api/proyectos');
+                if (response.ok) {
+                    proyectosCache = await response.json();
+                    const select = document.getElementById('filtroProyecto');
+                    select.innerHTML = '<option value="">Todos los proyectos</option>';
+                    proyectosCache.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.idProyecto;
+                        option.textContent = p.nombre || `Proyecto ${p.idProyecto}`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar proyectos:', error);
+            }
+        }
+
+        // Cargar documentos respondidos
+        async function cargarDocumentosRespondidos(proyectoId = '', periodo = '') {
+            const container = document.getElementById('tablaDocumentosRespondidos');
+            container.innerHTML = '<p style="color: #718096; text-align: center; padding: 2rem;">Cargando documentos...</p>';
+
+            try {
+                let url = '/api/documentos/respondidos';
+                const params = new URLSearchParams();
+                if (proyectoId) params.append('proyectoId', proyectoId);
+                if (periodo) params.append('periodo', periodo);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Error al obtener documentos');
+
+                const documentos = await response.json();
+                
+                // Extraer periodos únicos para el filtro
+                periodosCache.clear();
+                documentos.forEach(doc => {
+                    const per = doc.periodoAcademico;
+                    if (per) periodosCache.add(per);
+                });
+                actualizarFiltroPeriodos();
+
+                if (documentos.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #718096;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📭</div>
+                            <p style="font-size: 1.2rem;">No hay documentos respondidos con los filtros seleccionados</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Construir tabla
+                let html = `
+                    <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; min-width: 900px; table-layout: fixed;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <th style="padding: 1rem; text-align: left; border-radius: 10px 0 0 0; width: 22%;">Proyecto</th>
+                                <th style="padding: 1rem; text-align: center; width: 10%;">Tipo</th>
+                                <th style="padding: 1rem; text-align: center; width: 8%;">Periodo</th>
+                                <th style="padding: 1rem; text-align: center; width: 10%;">Estado</th>
+                                <th style="padding: 1rem; text-align: left; width: 25%;">Observaciones</th>
+                                <th style="padding: 1rem; text-align: center; width: 10%;">Fecha</th>
+                                <th style="padding: 1rem; text-align: center; border-radius: 0 10px 0 0; width: 15%;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                documentos.forEach((doc, index) => {
+                    const esAprobado = doc.aprobado === true;
+                    const estadoTexto = esAprobado ? 'Aprobado' : 'Rechazado';
+                    const estadoColor = esAprobado ? '#48bb78' : '#f56565';
+                    const estadoIcon = esAprobado ? '✅' : '❌';
+                    
+                    // Obtener nombre del proyecto - viene en doc.proyecto.nombre o buscar en cache
+                    let nombreProyecto = 'Sin proyecto';
+                    if (doc.proyecto && doc.proyecto.nombre) {
+                        nombreProyecto = doc.proyecto.nombre;
+                    } else if (doc.proyecto && doc.proyecto.idProyecto) {
+                        const proyectoEnCache = proyectosCache.find(p => p.idProyecto === doc.proyecto.idProyecto);
+                        nombreProyecto = proyectoEnCache ? proyectoEnCache.nombre : `Proyecto ${doc.proyecto.idProyecto}`;
+                    }
+                    
+                    const fechaRespuesta = doc.fechaAprobacion ? 
+                        new Date(doc.fechaAprobacion).toLocaleDateString('es-EC') : '-';
+
+                    html += `
+                        <tr style="border-bottom: 1px solid #e2e8f0; ${index % 2 === 0 ? 'background: #f7fafc;' : ''}">
+                            <td style="padding: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${nombreProyecto}">${nombreProyecto}</td>
+                            <td style="padding: 0.75rem; text-align: center;">
+                                <span style="background: ${doc.tipo === 'PLANIFICACION' ? '#4299e1' : '#ed8936'}; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem; white-space: nowrap;">
+                                    ${doc.tipo === 'PLANIFICACION' ? 'Planif.' : 'Avance'}
+                                </span>
+                            </td>
+                            <td style="padding: 0.75rem; text-align: center; font-weight: 500; font-size: 0.9rem;">${doc.periodoAcademico || '-'}</td>
+                            <td style="padding: 0.75rem; text-align: center;">
+                                <span style="background: ${estadoColor}20; color: ${estadoColor}; padding: 0.2rem 0.5rem; border-radius: 12px; font-weight: 600; font-size: 0.75rem; white-space: nowrap;">
+                                    ${estadoIcon} ${estadoTexto}
+                                </span>
+                            </td>
+                            <td style="padding: 0.75rem; font-size: 0.85rem; cursor: pointer;" onclick="mostrarObservaciones('${(doc.observaciones || 'Sin observaciones').replace(/'/g, "\\'")}')">
+                                <div style="max-height: 3em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="Clic para ver completo">
+                                    ${doc.observaciones || '-'}
+                                </div>
+                            </td>
+                            <td style="padding: 0.75rem; text-align: center; color: #718096; font-size: 0.85rem;">${fechaRespuesta}</td>
+                            <td style="padding: 0.75rem; text-align: center; white-space: nowrap;">
+                                <button onclick="verDocumento(${doc.idDocumento})" 
+                                        style="background: #4299e1; color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem;"
+                                        title="Ver documento original">
+                                    👁️ Ver
+                                </button>
+                                ${esAprobado ? `
+                                    <button onclick="descargarFirmado(${doc.idDocumento})" 
+                                            style="background: #48bb78; color: white; border: none; padding: 0.4rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; margin-left: 0.25rem;"
+                                            title="Descargar documento firmado">
+                                        📥 Firmado
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table></div>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #f56565;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                        <p style="font-size: 1.2rem;">Error al cargar los documentos</p>
+                        <p style="color: #718096;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function actualizarFiltroPeriodos() {
+            const select = document.getElementById('filtroPeriodo');
+            const valorActual = select.value;
+            select.innerHTML = '<option value="">Todos los periodos</option>';
+            
+            const periodosOrdenados = Array.from(periodosCache).sort().reverse();
+            periodosOrdenados.forEach(periodo => {
+                const option = document.createElement('option');
+                option.value = periodo;
+                option.textContent = periodo;
+                select.appendChild(option);
+            });
+            
+            if (valorActual && periodosCache.has(valorActual)) {
+                select.value = valorActual;
+            }
+        }
+
+        function filtrarDocumentosRespondidos() {
+            const proyectoId = document.getElementById('filtroProyecto').value;
+            const periodo = document.getElementById('filtroPeriodo').value;
+            cargarDocumentosRespondidos(proyectoId, periodo);
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('filtroProyecto').value = '';
+            document.getElementById('filtroPeriodo').value = '';
+            cargarDocumentosRespondidos();
+        }
+
+        function verDocumento(idDocumento) {
+            window.open(`/api/documentos/${idDocumento}/ver`, '_blank');
+        }
+
+        function descargarFirmado(idDocumento) {
+            window.open(`/api/documentos/${idDocumento}/firmado`, '_blank');
+        }
+
+        function mostrarObservaciones(texto) {
+            alert('Observaciones:\n\n' + texto);
+        }
+
+        function mostrarDocumentosRespondidos() {
+            document.getElementById('seccionSubmenu').classList.add('seccion-oculta');
+            document.getElementById('seccionDocumentosRespondidos').classList.remove('seccion-oculta');
+            cargarProyectos();
+            cargarDocumentosRespondidos();
+        }
+
+        function volverSubmenu() {
+            document.getElementById('seccionSubmenu').classList.remove('seccion-oculta');
+            document.getElementById('seccionDocumentosRespondidos').classList.add('seccion-oculta');
         }
     </script>
 </body>
