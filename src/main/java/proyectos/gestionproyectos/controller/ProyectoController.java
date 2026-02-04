@@ -2,6 +2,7 @@ package proyectos.gestionproyectos.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,9 +122,23 @@ public class ProyectoController {
     }
 
     @GetMapping("/director/{correo}")
-    public ResponseEntity<?> listarPorDirector(@PathVariable String correo) {
+    public ResponseEntity<?> listarPorDirector(@PathVariable String correo, @RequestParam(required = false) String tipo) {
         try {
             List<Proyecto> proyectos = servicio.obtenerProyectosPorDirector(correo);
+            if (tipo != null && !tipo.isBlank()) {
+                proyectos = proyectos.stream()
+                    .filter(p -> {
+                        if ("ProyectoInvestigacion".equals(tipo)) {
+                            return p instanceof proyectos.gestionproyectos.model.ProyectoInvestigacion;
+                        } else if ("ProyectoVinculacion".equals(tipo)) {
+                            return p instanceof proyectos.gestionproyectos.model.ProyectoVinculacion;
+                        } else if ("ProyectoTransicionTecnologica".equals(tipo)) {
+                            return p instanceof proyectos.gestionproyectos.model.ProyectoTransicionTecnologica;
+                        }
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+            }
             return ResponseEntity.ok(proyectos != null ? proyectos : new ArrayList<>());
         } catch (Exception e) {
             logger.error("Error al listar proyectos: {}", e.getMessage(), e);

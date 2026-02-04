@@ -489,7 +489,9 @@
 
                 if (proyectoId) {
                     const userEmail = localStorage.getItem('userEmail');
-                    const query = userEmail ? `?actualizadoPor=${encodeURIComponent(userEmail)}` : '';
+                    const sesion = localStorage.getItem('sesion');
+                    // Para director, no filtrar por actualizadoPor para ver todas las nóminas
+                    const query = (sesion === 'director') ? '' : (userEmail ? `?actualizadoPor=${encodeURIComponent(userEmail)}` : '');
                     response = await fetch(`${API_BASE}/api/nomina/estado-proyecto/${proyectoId}${query}`);
                     if (!response.ok) throw new Error('Error al cargar estado de nóminas');
                     payload = await response.json();

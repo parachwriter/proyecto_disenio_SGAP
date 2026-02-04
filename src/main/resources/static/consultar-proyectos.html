@@ -370,7 +370,7 @@
                 const userEmail = localStorage.getItem('userEmail');
                 let url;
                 if (sesion === 'director' && userEmail) {
-                    url = `${API_BASE}/proyectos/director/${encodeURIComponent(userEmail)}`;
+                    url = tipo ? `${API_BASE}/proyectos/director/${encodeURIComponent(userEmail)}?tipo=${encodeURIComponent(tipo)}` : `${API_BASE}/proyectos/director/${encodeURIComponent(userEmail)}`;
                 } else {
                     url = tipo ? `${API_BASE}/proyectos?tipo=${encodeURIComponent(tipo)}` : `${API_BASE}/proyectos`;
                 }
