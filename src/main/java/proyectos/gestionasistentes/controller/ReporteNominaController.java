@@ -160,18 +160,6 @@ public class ReporteNominaController {
     public ResponseEntity<?> confirmarNominaCompleta(@RequestBody NominaRequestDTO request) {
         Map<String, Object> response = new HashMap<>();
         try {
-            System.out.println("DEBUG: Iniciando procesamiento de nómina");
-            System.out.println("DEBUG: Proyecto ID: " + request.getProyectoId());
-            System.out.println(
-                    "DEBUG: Asistentes recibidos: "
-                            + (request.getAsistentes() != null ? request.getAsistentes().size() : 0));
-
-            if (request.getAsistentes() != null) {
-                for (NominaRequestDTO.AsistenteDTO a : request.getAsistentes()) {
-                    System.out.println(
-                            "  - ID: " + a.getId() + ", Nombre: " + a.getNombre() + ", Estado: " + a.getEstado());
-                }
-            }
 
             ReporteNomina resultado = servicioAsistente.procesarNominaCompleta(request);
 

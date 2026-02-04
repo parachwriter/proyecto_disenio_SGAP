@@ -382,7 +382,6 @@
                 } else {
                     proyectosData = await response.json();
                 }
-                console.debug('Respuesta /proyectos:', proyectosData);
                 
                 // Filtrar proyectos duplicados por ID y asegurar que tengan ID válido
                 const idsVistos = new Set();
@@ -394,7 +393,6 @@
                     }
                 });
                 
-                console.debug('Proyectos originales:', proyectosData.length, 'Únicos:', proyectosUnicos.length);
                 proyectosData = proyectosUnicos; // Actualizar los datos globales
                 mostrarProyectos(proyectosData);
 

@@ -52,18 +52,6 @@ public class ServicioGestionDocumento {
         }
     }
 
-    // Método del UML: descargarDocumento
-    public Documento descargarDocumento(Long idDocumento) {
-        Optional<Documento> docOpt = documentoRepository.findById(idDocumento);
-        if (docOpt.isPresent()) {
-            Documento doc = docOpt.get();
-            System.out.println("Descargando archivo desde ruta: " + doc.obtenerRutaCompleta());
-            return doc;
-        } else {
-            System.out.println("Documento no encontrado.");
-            return null;
-        }
-    }
 
     // Método del UML: agregarDocumentoAProyecto
     public void agregarDocumentoAProyecto(String idProyecto, Documento documento) {

@@ -30,10 +30,17 @@ public class ServicioGestionComunicacion {
             SimpleMailMessage mensaje = new SimpleMailMessage();
             mensaje.setFrom("troyacarlos2001@gmail.com"); // Agregar remitente
             mensaje.setTo(destino);
-            mensaje.setSubject("Bienvenido al Sistema - Credenciales de Director");
-            mensaje.setText("Se le ha asignado un nuevo proyecto.\n\n" +
+            mensaje.setSubject("Sistema de Gestión Académica y Progreso – Credenciales de Director de Proyecto.");
+            mensaje.setText("Estimado/a usuario/a:\n\n" +
+                    "Le damos la más cordial bienvenida al Sistema de Gestión Académica y Progreso.\n\n" +
+                    "Nos complace informarle que el proyecto ha sido registrado correctamente y que usted ha sido asignado/a como Director/a del Proyecto.\n" +
+                    "Por este motivo, se ha generado una cuenta de acceso para que pueda ingresar al sistema y gestionar la información correspondiente a su proyecto.\n\n" +
+                    "A continuación, se detallan sus credenciales de acceso:\n\n" +
                     "Usuario: " + usuario + "\n" +
-                    "Contraseña temporal: " + password);
+                    "Contraseña temporal: " + password + "\n\n" +
+                    "Con estas credenciales, usted podrá acceder al sistema y ejercer sus funciones como Director/a del Proyecto asignado.\n\n" +
+                    "Atentamente,\n" +
+                    "Sistema de Gestión Académica y Progreso.");
 
             System.out.println("Enviando mensaje...");
             mailSender.send(mensaje);

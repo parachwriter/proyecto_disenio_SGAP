@@ -10,32 +10,8 @@ import jakarta.persistence.Entity;
 public abstract class ProyectoInvestigacion extends Proyecto {
 
     // Atributos comunes a todos los proyectos de investigación
-    private String hipotesis;
-    private String metodologiaCientifica;
-    private String estadoDelArte;
+    // (Removed unused fields: hipotesis, metodologiaCientifica, estadoDelArte)
 
     // --- GETTERS Y SETTERS ---
-    public String getHipotesis() {
-        return hipotesis;
-    }
-
-    public void setHipotesis(String hipotesis) {
-        this.hipotesis = hipotesis;
-    }
-
-    public String getMetodologiaCientifica() {
-        return metodologiaCientifica;
-    }
-
-    public void setMetodologiaCientifica(String metodologiaCientifica) {
-        this.metodologiaCientifica = metodologiaCientifica;
-    }
-
-    public String getEstadoDelArte() {
-        return estadoDelArte;
-    }
-
-    public void setEstadoDelArte(String estadoDelArte) {
-        this.estadoDelArte = estadoDelArte;
-    }
+    // (Removed unused getters/setters)
 }

@@ -39,10 +39,6 @@ public class ServicioGestionProyecto {
         proyectoRepo.save(proyecto);
     }
 
-    public IntegranteProyecto registrarIntegrante(IntegranteProyecto i) {
-        return integranteRepo.save(i);
-    }
-
     public void asignarIntegranteAProyecto(Long proyectoId, Long integranteId) {
         Proyecto proyecto = proyectoRepo.findById(proyectoId)
                 .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));

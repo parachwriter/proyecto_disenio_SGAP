@@ -152,24 +152,17 @@ public class DocumentoController {
         try {
             Documento documento = servicioGestionDocumento.obtenerDocumentoPorId(idDocumento);
             if (documento == null) {
-                System.err.println("DEBUG - Documento no encontrado con ID: " + idDocumento);
                 return ResponseEntity.notFound().build();
             }
 
-            System.out.println("DEBUG - Documento encontrado: " + documento.getNombre());
-            System.out.println("DEBUG - Ruta almacenamiento: " + documento.getRutaAlmacenamiento());
-
             // Obtener la ruta del archivo
             String rutaArchivo = documento.obtenerRutaCompleta();
-            System.out.println("DEBUG - Intentando abrir archivo: " + rutaArchivo);
 
             Path path = Paths.get(rutaArchivo);
             Resource resource = new UrlResource(path.toUri());
 
             // Si no existe, intentar buscar el archivo por nombre en el directorio
             if (!resource.exists() || !resource.isReadable()) {
-                System.out.println("DEBUG - Archivo no encontrado en ruta principal, buscando alternativas...");
-
                 // El nombre en BD podría ser el original, pero el archivo físico es UUID
                 // Intentar extraer el directorio base
                 String dirBase = documento.getRutaAlmacenamiento();
@@ -182,20 +175,15 @@ public class DocumentoController {
 
                 // Intentar con la ruta base + nombre
                 Path pathAlternativo = Paths.get(dirBase, documento.getNombre());
-                System.out.println("DEBUG - Intentando ruta alternativa: " + pathAlternativo.toString());
                 resource = new UrlResource(pathAlternativo.toUri());
 
                 if (!resource.exists() || !resource.isReadable()) {
-                    System.err.println("ERROR - No se puede leer el archivo en ninguna ruta");
-                    System.err.println("  - Ruta original: " + rutaArchivo);
-                    System.err.println("  - Ruta alternativa: " + pathAlternativo.toString());
                     return ResponseEntity.notFound().build();
                 }
             }
 
             // Obtener nombre original para el header
             String nombreOriginal = documento.getNombreOriginal();
-            System.out.println("DEBUG - Sirviendo archivo, nombre para descarga: " + nombreOriginal);
 
             // Devolver el PDF para visualización en el navegador
             return ResponseEntity.ok()
@@ -204,8 +192,6 @@ public class DocumentoController {
                     .body(resource);
 
         } catch (Exception e) {
-            System.err.println("Error al servir PDF: " + e.getMessage());
-            e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }
