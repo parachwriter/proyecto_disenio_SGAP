@@ -278,7 +278,6 @@
                     <th>Cédula</th>
                     <th>Área Investigación</th>
                     <th>Estado</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="cuerpoTabla"></tbody>
@@ -364,11 +363,6 @@
                     <td>${director.cedula || 'N/A'}</td>
                     <td>${director.areaInvestigacion || 'N/A'}</td>
                     <td><span class="badge badge-activo">Activo</span></td>
-                    <td>
-                        <div class="actions">
-                            <button class="btn-accion btn-eliminar" onclick="eliminarDirector(${director.id})">Eliminar</button>
-                        </div>
-                    </td>
                 `;
                 tbody.appendChild(row);
             });
