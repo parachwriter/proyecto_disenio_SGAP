@@ -5,7 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import proyectos.gestionasistentes.model.ReporteNomina;
@@ -18,6 +22,8 @@ import proyectos.gestionproyectos.repository.IntegranteRepository;
 @RequestMapping("/nomina")
 @CrossOrigin(origins = "*")
 public class GestionAsistenteController {
+
+    private static final Logger logger = LoggerFactory.getLogger(GestionAsistenteController.class);
 
     @Autowired
     private ServicioGestionAsistente servicio;
@@ -55,16 +61,16 @@ public class GestionAsistenteController {
 
     // 2) REGISTRAR ASISTENTE (POST)
     @PostMapping("/asistentes/registrar")
-    public Asistente registrarAsistente(@RequestBody RegistrarAsistenteRequest req) {
-        Asistente a = new Asistente();
-        a.setCedula(req.getCedula());
-        a.setNombre(req.getNombre());
+    public IntegranteProyecto registrarAsistente(@RequestBody RegistrarAsistenteRequest req) {
+        IntegranteProyecto integrante = servicio.crearIntegranteSegunTipo(req.getTipo());
+        integrante.setCedula(req.getCedula());
+        integrante.setNombre(req.getNombre());
 
         if (req.getFechaNacimiento() != null && !req.getFechaNacimiento().isBlank()) {
-            a.setFechaNacimiento(LocalDate.parse(req.getFechaNacimiento())); // YYYY-MM-DD
+            integrante.setFechaNacimiento(LocalDate.parse(req.getFechaNacimiento())); // YYYY-MM-DD
         }
 
-        return servicio.registrarAsistenteAProyecto(req.getIdProyecto(), a);
+        return servicio.registrarAsistenteAProyecto(req.getIdProyecto(), integrante);
     }
 
     // 3) GENERAR REPORTE NOMINA
@@ -95,12 +101,18 @@ public class GestionAsistenteController {
 
     // 6) ELIMINAR ASISTENTE
     @DeleteMapping("/asistentes/{id}")
-    public org.springframework.http.ResponseEntity<?> eliminarAsistente(@PathVariable Long id) {
+    public ResponseEntity<?> eliminarAsistente(@PathVariable Long id) {
         try {
-            servicio.darDeBajaAsistente(id);
-            return org.springframework.http.ResponseEntity.noContent().build();
+            IntegranteProyecto dadoDeBaja = servicio.darDeBajaAsistente(id);
+            logger.info("Integrante dado de baja: id={} tipo={}", dadoDeBaja.getId(), dadoDeBaja.getTipo());
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            logger.warn("No se pudo dar de baja el integrante id={}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
-            return org.springframework.http.ResponseEntity.badRequest().body(e.getMessage());
+            logger.error("Error al dar de baja el integrante id={}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("No se pudo dar de baja el integrante. Intenta nuevamente.");
         }
     }
 
@@ -116,6 +128,7 @@ public class GestionAsistenteController {
         private Long idProyecto;
         private String cedula;
         private String nombre;
+        private String tipo;
         private String fechaNacimiento;
 
         public Long getIdProyecto() {
@@ -140,6 +153,14 @@ public class GestionAsistenteController {
 
         public void setNombre(String nombre) {
             this.nombre = nombre;
+        }
+
+        public String getTipo() {
+            return tipo;
+        }
+
+        public void setTipo(String tipo) {
+            this.tipo = tipo;
         }
 
         public String getFechaNacimiento() {
