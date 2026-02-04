@@ -165,10 +165,10 @@ public class ServicioGestionAsistente {
                             nuevo.setNombre(dto.getNombre());
                             nuevo.setCedula(dto.getCedula());
                             nuevo.setProyecto(proyecto);
+                            nuevo.activar();
 
-                            // Si es Asistente, activarlo
-                            if (nuevo instanceof Asistente) {
-                                ((Asistente) nuevo).activar();
+                            if ("FUERA_NOMINA".equals(dto.getEstado())) {
+                                nuevo.desactivar();
                             }
 
                             // Guardar fecha de nacimiento si está presente
@@ -178,40 +178,40 @@ public class ServicioGestionAsistente {
 
                             IntegranteProyecto guardado = integranteRepository.save(nuevo);
 
-                            // Agregar a la lista (todos los tipos)
-                            integrantesFinales.add(guardado);
-
-                            logger.info("  Nuevo integrante guardado: {} (ID={}) tipo={}", guardado.getNombre(),
-                                    guardado.getId(), guardado.getClass().getSimpleName());
+                            if (guardado.estaActivo()) {
+                                integrantesFinales.add(guardado);
+                                logger.info("  Nuevo integrante guardado y ACTIVO: {} (ID={}) tipo={} estado={} ",
+                                        guardado.getNombre(), guardado.getId(), guardado.getClass().getSimpleName(),
+                                        guardado.getEstado());
+                            } else {
+                                logger.info(
+                                        "  Nuevo integrante guardado como FUERA_NOMINA: {} (ID={}) tipo={} estado={} ",
+                                        guardado.getNombre(), guardado.getId(), guardado.getClass().getSimpleName(),
+                                        guardado.getEstado());
+                            }
                         } else {
-                            // Integrante existente
+                            // Integrante existente (cualquier tipo)
                             IntegranteProyecto existente = integranteRepository.findById(dto.getId())
                                     .orElseThrow(() -> new RuntimeException("Integrante no encontrado"));
 
-                            // Si es Asistente, actualizar estado
-                            if (existente instanceof Asistente) {
-                                Asistente asistente = (Asistente) existente;
-                                if ("FUERA_NOMINA".equals(dto.getEstado())) {
-                                    asistente.desactivar();
-                                } else {
-                                    asistente.activar();
-                                }
-                                integranteRepository.save(asistente);
-
-                                // Agregar solo si está activo
-                                if (asistente.estaActivo()) {
-                                    integrantesFinales.add(asistente);
-                                    logger.info("  Asistente actualizado y agregado: {} (ID={})", asistente.getNombre(),
-                                            asistente.getId());
-                                } else {
-                                    logger.info("  Asistente dado de baja: {} (ID={})", asistente.getNombre(),
-                                            asistente.getId());
-                                }
+                            if ("FUERA_NOMINA".equals(dto.getEstado())) {
+                                existente.desactivar();
                             } else {
-                                // Ayudantes y Técnicos siempre se agregan (no tienen estado)
-                                integrantesFinales.add(existente);
-                                logger.info("  {} actualizado y agregado: {} (ID={})",
-                                        existente.getClass().getSimpleName(), existente.getNombre(), existente.getId());
+                                existente.activar();
+                            }
+
+                            IntegranteProyecto guardado = integranteRepository.save(existente);
+
+                            if (guardado.estaActivo()) {
+                                integrantesFinales.add(guardado);
+                                logger.info("  Integrante actualizado y ACTIVO: {} (ID={}) tipo={} estado={} ",
+                                        guardado.getNombre(), guardado.getId(), guardado.getClass().getSimpleName(),
+                                        guardado.getEstado());
+                            } else {
+                                logger.info(
+                                        "  Integrante marcado FUERA_NOMINA y excluido de la nómina: {} (ID={}) tipo={} estado={} ",
+                                        guardado.getNombre(), guardado.getId(), guardado.getClass().getSimpleName(),
+                                        guardado.getEstado());
                             }
                         }
                     } catch (RuntimeException e) {

@@ -832,25 +832,32 @@
       boton.closest('tr').remove();
     }
 
-    // 4. DAR DE BAJA UN ASISTENTE (Solo visual, sin guardar en BD todavía)
-    function darDeBaja(idAsistente) {
+    // 4. DAR DE BAJA UN ASISTENTE (persistente en backend)
+    async function darDeBaja(idAsistente) {
       const fila = document.querySelector(`tr[data-id="${idAsistente}"]`);
-      const nombreAsistente = fila.cells[1].innerText.trim();
+      const nombreAsistente = fila?.cells?.[1]?.innerText?.trim() || '';
 
-      // Mostrar confirmación
       const confirmar = confirm(`¿Estás seguro de dar de baja a "${nombreAsistente}"?`);
-      
       if (!confirmar) return;
 
-      // Cambiar el estado visual SOLO en el frontend
+      try {
+        const resp = await fetch(`/api/nomina/dar-de-baja/${idAsistente}`, { method: 'PUT' });
+        if (!resp.ok) {
+          const mensaje = await resp.text();
+          alert(`No se pudo dar de baja: ${mensaje || resp.status}`);
+          return;
+        }
+      } catch (e) {
+        console.error('Error al dar de baja', e);
+        alert('Error al dar de baja. Revisa la consola.');
+        return;
+      }
+
+      // Actualizar visual tras éxito
       const estadoCell = fila.cells[4];
       const accionCell = fila.cells[5];
-      
-      // Cambiar el estado visual
       estadoCell.className = 'status-fuera';
       estadoCell.innerText = 'FUERA_NOMINA';
-      
-      // Cambiar el botón a restaurar
       accionCell.innerHTML = `<button class="btn-restaurar" onclick="restaurarAsistente(${idAsistente})">Restaurar</button>`;
     }
 
