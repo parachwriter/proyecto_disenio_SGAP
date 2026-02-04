@@ -85,6 +85,8 @@
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
+            position: relative;
+            min-height: 200px; /* Para asegurar espacio para centrar */
         }
 
         .proyecto-card {
@@ -290,10 +292,15 @@
         }
 
         .sin-resultados {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
             padding: 40px;
             color: #a0aec0;
             font-size: 1.1rem;
+            width: 100%;
         }
     </style>
 </head>
@@ -356,6 +363,7 @@
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('contenedorProyectos').style.display = 'none';
+                document.getElementById('errorDiv').style.display = 'none'; // Limpiar error anterior
                 const tipo = document.getElementById('filtroTipo').value;
                 // Si es director, solicitar solo sus proyectos
                 const sesion = localStorage.getItem('sesion');
@@ -367,9 +375,13 @@
                     url = tipo ? `${API_BASE}/proyectos?tipo=${encodeURIComponent(tipo)}` : `${API_BASE}/proyectos`;
                 }
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('Error al cargar proyectos');
-
-                proyectosData = await response.json();
+                if (response.status === 204) {
+                    proyectosData = []; // No hay contenido, lista vacía
+                } else if (!response.ok) {
+                    throw new Error('Error al cargar proyectos');
+                } else {
+                    proyectosData = await response.json();
+                }
                 console.debug('Respuesta /proyectos:', proyectosData);
                 
                 // Filtrar proyectos duplicados por ID y asegurar que tengan ID válido
