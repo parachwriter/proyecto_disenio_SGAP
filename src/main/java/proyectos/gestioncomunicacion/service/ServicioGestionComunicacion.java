@@ -68,9 +68,8 @@ public class ServicioGestionComunicacion {
 
         for (DirectorProyecto director : directores) {
             if (director.getCorreoInstitucional() != null) {
-                String subject = "Recordatorio: Actualización de Nómina Mensual";
-                String content = "Estimado " + director.getNombre() +
-                        ", por favor ingrese al sistema para reportar su nómina.";
+                String subject = Comunicado.getAsuntoPorTipo("RECORDATORIO_NOMINA");
+                String content = Comunicado.getContenidoRecordatorioNomina(director.getNombre());
 
                 SimpleMailMessage mensaje = new SimpleMailMessage();
                 mensaje.setTo(director.getCorreoInstitucional());
@@ -92,11 +91,8 @@ public class ServicioGestionComunicacion {
 
     // 3. Confirmación de actualización exitosa (PERSISTENTE)
     public void enviarConfirmacionActualizadaNominaMensual(String destino, String nombreDirector) {
-        String subject = "Confirmación: Nómina Actualizada Exitosamente";
-        String content = "Estimado/a " + nombreDirector + ",\n\n" +
-                "Le informamos que el reporte de asistentes para su proyecto " +
-                "ha sido registrado correctamente en la base de datos.\n\n" +
-                "Fecha de registro: " + java.time.LocalDateTime.now();
+        String subject = Comunicado.getAsuntoPorTipo("CONFIRMACION_NOMINA");
+        String content = Comunicado.getContenidoConfirmacionNomina(nombreDirector);
 
         SimpleMailMessage mensaje = new SimpleMailMessage();
         mensaje.setTo(destino);
@@ -125,12 +121,8 @@ public class ServicioGestionComunicacion {
     // Método para enviar correo de nómina exitosa
     public void enviarCorreoNominaExitosa(String destino, String nombreDirector) {
         try {
-            String subject = "Confirmación: Nómina Procesada Exitosamente";
-            String content = "Estimado/a " + nombreDirector + ",\n\n" +
-                    "Le informamos que la nómina de su proyecto ha sido procesada y registrada correctamente en el sistema.\n\n" +
-                    "Fecha de procesamiento: " + java.time.LocalDateTime.now() + "\n\n" +
-                    "Atentamente,\n" +
-                    "Sistema de Gestión Académica y Progreso.";
+            String subject = Comunicado.getAsuntoPorTipo("NOMINA_EXITOSA");
+            String content = Comunicado.getContenidoNominaExitosa(nombreDirector);
 
             SimpleMailMessage mensaje = new SimpleMailMessage();
             mensaje.setFrom("troyacarlos2001@gmail.com");

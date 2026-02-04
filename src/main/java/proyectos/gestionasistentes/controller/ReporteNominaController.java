@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import proyectos.gestionasistentes.dto.NominaRequestDTO;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.service.ServicioGestionAsistente;
+import proyectos.gestioncomunicacion.service.ServicioGestionComunicacion;
 import proyectos.gestionproyectos.model.Asistente;
 import proyectos.gestionproyectos.model.IntegranteProyecto;
 import proyectos.gestionproyectos.model.Proyecto;
@@ -39,6 +40,9 @@ public class ReporteNominaController {
 
     @Autowired
     private ServicioGestionAsistente servicioAsistente;
+
+    @Autowired
+    private ServicioGestionComunicacion servicioGestionComunicacion;
 
     @Autowired
     private ProyectoRepository proyectoRepository;
@@ -162,6 +166,21 @@ public class ReporteNominaController {
         try {
 
             ReporteNomina resultado = servicioAsistente.procesarNominaCompleta(request);
+
+            // Enviar correo de confirmación al director
+            try {
+                Proyecto proyecto = proyectoRepository.findById(request.getProyectoId())
+                        .orElseThrow(() -> new RuntimeException("Proyecto no encontrado"));
+                if (proyecto.getDirector() != null && proyecto.getDirector().getCorreoInstitucional() != null) {
+                    servicioGestionComunicacion.enviarCorreoNominaExitosa(
+                            proyecto.getDirector().getCorreoInstitucional(),
+                            proyecto.getDirector().getNombre()
+                    );
+                }
+            } catch (Exception emailEx) {
+                logger.warn("Error enviando correo de nómina exitosa: {}", emailEx.getMessage());
+                // No fallar la respuesta por error en email
+            }
 
             response.put("idReporte", resultado.getIdReporte());
             response.put("mensaje", "Nómina procesada exitosamente");

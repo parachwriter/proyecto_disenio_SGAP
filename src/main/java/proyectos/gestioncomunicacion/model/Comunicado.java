@@ -73,7 +73,7 @@ public class Comunicado {
     public static String getContenidoNominaExitosa(String nombreDirector) {
         return "Estimado/a " + nombreDirector + ",\n\n" +
                 "Le informamos que la nómina de su proyecto ha sido procesada y registrada correctamente en el sistema.\n\n" +
-                "Fecha de procesamiento: " + java.time.LocalDateTime.now() + "\n\n" +
+                "Fecha de procesamiento: " + java.time.LocalDate.now() + "\n\n" +
                 "Atentamente,\n" +
                 "Sistema de Gestión Académica y Progreso.";
     }
