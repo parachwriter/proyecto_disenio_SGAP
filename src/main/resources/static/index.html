@@ -632,10 +632,10 @@
             document.getElementById('divSubtipo').classList.add('hidden');
             document.getElementById('subtipoInvestigacion').required = false;
 
-            // Reactivar el botón de envío
+            // El botón permanece deshabilitado para prevenir envíos múltiples
             const btnSubmit = document.querySelector('button[type="submit"]');
             btnSubmit.innerText = '✓ Registrar Proyecto y Notificar Director';
-            btnSubmit.disabled = true;
+            // btnSubmit.disabled = false; // Removido para mantener deshabilitado
 
             // Volver al inicio del formulario
             window.scrollTo({ top: 0, behavior: 'smooth' });
