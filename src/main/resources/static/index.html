@@ -224,6 +224,17 @@
             transform: translateY(0);
         }
 
+        button[type="submit"]:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        button[type="submit"]:disabled:hover {
+            transform: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
         .info-text {
             color: #718096;
             font-size: 0.85rem;
@@ -449,6 +460,42 @@
             window.location.href = 'login.html';
         }
 
+        // Desactivar el botón de envío al cargar la página
+        window.addEventListener('load', () => {
+            const btnSubmit = document.querySelector('button[type="submit"]');
+            btnSubmit.disabled = true;
+        });
+
+        // Función para validar si todos los campos requeridos están completos
+        function validarCamposObligatorios() {
+            const tipoProyecto = document.getElementById('tipoProyecto').value;
+            const nombreP = document.getElementById('nombreP').value.trim();
+            const presupuestoP = document.getElementById('presupuestoP').value;
+            const maxAsistentesP = document.getElementById('maxAsistentesP').value;
+            const fechaInicioP = document.getElementById('fechaInicioP').value;
+            const fechaFinP = document.getElementById('fechaFinP').value;
+            const nombreD = document.getElementById('nombreD').value.trim();
+            const correoD = document.getElementById('correoD').value.trim();
+            const cedulaD = document.getElementById('cedulaD').value.trim();
+            const areaD = document.getElementById('areaD').value.trim();
+
+            let todosCompletos = tipoProyecto && nombreP && presupuestoP && 
+                                  maxAsistentesP && fechaInicioP && fechaFinP && 
+                                  nombreD && correoD && cedulaD && areaD;
+
+            // Si el tipo es investigación, validar que el subtipo también esté completo
+            if (tipoProyecto === 'INVESTIGACION') {
+                const subtipoInvestigacion = document.getElementById('subtipoInvestigacion').value;
+                todosCompletos = todosCompletos && subtipoInvestigacion;
+            }
+
+            // Habilitar o deshabilitar el botón de envío
+            const btnSubmit = document.querySelector('button[type="submit"]');
+            btnSubmit.disabled = !todosCompletos;
+
+            return todosCompletos;
+        }
+
         // Mostrar/ocultar subtipo según tipo de proyecto
         document.getElementById('tipoProyecto').addEventListener('change', (e) => {
             const divSubtipo = document.getElementById('divSubtipo');
@@ -462,16 +509,35 @@
                 selectSubtipo.required = false;
                 selectSubtipo.value = '';
             }
+
+            validarCamposObligatorios();
         });
 
         // Validación de cédula: solo números
         document.getElementById("cedulaD").addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
+            validarCamposObligatorios();
         });
 
         // Validación de cédula: solo números
         document.getElementById("cedulaD").addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
+            validarCamposObligatorios();
+        });
+
+        // Agregar validación a todos los campos del formulario
+        const camposFormulario = [
+            'tipoProyecto', 'subtipoInvestigacion', 'nombreP', 'presupuestoP', 
+            'maxAsistentesP', 'fechaInicioP', 'fechaFinP', 'nombreD', 'correoD', 
+            'cedulaD', 'areaD'
+        ];
+
+        camposFormulario.forEach(id => {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                elemento.addEventListener('input', validarCamposObligatorios);
+                elemento.addEventListener('change', validarCamposObligatorios);
+            }
         });
 
         // Validación de fechas
@@ -490,6 +556,12 @@
 
         document.getElementById('formProyecto').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Validar que todos los campos estén completos
+            if (!validarCamposObligatorios()) {
+                alert('Por favor, complete todos los campos obligatorios');
+                return;
+            }
 
             const tipoProyecto = document.getElementById('tipoProyecto').value;
             const subtipoInvestigacion = document.getElementById('subtipoInvestigacion').value;
@@ -511,6 +583,12 @@
                 }
             };
 
+            // Bloquear el botón durante el envío
+            const btnSubmit = document.querySelector('button[type="submit"]');
+            btnSubmit.disabled = true;
+            const textoOriginal = btnSubmit.innerText;
+            btnSubmit.innerText = '⏳ Registrando...';
+
             try {
                 const res = await fetch('/proyectos', {
                     method: 'POST',
@@ -527,10 +605,20 @@
                 } else {
                     const errorMsg = await res.text();
                     alert("Error del servidor: " + errorMsg);
+                    
+                    // Reactivar el botón si hay error
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = textoOriginal;
+                    validarCamposObligatorios();
                 }
             } catch (err) {
                 alert("Error al conectar con el servidor. Asegúrese de que el Backend esté corriendo.");
                 console.error(err);
+                
+                // Reactivar el botón si hay error
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = textoOriginal;
+                validarCamposObligatorios();
             }
         });
 
@@ -539,6 +627,18 @@
             
             // Limpiar formulario
             document.getElementById('formProyecto').reset();
+
+            // Resetear subtipo a oculto
+            document.getElementById('divSubtipo').classList.add('hidden');
+            document.getElementById('subtipoInvestigacion').required = false;
+
+            // Reactivar el botón de envío
+            const btnSubmit = document.querySelector('button[type="submit"]');
+            btnSubmit.innerText = '✓ Registrar Proyecto y Notificar Director';
+            btnSubmit.disabled = true;
+
+            // Volver al inicio del formulario
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
