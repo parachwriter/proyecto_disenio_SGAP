@@ -250,6 +250,11 @@
                 <p><strong>Estado:</strong> <span id="estadoProyecto">-</span></p>
             </div>
 
+            <div id="mensajeNoVigencia" class="alert alert-warning seccion-oculta" style="margin-top: 2rem;">
+                <strong>⚠️ Proyecto no disponible para carga de documentos</strong><br>
+                Este proyecto aún no ha iniciado o ya ha finalizado. Solo puedes cargar documentos en proyectos que estén en vigencia.
+            </div>
+
             <div id="seccionPeriodos" class="seccion-oculta" style="margin-top: 2rem;">
                 <div class="alert alert-info">
                     <strong>ℹ️ Información:</strong> Solo se muestran los periodos académicos desde el inicio del proyecto hasta el periodo actual.
@@ -361,6 +366,7 @@
         // Variables globales
         let proyectosGlobal = [];
         let proyectoSeleccionado = null;
+        let estadoProyectoGlobal = "";
 
         // Funciones del submenú
         function mostrarCargarDocumento() {
@@ -441,21 +447,12 @@
                 const select = document.getElementById("selectProyecto");
                 select.innerHTML = '<option value="">-- Seleccione un proyecto --</option>';
 
-                // Filtrar proyectos que están en vigencia según las fechas
-                const fechaActual = new Date();
-                const proyectosVigentes = proyectos.filter(p => {
-                    if (!p.fechaInicio || !p.fechaFin) return false;
-                    const inicio = new Date(p.fechaInicio);
-                    const fin = new Date(p.fechaFin);
-                    return fechaActual >= inicio && fechaActual <= fin;
-                });
-
-                if (proyectosVigentes.length === 0) {
-                    select.innerHTML += '<option value="" disabled>No hay proyectos en vigencia</option>';
+                if (proyectos.length === 0) {
+                    select.innerHTML += '<option value="" disabled>No hay proyectos registrados</option>';
                     return;
                 }
 
-                proyectosVigentes.forEach(proyecto => {
+                proyectos.forEach(proyecto => {
                     const option = document.createElement("option");
                     option.value = proyecto.id;
                     option.textContent = `${proyecto.nombre} (ID: ${proyecto.id})`;
@@ -486,6 +483,16 @@
                 return;
             }
 
+            // Ocultar secciones dependientes al cambiar de proyecto
+            document.getElementById("mensajeNoVigencia").classList.add("seccion-oculta");
+            document.getElementById("seccionTipoDocumento").classList.add("seccion-oculta");
+            document.getElementById("seccionDocumentos").classList.add("seccion-oculta");
+            document.getElementById("selectPeriodo").value = "";
+            document.getElementById("selectTipoDocumento").value = "";
+            document.getElementById("infoPeriodo").classList.add("seccion-oculta");
+            document.getElementById("infoTipoDocumento").classList.add("seccion-oculta");
+            document.getElementById("btnContinuar").disabled = true;
+
             // Mostrar información del proyecto
             document.getElementById("fechaInicio").textContent = proyectoSeleccionado.fechaInicio;
             document.getElementById("fechaFin").textContent = proyectoSeleccionado.fechaFin;
@@ -502,29 +509,37 @@
             }
             
             document.getElementById("estadoProyecto").textContent = estadoTexto;
+            estadoProyectoGlobal = estadoTexto;
             document.getElementById("infoProyecto").classList.remove("seccion-oculta");
 
-            // Calcular periodos académicos
-            const periodos = calcularPeriodosProyecto(
-                proyectoSeleccionado.fechaInicio, 
-                proyectoSeleccionado.fechaFin
-            );
+            if (estadoTexto === "EN VIGENCIA") {
+                // Mostrar periodos para proyectos vigentes
+                const periodos = calcularPeriodosProyecto(
+                    proyectoSeleccionado.fechaInicio, 
+                    proyectoSeleccionado.fechaFin
+                );
 
-            // Llenar el select de periodos
-            const selectPeriodo = document.getElementById("selectPeriodo");
-            selectPeriodo.innerHTML = '<option value="">-- Seleccione un periodo --</option>';
+                // Llenar el select de periodos
+                const selectPeriodo = document.getElementById("selectPeriodo");
+                selectPeriodo.innerHTML = '<option value="">-- Seleccione un periodo --</option>';
 
-            periodos.forEach(periodo => {
-                const option = document.createElement("option");
-                option.value = periodo.codigo;
-                option.textContent = `${periodo.codigo} (${periodo.rangoFechas})`;
-                if (periodo.esActual) {
-                    option.textContent += " - ACTUAL";
-                }
-                selectPeriodo.appendChild(option);
-            });
+                periodos.forEach(periodo => {
+                    const option = document.createElement("option");
+                    option.value = periodo.codigo;
+                    option.textContent = `${periodo.codigo} (${periodo.rangoFechas})`;
+                    if (periodo.esActual) {
+                        option.textContent += " - ACTUAL";
+                    }
+                    selectPeriodo.appendChild(option);
+                });
 
-            document.getElementById("seccionPeriodos").classList.remove("seccion-oculta");
+                document.getElementById("seccionPeriodos").classList.remove("seccion-oculta");
+                document.getElementById("mensajeNoVigencia").classList.add("seccion-oculta");
+            } else {
+                // Mostrar mensaje para proyectos no vigentes
+                document.getElementById("seccionPeriodos").classList.add("seccion-oculta");
+                document.getElementById("mensajeNoVigencia").classList.remove("seccion-oculta");
+            }
         }
 
         // Calcular periodos académicos entre dos fechas (solo hasta el actual)
@@ -654,6 +669,11 @@
             
             if (!codigoPeriodo || !proyectoSeleccionado || !tipoDocumento) {
                 alert("Debe seleccionar un proyecto, periodo y tipo de documento");
+                return;
+            }
+
+            if (estadoProyectoGlobal !== "EN VIGENCIA") {
+                alert("No se puede cargar documentos para proyectos que no están en vigencia.");
                 return;
             }
 
