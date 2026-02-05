@@ -18,6 +18,8 @@ import jakarta.persistence.Table;
 import proyectos.gestionusuario.model.DirectorProyecto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import proyectos.gestionproyectos.model.PeriodoAcademico;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "proyecto_investigacion") // Mantiene la tabla existente
@@ -138,6 +140,82 @@ public abstract class Proyecto {
         }
     }
 
+    /**
+     * Obtiene la lista de periodos académicos que abarca este proyecto
+     */
+    public List<PeriodoAcademico> obtenerPeriodosAcademicos() {
+        if (this.fechaInicio == null || this.fechaFin == null) {
+            return new ArrayList<>();
+        }
+        try {
+            LocalDate inicio = LocalDate.parse(this.fechaInicio);
+            LocalDate fin = LocalDate.parse(this.fechaFin);
+            return obtenerPeriodosEntreFechas(inicio, fin);
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtiene los códigos de los periodos académicos que abarca este proyecto
+     */
+    public List<String> obtenerCodigosPeriodosAcademicos() {
+        if (this.fechaInicio == null || this.fechaFin == null) {
+            return new ArrayList<>();
+        }
+        try {
+            LocalDate inicio = LocalDate.parse(this.fechaInicio);
+            LocalDate fin = LocalDate.parse(this.fechaFin);
+            return obtenerCodigosPeriodosEntreFechas(inicio, fin);
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Verifica si el proyecto abarca múltiples periodos académicos
+     */
+    public boolean abarcaMultiplesPeriodosAcademicos() {
+        return obtenerPeriodosAcademicos().size() > 1;
+    }
+
+    /**
+     * Cuenta cuántos periodos académicos abarca el proyecto
+     */
+    public int contarPeriodosAcademicos() {
+        return obtenerPeriodosAcademicos().size();
+    }
+
+    /**
+     * Obtiene el periodo académico de inicio del proyecto
+     */
+    public PeriodoAcademico obtenerPeriodoInicio() {
+        if (this.fechaInicio == null) {
+            return null;
+        }
+        try {
+            LocalDate inicio = LocalDate.parse(this.fechaInicio);
+            return obtenerPeriodoDeFecha(inicio);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene el periodo académico de fin del proyecto
+     */
+    public PeriodoAcademico obtenerPeriodoFin() {
+        if (this.fechaFin == null) {
+            return null;
+        }
+        try {
+            LocalDate fin = LocalDate.parse(this.fechaFin);
+            return obtenerPeriodoDeFecha(fin);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public String getLineaInvestigacion() {
         return lineaInvestigacion;
     }
@@ -159,5 +237,62 @@ public abstract class Proyecto {
         if (className.equals("ProyectoTransicionTecnologica"))
             return "ProyectoTransicionTecnologica";
         return className;
+    }
+
+    /**
+     * Calcula el periodo académico correspondiente a una fecha específica
+     */
+    private static PeriodoAcademico obtenerPeriodoDeFecha(LocalDate fecha) {
+        int mes = fecha.getMonthValue();
+        int anio = fecha.getYear();
+
+        // Periodo A: Marzo (3) - Agosto (8)
+        if (mes >= 3 && mes <= 8) {
+            return new PeriodoAcademico(anio, 'A');
+        }
+        // Periodo B: Septiembre (9) - Diciembre (12)
+        else if (mes >= 9 && mes <= 12) {
+            return new PeriodoAcademico(anio, 'B');
+        }
+        // Periodo B del año anterior: Enero (1) - Febrero (2)
+        else {
+            return new PeriodoAcademico(anio - 1, 'B');
+        }
+    }
+
+    /**
+     * Obtiene todos los periodos académicos entre dos fechas (inclusive)
+     */
+    private static List<PeriodoAcademico> obtenerPeriodosEntreFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaInicio.isAfter(fechaFin)) {
+            throw new IllegalArgumentException("La fecha de inicio debe ser anterior o igual a la fecha de fin");
+        }
+
+        List<PeriodoAcademico> periodos = new ArrayList<>();
+
+        PeriodoAcademico periodoInicio = obtenerPeriodoDeFecha(fechaInicio);
+        PeriodoAcademico periodoFin = obtenerPeriodoDeFecha(fechaFin);
+
+        PeriodoAcademico actual = periodoInicio;
+        periodos.add(actual);
+
+        // Agregar todos los periodos hasta llegar al periodo final
+        while (actual.compareTo(periodoFin) < 0) {
+            actual = actual.siguiente();
+            periodos.add(actual);
+        }
+
+        return periodos;
+    }
+
+    /**
+     * Obtiene todos los periodos académicos entre dos fechas como lista de códigos
+     * (ej: ["2025A", "2025B"])
+     */
+    private static List<String> obtenerCodigosPeriodosEntreFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        List<PeriodoAcademico> periodos = obtenerPeriodosEntreFechas(fechaInicio, fechaFin);
+        return periodos.stream()
+                .map(PeriodoAcademico::getCodigo)
+                .toList();
     }
 }

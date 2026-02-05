@@ -10,7 +10,6 @@ import proyectos.gestiondocumentos.model.AvanceProyecto;
 import proyectos.gestiondocumentos.repository.DocumentoRepository;
 import proyectos.gestionasistentes.model.ReporteNomina;
 import proyectos.gestionasistentes.repository.NominaRepository;
-import proyectos.gestionproyectos.util.PeriodoAcademicoUtil;
 import proyectos.gestionproyectos.model.PeriodoAcademico;
 import proyectos.gestionproyectos.model.Proyecto;
 import proyectos.gestionproyectos.repository.ProyectoRepository;
@@ -90,7 +89,7 @@ public class ServicioGestionDocumento {
         LocalDate fechaActual = LocalDate.now();
 
         // Obtener el periodo solicitado
-        PeriodoAcademico periodoSolicitado = PeriodoAcademicoUtil.parsearCodigo(periodoAcademico);
+        PeriodoAcademico periodoSolicitado = parsearCodigo(periodoAcademico);
 
         if ("PLANIFICACION".equals(tipoDocumento)) {
             return validarPlanificacion(proyectoId, fechaInicio, periodoSolicitado);
@@ -121,7 +120,7 @@ public class ServicioGestionDocumento {
         // por periodo calculará exactamente cuántas nóminas faltan
 
         // Verificar si el periodo solicitado es el primer periodo del proyecto
-        PeriodoAcademico primerPeriodoProyecto = PeriodoAcademicoUtil.obtenerPeriodoDeFecha(fechaInicio);
+        PeriodoAcademico primerPeriodoProyecto = obtenerPeriodoDeFecha(fechaInicio);
 
         System.out.println("DEBUG PLANIFICACION - Primer periodo proyecto: " + primerPeriodoProyecto.getCodigo());
         System.out.println("DEBUG PLANIFICACION - Periodo solicitado: " + periodoSolicitado.getCodigo());
@@ -238,7 +237,7 @@ public class ServicioGestionDocumento {
         // por periodo calculará exactamente cuántas nóminas faltan
 
         // Verificar que el periodo solicitado no sea futuro
-        PeriodoAcademico periodoActual = PeriodoAcademicoUtil.obtenerPeriodoActual();
+        PeriodoAcademico periodoActual = obtenerPeriodoActual();
         if (periodoSolicitado.compareTo(periodoActual) > 0) {
             resultado.setPuedeCargar(false);
             resultado.setMensaje("No puede cargar un Avance para un periodo futuro");
@@ -257,7 +256,7 @@ public class ServicioGestionDocumento {
 
         // Lista para acumular todos los periodos con nóminas faltantes
         List<String> periodosFaltantes = new ArrayList<>();
-        PeriodoAcademico primerPeriodoProyecto = PeriodoAcademicoUtil.obtenerPeriodoDeFecha(fechaInicio);
+        PeriodoAcademico primerPeriodoProyecto = obtenerPeriodoDeFecha(fechaInicio);
 
         // 1. Validar periodos anteriores al seleccionado (completos)
         PeriodoAcademico periodo = primerPeriodoProyecto;
@@ -678,5 +677,50 @@ public class ServicioGestionDocumento {
 
         System.out.println("Documentos rechazados corregidos: " + corregidos);
         return corregidos;
+    }
+
+    /**
+     * Calcula el periodo académico correspondiente a una fecha específica
+     */
+    private static PeriodoAcademico obtenerPeriodoDeFecha(LocalDate fecha) {
+        int mes = fecha.getMonthValue();
+        int anio = fecha.getYear();
+
+        // Periodo A: Marzo (3) - Agosto (8)
+        if (mes >= 3 && mes <= 8) {
+            return new PeriodoAcademico(anio, 'A');
+        }
+        // Periodo B: Septiembre (9) - Diciembre (12)
+        else if (mes >= 9 && mes <= 12) {
+            return new PeriodoAcademico(anio, 'B');
+        }
+        // Periodo B del año anterior: Enero (1) - Febrero (2)
+        else {
+            return new PeriodoAcademico(anio - 1, 'B');
+        }
+    }
+
+    /**
+     * Obtiene el periodo académico actual (basado en la fecha de hoy)
+     */
+    private static PeriodoAcademico obtenerPeriodoActual() {
+        return obtenerPeriodoDeFecha(LocalDate.now());
+    }
+
+    /**
+     * Parsea un código de periodo (ej: "2025A") a un objeto PeriodoAcademico
+     */
+    private static PeriodoAcademico parsearCodigo(String codigo) {
+        if (codigo == null || codigo.length() < 5) {
+            throw new IllegalArgumentException("Código de periodo inválido: " + codigo);
+        }
+
+        try {
+            int anio = Integer.parseInt(codigo.substring(0, 4));
+            char ciclo = codigo.charAt(4);
+            return new PeriodoAcademico(anio, ciclo);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Código de periodo inválido: " + codigo, e);
+        }
     }
 }
