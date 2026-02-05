@@ -22,8 +22,6 @@ public abstract class Usuario {
     private String cedula;
     private String nombre;
     private String correoInstitucional;
-    private String telefono;
-    private String departamento;
 
     public Usuario() {}
 
@@ -46,11 +44,6 @@ public abstract class Usuario {
     public String getCorreoInstitucional() { return correoInstitucional; }
     public void setCorreoInstitucional(String correoInstitucional) { this.correoInstitucional = correoInstitucional; }
 
-    public String getTelefono() { return telefono; }
-    public void setTelefono(String telefono) { this.telefono = telefono; }
-
-    public String getDepartamento() { return departamento; }
-    public void setDepartamento(String departamento) { this.departamento = departamento; }
 
     // Métodos del diagrama
     public boolean verificarPermisos() { return true; }
