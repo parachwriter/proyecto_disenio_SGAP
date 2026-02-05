@@ -12,10 +12,6 @@ import java.time.LocalDateTime;
 public class PlanificacionProyecto extends Documento {
 
     private String periodoAcademico; // Ej: "2025A", "2025B"
-    private String objetivos;
-    private String metodologia;
-    private String cronograma;
-    private String presupuesto;
 
     @Column(name = "aprobado")
     private Boolean aprobado;
@@ -69,38 +65,6 @@ public class PlanificacionProyecto extends Documento {
 
     public void setPeriodoAcademico(String periodoAcademico) {
         this.periodoAcademico = periodoAcademico;
-    }
-
-    public String getObjetivos() {
-        return objetivos;
-    }
-
-    public void setObjetivos(String objetivos) {
-        this.objetivos = objetivos;
-    }
-
-    public String getMetodologia() {
-        return metodologia;
-    }
-
-    public void setMetodologia(String metodologia) {
-        this.metodologia = metodologia;
-    }
-
-    public String getCronograma() {
-        return cronograma;
-    }
-
-    public void setCronograma(String cronograma) {
-        this.cronograma = cronograma;
-    }
-
-    public String getPresupuesto() {
-        return presupuesto;
-    }
-
-    public void setPresupuesto(String presupuesto) {
-        this.presupuesto = presupuesto;
     }
 
     public Boolean getAprobado() {

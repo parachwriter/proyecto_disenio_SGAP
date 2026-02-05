@@ -12,10 +12,7 @@ import java.time.LocalDateTime;
 public class AvanceProyecto extends Documento {
 
     private String periodoAcademico; // Ej: "2025A", "2025B"
-    private String actividadesRealizadas;
-    private String resultadosObtenidos;
-    private String dificultadesEncontradas;
-    private Integer porcentajeAvance; // 0-100
+
 
     @Column(name = "aprobado")
     private Boolean aprobado;
@@ -62,9 +59,6 @@ public class AvanceProyecto extends Documento {
         return aprobado != null && aprobado;
     }
 
-    public boolean validarPorcentajeAvance() {
-        return porcentajeAvance != null && porcentajeAvance >= 0 && porcentajeAvance <= 100;
-    }
 
     // --- GETTERS Y SETTERS ---
     public String getPeriodoAcademico() {
@@ -73,38 +67,6 @@ public class AvanceProyecto extends Documento {
 
     public void setPeriodoAcademico(String periodoAcademico) {
         this.periodoAcademico = periodoAcademico;
-    }
-
-    public String getActividadesRealizadas() {
-        return actividadesRealizadas;
-    }
-
-    public void setActividadesRealizadas(String actividadesRealizadas) {
-        this.actividadesRealizadas = actividadesRealizadas;
-    }
-
-    public String getResultadosObtenidos() {
-        return resultadosObtenidos;
-    }
-
-    public void setResultadosObtenidos(String resultadosObtenidos) {
-        this.resultadosObtenidos = resultadosObtenidos;
-    }
-
-    public String getDificultadesEncontradas() {
-        return dificultadesEncontradas;
-    }
-
-    public void setDificultadesEncontradas(String dificultadesEncontradas) {
-        this.dificultadesEncontradas = dificultadesEncontradas;
-    }
-
-    public Integer getPorcentajeAvance() {
-        return porcentajeAvance;
-    }
-
-    public void setPorcentajeAvance(Integer porcentajeAvance) {
-        this.porcentajeAvance = porcentajeAvance;
     }
 
     public Boolean getAprobado() {
